@@ -47,8 +47,21 @@ router.put("/:id", auth, async (req, res) => {
 });
 
 // Deletar categoria
+// Deletar categoria
 router.delete("/:id", auth, async (req, res) => {
   try {
+    // Verifica se tem transações vinculadas
+    const [transacoes] = await db.query(
+      "SELECT COUNT(*) as total FROM Transacoes WHERE categoria_id = ?",
+      [req.params.id],
+    );
+
+    if (transacoes[0].total > 0) {
+      return res.status(400).json({
+        erro: `Esta categoria possui ${transacoes[0].total} transação(ões) vinculada(s) e não pode ser excluída.`,
+      });
+    }
+
     await db.query("DELETE FROM Categorias WHERE id=? AND usuario_id=?", [
       req.params.id,
       req.usuarioId,
@@ -58,5 +71,4 @@ router.delete("/:id", auth, async (req, res) => {
     res.status(500).json({ erro: "Erro ao deletar categoria." });
   }
 });
-
 module.exports = router;

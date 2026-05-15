@@ -402,7 +402,13 @@
 
       async function deletar(id) {
         if (!confirm("Deletar esta categoria?")) return;
-        await fetchAPI(`/api/categorias/${id}`, { method: "DELETE" });
+        const res = await fetchAPI(`/api/categorias/${id}`, {
+          method: "DELETE",
+        });
+        if (res?.erro) {
+          alert("⚠️ " + res.erro);
+          return;
+        }
         carregarCategorias();
       }
 
