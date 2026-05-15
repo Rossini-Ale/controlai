@@ -3,9 +3,9 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../config/db");
+const auth = require("../middleware/auth");
 
 const CATEGORIAS_PADRAO = [
-  // Despesas
   {
     nome: "Alimentação",
     tipo: "despesa",
@@ -42,7 +42,6 @@ const CATEGORIAS_PADRAO = [
   },
   { nome: "Farmácia", tipo: "despesa", icone: "fa-pills", cor: "#ec4899" },
   { nome: "Outros", tipo: "despesa", icone: "fa-tag", cor: "#6b7280" },
-  // Receitas
   { nome: "Salário", tipo: "receita", icone: "fa-money-bill", cor: "#10b981" },
   { nome: "Freelance", tipo: "receita", icone: "fa-briefcase", cor: "#06b6d4" },
   {
@@ -71,7 +70,6 @@ router.post("/cadastro", async (req, res) => {
     );
     const usuarioId = result.insertId;
 
-    // Cria categorias padrão
     for (const cat of CATEGORIAS_PADRAO) {
       await db.query(
         "INSERT INTO Categorias (usuario_id, nome, tipo, icone, cor) VALUES (?, ?, ?, ?, ?)",
@@ -79,7 +77,6 @@ router.post("/cadastro", async (req, res) => {
       );
     }
 
-    // Cria conta padrão
     await db.query(
       "INSERT INTO Contas (usuario_id, nome, tipo, saldo_inicial, cor) VALUES (?, ?, ?, ?, ?)",
       [usuarioId, "Carteira", "carteira", 0, "#10b981"],
@@ -114,6 +111,58 @@ router.post("/login", async (req, res) => {
     res.json({ token, nome: usuario.nome, username: usuario.username });
   } catch (err) {
     res.status(500).json({ erro: "Erro interno do servidor." });
+  }
+});
+
+// Buscar perfil
+router.get("/perfil", auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT id, nome, email, username, telegram_chat_id, created_at FROM Usuarios WHERE id = ?",
+      [req.usuarioId],
+    );
+    if (rows.length === 0)
+      return res.status(404).json({ erro: "Usuário não encontrado." });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao buscar perfil." });
+  }
+});
+
+// Atualizar perfil
+router.put("/perfil", auth, async (req, res) => {
+  const { nome, email } = req.body;
+  try {
+    await db.query("UPDATE Usuarios SET nome=?, email=? WHERE id=?", [
+      nome,
+      email,
+      req.usuarioId,
+    ]);
+    res.json({ mensagem: "Perfil atualizado!" });
+  } catch (err) {
+    res.status(500).json({ erro: "Email já cadastrado." });
+  }
+});
+
+// Alterar senha
+router.put("/perfil/senha", auth, async (req, res) => {
+  const { senha_atual, nova_senha } = req.body;
+  try {
+    const [rows] = await db.query("SELECT * FROM Usuarios WHERE id=?", [
+      req.usuarioId,
+    ]);
+    const usuario = rows[0];
+    const senhaValida = await bcrypt.compare(senha_atual, usuario.senha);
+    if (!senhaValida)
+      return res.status(401).json({ erro: "Senha atual incorreta." });
+    const hash = await bcrypt.hash(nova_senha, 10);
+    await db.query("UPDATE Usuarios SET senha=? WHERE id=?", [
+      hash,
+      req.usuarioId,
+    ]);
+    res.json({ mensagem: "Senha alterada com sucesso!" });
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao alterar senha." });
   }
 });
 

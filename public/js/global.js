@@ -101,6 +101,7 @@ function renderSidebar(paginaAtiva) {
     { href: "/categorias.html", icon: "fa-tag", label: "Categorias" },
     { href: "/metas.html", icon: "fa-bullseye", label: "Metas" },
     { href: "/relatorios.html", icon: "fa-chart-bar", label: "Relatórios" },
+    { href: "/perfil.html", icon: "fa-user", label: "Perfil" },
   ];
 
   return `
