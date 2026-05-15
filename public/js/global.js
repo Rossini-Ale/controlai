@@ -95,6 +95,7 @@ function renderSidebar(paginaAtiva) {
     { href: "/dashboard.html", icon: "fa-house", label: "Dashboard" },
     { href: "/lancamentos.html", icon: "fa-right-left", label: "Lançamentos" },
     { href: "/contas.html", icon: "fa-wallet", label: "Contas" },
+    { href: "/categorias.html", icon: "fa-tag", label: "Categorias" },
     { href: "/metas.html", icon: "fa-bullseye", label: "Metas" },
     { href: "/relatorios.html", icon: "fa-chart-bar", label: "Relatórios" },
   ];

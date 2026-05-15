@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controlaí — Categorias</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/css/global.css" />
+    <style>
+      .categorias-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+      .categoria-section h2 {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .categoria-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .categoria-item {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .categoria-cor {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .categoria-nome {
+        flex: 1;
+        font-size: 14px;
+      }
+      .categoria-acoes {
+        display: flex;
+        gap: 6px;
+      }
+      .empty {
+        color: var(--text-muted);
+        font-size: 13px;
+        padding: 16px;
+        text-align: center;
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 10px;
+      }
+      @media (max-width: 700px) {
+        .categorias-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar" id="sidebar"></div>
+
+    <div class="main">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 24px;
+        "
+      >
+        <h1 class="page-title" style="margin: 0">Categorias</h1>
+        <button class="btn" onclick="abrirModal()">
+          <i class="fa-solid fa-plus"></i> Nova categoria
+        </button>
+      </div>
+
+      <div class="categorias-grid">
+        <div class="categoria-section">
+          <h2>
+            <span style="color: var(--red)"
+              ><i class="fa-solid fa-arrow-down"></i
+            ></span>
+            Despesas
+          </h2>
+          <div class="categoria-lista" id="lista-despesas">
+            <p class="empty">Carregando...</p>
+          </div>
+        </div>
+        <div class="categoria-section">
+          <h2>
+            <span style="color: var(--green)"
+              ><i class="fa-solid fa-arrow-up"></i
+            ></span>
+            Receitas
+          </h2>
+          <div class="categoria-lista" id="lista-receitas">
+            <p class="empty">Carregando...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+      <div class="modal">
+        <h2 id="modal-titulo">Nova categoria</h2>
+        <div class="form-group">
+          <label>Nome</label>
+          <input
+            type="text"
+            id="f-nome"
+            placeholder="Ex: Alimentação, Salário..."
+          />
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="f-tipo">
+            <option value="despesa">Despesa</option>
+            <option value="receita">Receita</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ícone (Font Awesome)</label>
+          <input
+            type="text"
+            id="f-icone"
+            placeholder="Ex: fa-utensils, fa-car..."
+          />
+        </div>
+        <div class="form-group">
+          <label>Cor</label>
+          <input
+            type="color"
+            id="f-cor"
+            value="#ef4444"
+            style="height: 40px; cursor: pointer"
+          />
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+          <button class="btn" onclick="salvar()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/global.js"></script>
+    <script>
+      verificarAuth();
+      document.getElementById("sidebar").innerHTML =
+        renderSidebar("Categorias");
+
+      let editandoId = null;
+
+      async function carregarCategorias() {
+        const data = (await fetchAPI("/api/categorias")) || [];
+
+        const despesas = data.filter((c) => c.tipo === "despesa");
+        const receitas = data.filter((c) => c.tipo === "receita");
+
+        renderLista("lista-despesas", despesas);
+        renderLista("lista-receitas", receitas);
+      }
+
+      function renderLista(id, lista) {
+        const el = document.getElementById(id);
+        if (lista.length === 0) {
+          el.innerHTML = `<p class="empty">Nenhuma categoria cadastrada.</p>`;
+          return;
+        }
+        el.innerHTML = lista
+          .map(
+            (c) => `
+      <div class="categoria-item">
+        <div class="categoria-cor" style="background:${c.cor || "#6b7280"}"></div>
+        <i class="fa-solid ${c.icone || "fa-tag"}" style="color:${c.cor || "#6b7280"};font-size:14px"></i>
+        <span class="categoria-nome">${c.nome}</span>
+        <div class="categoria-acoes">
+          <button class="btn-edit" onclick="editar(${c.id}, '${c.nome}', '${c.tipo}', '${c.icone || "fa-tag"}', '${c.cor || "#6b7280"}')">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+          <button class="btn-danger" onclick="deletar(${c.id})">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    `,
+          )
+          .join("");
+      }
+
+      function abrirModal() {
+        editandoId = null;
+        document.getElementById("modal-titulo").textContent = "Nova categoria";
+        document.getElementById("f-nome").value = "";
+        document.getElementById("f-tipo").value = "despesa";
+        document.getElementById("f-icone").value = "";
+        document.getElementById("f-cor").value = "#ef4444";
+        document.getElementById("modal").classList.add("active");
+      }
+
+      function fecharModal() {
+        document.getElementById("modal").classList.remove("active");
+      }
+
+      function editar(id, nome, tipo, icone, cor) {
+        editandoId = id;
+        document.getElementById("modal-titulo").textContent =
+          "Editar categoria";
+        document.getElementById("f-nome").value = nome;
+        document.getElementById("f-tipo").value = tipo;
+        document.getElementById("f-icone").value = icone;
+        document.getElementById("f-cor").value = cor;
+        document.getElementById("modal").classList.add("active");
+      }
+
+      async function salvar() {
+        const body = {
+          nome: document.getElementById("f-nome").value,
+          tipo: document.getElementById("f-tipo").value,
+          icone: document.getElementById("f-icone").value || "fa-tag",
+          cor: document.getElementById("f-cor").value,
+        };
+        if (!body.nome) {
+          alert("Informe o nome da categoria.");
+          return;
+        }
+        if (editandoId) {
+          await fetchAPI(`/api/categorias/${editandoId}`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+        } else {
+          await fetchAPI("/api/categorias", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+        }
+        fecharModal();
+        carregarCategorias();
+      }
+
+      async function deletar(id) {
+        if (!confirm("Deletar esta categoria?")) return;
+        await fetchAPI(`/api/categorias/${id}`, { method: "DELETE" });
+        carregarCategorias();
+      }
+
+      carregarCategorias();
+    </script>
+  </body>
+</html>
