@@ -19,7 +19,7 @@
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 24px;
+          margin-bottom: 16px;
         "
       >
         <h1 class="page-title" style="margin: 0">Lançamentos</h1>
@@ -29,7 +29,8 @@
       </div>
 
       <div
-        style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap"
+        class="filtros"
+        style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap"
       >
         <select
           id="filtro-mes"
@@ -42,6 +43,7 @@
             padding: 8px 12px;
             font-size: 14px;
             outline: none;
+            flex: 1;
           "
         >
           <option value="1">Janeiro</option>
@@ -68,6 +70,7 @@
             padding: 8px 12px;
             font-size: 14px;
             outline: none;
+            flex: 1;
           "
         ></select>
         <select
@@ -81,6 +84,7 @@
             padding: 8px 12px;
             font-size: 14px;
             outline: none;
+            flex: 1;
           "
         >
           <option value="">Todos</option>
@@ -89,7 +93,8 @@
         </select>
       </div>
 
-      <div class="table-wrap">
+      <!-- Desktop: tabela -->
+      <div class="table-wrap desktop-only">
         <table>
           <thead>
             <tr>
@@ -102,7 +107,7 @@
               <th>Ações</th>
             </tr>
           </thead>
-          <tbody id="tabela-transacoes">
+          <tbody id="tabela-transacoes-desktop">
             <tr>
               <td
                 colspan="7"
@@ -118,6 +123,9 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Mobile: cards -->
+      <div id="lista-mobile" class="mobile-only"></div>
     </div>
 
     <!-- Modal -->
@@ -195,10 +203,13 @@
       for (let a = ano; a >= ano - 3; a--) {
         selectAno.innerHTML += `<option value="${a}">${a}</option>`;
       }
-
       document.getElementById("f-data").value = new Date()
         .toISOString()
         .split("T")[0];
+
+      function isMobile() {
+        return window.innerWidth <= 768;
+      }
 
       async function carregarTransacoes() {
         const m = document.getElementById("filtro-mes").value;
@@ -208,7 +219,16 @@
         if (tipo) url += `&tipo=${tipo}`;
         const data = await fetchAPI(url);
         if (!data) return;
-        const tbody = document.getElementById("tabela-transacoes");
+
+        if (isMobile()) {
+          renderMobile(data);
+        } else {
+          renderDesktop(data);
+        }
+      }
+
+      function renderDesktop(data) {
+        const tbody = document.getElementById("tabela-transacoes-desktop");
         if (data.length === 0) {
           tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">Nenhuma transação encontrada</td></tr>`;
           return;
@@ -233,6 +253,43 @@
           <button class="btn-danger" onclick="deletar(${t.id})"><i class="fa-solid fa-trash"></i></button>
         </td>
       </tr>
+    `,
+          )
+          .join("");
+      }
+
+      function renderMobile(data) {
+        const lista = document.getElementById("lista-mobile");
+        if (data.length === 0) {
+          lista.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:32px 0">Nenhuma transação encontrada</p>`;
+          return;
+        }
+        lista.innerHTML = data
+          .map(
+            (t) => `
+      <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;border-left:3px solid ${t.tipo === "receita" ? "var(--green)" : "var(--red)"}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div style="flex:1;margin-right:8px">
+            <div style="font-size:15px;font-weight:600;margin-bottom:3px">${t.descricao}</div>
+            <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+              <span>${formatarData(t.data)}</span>
+              <span>·</span>
+              <span style="display:inline-flex;align-items:center;gap:4px">
+                <span style="width:7px;height:7px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
+                ${t.categoria_nome || "—"}
+              </span>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:16px;font-weight:700;color:${t.tipo === "receita" ? "var(--green)" : "var(--red)"}">${t.tipo === "receita" ? "+" : "-"}${formatarMoeda(t.valor)}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${t.conta_nome || "—"}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn-edit" onclick="editar(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-pen"></i> Editar</button>
+          <button class="btn-danger" onclick="deletar(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
     `,
           )
           .join("");
@@ -336,8 +393,27 @@
         carregarTransacoes();
       }
 
+      // Mostra/esconde baseado no tamanho
+      function ajustarLayout() {
+        const desktopTable = document.querySelector(".desktop-only");
+        const mobileLista = document.getElementById("lista-mobile");
+        if (isMobile()) {
+          desktopTable.style.display = "none";
+          mobileLista.style.display = "block";
+        } else {
+          desktopTable.style.display = "block";
+          mobileLista.style.display = "none";
+        }
+      }
+
+      window.addEventListener("resize", () => {
+        ajustarLayout();
+        carregarTransacoes();
+      });
+
       carregarCategorias();
       carregarContas();
+      ajustarLayout();
       carregarTransacoes();
     </script>
   </body>

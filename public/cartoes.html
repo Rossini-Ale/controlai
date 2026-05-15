@@ -14,7 +14,7 @@
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 16px;
-        margin-bottom: 32px;
+        margin-bottom: 24px;
       }
       .cartao-card {
         border-radius: 16px;
@@ -109,13 +109,68 @@
         background: #6366f1;
         color: #fff;
       }
+
+      /* Fatura */
+      .fatura-wrap {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 24px;
+      }
+      .fatura-header {
+        padding: 16px 20px;
+        border-bottom: 0.5px solid var(--border);
+      }
+      .fatura-titulo-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .fatura-titulo-row h2 {
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .fatura-nav-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .fatura-nav-btn {
+        background: var(--bg-tertiary);
+        border: 0.5px solid var(--border);
+        color: var(--text-primary);
+        border-radius: 8px;
+        padding: 7px 12px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .fatura-mes-label {
+        font-size: 14px;
+        font-weight: 600;
+        min-width: 100px;
+        text-align: center;
+      }
+      .fatura-acoes {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .fatura-acoes .btn {
+        flex: 1;
+        justify-content: center;
+      }
+
       .fatura-status {
         padding: 3px 10px;
         border-radius: 20px;
         font-size: 12px;
         font-weight: 500;
         display: inline-block;
-        margin-bottom: 12px;
+        margin-bottom: 4px;
       }
       .fatura-status.aberta {
         background: rgba(59, 130, 246, 0.15);
@@ -129,11 +184,62 @@
         background: rgba(16, 185, 129, 0.15);
         color: var(--green);
       }
+
       .fatura-resumo {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        padding: 16px 20px;
+        gap: 10px;
+        padding: 14px 16px;
+        border-bottom: 0.5px solid var(--border);
+      }
+      .fatura-resumo .card {
+        margin: 0;
+        padding: 12px;
+      }
+      .fatura-resumo .card-value {
+        font-size: 15px;
+      }
+      .fatura-resumo .card-label {
+        font-size: 10px;
+      }
+
+      /* Cards da fatura no mobile */
+      .fatura-lista-mobile {
+        padding: 12px;
+      }
+      .fatura-item-card {
+        background: var(--bg-tertiary);
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      .fatura-item-info {
+        flex: 1;
+        margin-right: 8px;
+      }
+      .fatura-item-desc {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .fatura-item-meta {
+        font-size: 11px;
+        color: var(--text-muted);
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .fatura-item-right {
+        text-align: right;
+      }
+      .fatura-item-valor {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--red);
+        margin-bottom: 6px;
       }
     </style>
   </head>
@@ -159,58 +265,26 @@
         <p style="color: var(--text-muted)">Carregando...</p>
       </div>
 
+      <!-- Fatura -->
       <div id="fatura-section" style="display: none">
-        <div class="table-wrap">
-          <div class="table-header">
-            <div>
-              <h2 id="fatura-titulo" style="font-size: 15px; font-weight: 600">
-                Fatura
-              </h2>
-              <span class="fatura-status" id="fatura-status">aberta</span>
+        <div class="fatura-wrap">
+          <div class="fatura-header">
+            <div class="fatura-titulo-row">
+              <div>
+                <h2 id="fatura-titulo">Fatura</h2>
+                <span class="fatura-status" id="fatura-status">aberta</span>
+              </div>
             </div>
-            <div
-              style="
-                display: flex;
-                gap: 8px;
-                align-items: center;
-                flex-wrap: wrap;
-              "
-            >
-              <button
-                onclick="mudarMesFatura(-1)"
-                style="
-                  background: var(--bg-tertiary);
-                  border: 0.5px solid var(--border);
-                  color: var(--text-primary);
-                  border-radius: 8px;
-                  padding: 6px 12px;
-                  cursor: pointer;
-                "
-              >
+            <div class="fatura-nav-row">
+              <button class="fatura-nav-btn" onclick="mudarMesFatura(-1)">
                 <i class="fa-solid fa-chevron-left"></i>
               </button>
-              <span
-                id="fatura-mes-label"
-                style="
-                  font-size: 14px;
-                  font-weight: 600;
-                  min-width: 110px;
-                  text-align: center;
-                "
-              ></span>
-              <button
-                onclick="mudarMesFatura(1)"
-                style="
-                  background: var(--bg-tertiary);
-                  border: 0.5px solid var(--border);
-                  color: var(--text-primary);
-                  border-radius: 8px;
-                  padding: 6px 12px;
-                  cursor: pointer;
-                "
-              >
+              <span class="fatura-mes-label" id="fatura-mes-label"></span>
+              <button class="fatura-nav-btn" onclick="mudarMesFatura(1)">
                 <i class="fa-solid fa-chevron-right"></i>
               </button>
+            </div>
+            <div class="fatura-acoes">
               <button class="btn" onclick="abrirModalLancar()">
                 <i class="fa-solid fa-plus"></i> Lançar
               </button>
@@ -224,52 +298,50 @@
               </button>
             </div>
           </div>
+
           <div class="fatura-resumo">
-            <div class="card" style="margin: 0">
-              <div class="card-label">Total da fatura</div>
+            <div class="card">
+              <div class="card-label">Total</div>
               <div class="card-value red" id="fatura-total">R$ 0,00</div>
             </div>
-            <div class="card" style="margin: 0">
+            <div class="card">
               <div class="card-label">Lançamentos</div>
               <div class="card-value" id="fatura-qtd">0</div>
             </div>
-            <div class="card" style="margin: 0">
+            <div class="card">
               <div class="card-label">Vencimento</div>
               <div
                 class="card-value"
                 id="fatura-vencimento"
-                style="font-size: 16px"
+                style="font-size: 13px"
               >
                 —
               </div>
             </div>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Descrição</th>
-                <th>Categoria</th>
-                <th>Parcela</th>
-                <th>Valor</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="tabela-fatura">
-              <tr>
-                <td
-                  colspan="6"
-                  style="
-                    text-align: center;
-                    color: var(--text-muted);
-                    padding: 24px;
-                  "
-                >
-                  Selecione um cartão
-                </td>
-              </tr>
-            </tbody>
-          </table>
+
+          <!-- Desktop: tabela -->
+          <div class="desktop-only">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Descrição</th>
+                  <th>Categoria</th>
+                  <th>Parcela</th>
+                  <th>Valor</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-fatura-desktop"></tbody>
+            </table>
+          </div>
+
+          <!-- Mobile: cards -->
+          <div
+            class="fatura-lista-mobile mobile-only"
+            id="fatura-lista-mobile"
+          ></div>
         </div>
       </div>
     </div>
@@ -299,7 +371,7 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <div class="form-group">
-            <label>Dia de fechamento</label>
+            <label>Dia fechamento</label>
             <input
               type="number"
               id="f-fechamento"
@@ -309,7 +381,7 @@
             />
           </div>
           <div class="form-group">
-            <label>Dia de vencimento</label>
+            <label>Dia vencimento</label>
             <input
               type="number"
               id="f-vencimento"
@@ -326,7 +398,7 @@
       </div>
     </div>
 
-    <!-- Modal lançar despesa -->
+    <!-- Modal lançar -->
     <div class="modal-overlay" id="modal-lancar">
       <div class="modal">
         <h2>Lançar no cartão</h2>
@@ -461,6 +533,10 @@
         .toISOString()
         .split("T")[0];
 
+      function isMobile() {
+        return window.innerWidth <= 768;
+      }
+
       async function carregarCartoes() {
         const data = (await fetchAPI("/api/cartoes")) || [];
         const grid = document.getElementById("cartoes-grid");
@@ -483,22 +559,10 @@
             <div class="cartao-chip"></div>
           </div>
           <div class="cartao-info">
-            <div class="cartao-info-item">
-              <label>Limite</label>
-              <span>${formatarMoeda(limite)}</span>
-            </div>
-            <div class="cartao-info-item">
-              <label>Fatura atual</label>
-              <span style="color:var(--red)">${formatarMoeda(fatura)}</span>
-            </div>
-            <div class="cartao-info-item">
-              <label>Fechamento</label>
-              <span>Dia ${c.dia_fechamento}</span>
-            </div>
-            <div class="cartao-info-item">
-              <label>Vencimento</label>
-              <span>Dia ${c.dia_vencimento}</span>
-            </div>
+            <div class="cartao-info-item"><label>Limite</label><span>${formatarMoeda(limite)}</span></div>
+            <div class="cartao-info-item"><label>Fatura atual</label><span style="color:var(--red)">${formatarMoeda(fatura)}</span></div>
+            <div class="cartao-info-item"><label>Fechamento</label><span>Dia ${c.dia_fechamento}</span></div>
+            <div class="cartao-info-item"><label>Vencimento</label><span>Dia ${c.dia_vencimento}</span></div>
           </div>
           <div class="limite-bar">
             <div class="limite-fill" style="width:${pct}%;background:${corBarra}"></div>
@@ -568,17 +632,28 @@
         if (!data) return;
         const { fatura, transacoes } = data;
         const total = transacoes.reduce((s, t) => s + parseFloat(t.valor), 0);
+
         document.getElementById("fatura-total").textContent =
           formatarMoeda(total);
         document.getElementById("fatura-qtd").textContent = transacoes.length;
+
         const statusEl = document.getElementById("fatura-status");
         statusEl.textContent = fatura.status;
         statusEl.className = `fatura-status ${fatura.status}`;
         document.getElementById("btn-pagar").style.display =
           fatura.status === "paga" ? "none" : "flex";
-        const tbody = document.getElementById("tabela-fatura");
+
+        if (isMobile()) {
+          renderFaturaMobile(transacoes);
+        } else {
+          renderFaturaDesktop(transacoes);
+        }
+      }
+
+      function renderFaturaDesktop(transacoes) {
+        const tbody = document.getElementById("tabela-fatura-desktop");
         if (transacoes.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">Nenhum lançamento nesta fatura</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">Nenhum lançamento</td></tr>`;
           return;
         }
         tbody.innerHTML = transacoes
@@ -587,20 +662,49 @@
       <tr>
         <td>${formatarData(t.data)}</td>
         <td>${t.descricao}</td>
-        <td>
-          <span style="display:inline-flex;align-items:center;gap:5px">
-            <span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
-            ${t.categoria_nome || "—"}
-          </span>
-        </td>
+        <td><span style="display:inline-flex;align-items:center;gap:5px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
+          ${t.categoria_nome || "—"}
+        </span></td>
         <td style="color:var(--text-muted)">${t.parcelas > 1 ? `${t.parcela_atual}/${t.parcelas}` : "À vista"}</td>
         <td><span class="badge despesa">${formatarMoeda(t.valor)}</span></td>
-        <td>
-          <button class="btn-danger" onclick="deletarLancamento(${t.id})">
+        <td><button class="btn-danger" onclick="deletarLancamento(${t.id})"><i class="fa-solid fa-trash"></i></button></td>
+      </tr>
+    `,
+          )
+          .join("");
+      }
+
+      function renderFaturaMobile(transacoes) {
+        const lista = document.getElementById("fatura-lista-mobile");
+        if (transacoes.length === 0) {
+          lista.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:24px 0">Nenhum lançamento nesta fatura</p>`;
+          return;
+        }
+        lista.innerHTML = transacoes
+          .map(
+            (t) => `
+      <div class="fatura-item-card">
+        <div class="fatura-item-info">
+          <div class="fatura-item-desc">${t.descricao}</div>
+          <div class="fatura-item-meta">
+            <span>${formatarData(t.data)}</span>
+            <span>·</span>
+            <span style="display:inline-flex;align-items:center;gap:4px">
+              <span style="width:7px;height:7px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
+              ${t.categoria_nome || "—"}
+            </span>
+            <span>·</span>
+            <span>${t.parcelas > 1 ? `${t.parcela_atual}/${t.parcelas}` : "À vista"}</span>
+          </div>
+        </div>
+        <div class="fatura-item-right">
+          <div class="fatura-item-valor">${formatarMoeda(t.valor)}</div>
+          <button class="btn-danger" style="padding:5px 10px;font-size:11px" onclick="deletarLancamento(${t.id})">
             <i class="fa-solid fa-trash"></i>
           </button>
-        </td>
-      </tr>
+        </div>
+      </div>
     `,
           )
           .join("");
@@ -766,6 +870,10 @@
         carregarFatura();
         carregarCartoes();
       }
+
+      window.addEventListener("resize", () => {
+        if (cartaoAtivo) carregarFatura();
+      });
 
       carregarCartoes();
     </script>
