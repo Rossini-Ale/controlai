@@ -4,15 +4,87 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../config/db");
 
+const CATEGORIAS_PADRAO = [
+  // Despesas
+  {
+    nome: "Alimentação",
+    tipo: "despesa",
+    icone: "fa-utensils",
+    cor: "#ef4444",
+  },
+  { nome: "Transporte", tipo: "despesa", icone: "fa-car", cor: "#f97316" },
+  { nome: "Saúde", tipo: "despesa", icone: "fa-heart-pulse", cor: "#ec4899" },
+  {
+    nome: "Educação",
+    tipo: "despesa",
+    icone: "fa-graduation-cap",
+    cor: "#8b5cf6",
+  },
+  { nome: "Lazer", tipo: "despesa", icone: "fa-gamepad", cor: "#06b6d4" },
+  { nome: "Vestuário", tipo: "despesa", icone: "fa-shirt", cor: "#6366f1" },
+  { nome: "Moradia", tipo: "despesa", icone: "fa-house", cor: "#84cc16" },
+  { nome: "Assinaturas", tipo: "despesa", icone: "fa-tv", cor: "#14b8a6" },
+  { nome: "Eletrônicos", tipo: "despesa", icone: "fa-laptop", cor: "#3b82f6" },
+  { nome: "Pet", tipo: "despesa", icone: "fa-dog", cor: "#a78bfa" },
+  { nome: "Viagem", tipo: "despesa", icone: "fa-plane", cor: "#f59e0b" },
+  {
+    nome: "Mercado",
+    tipo: "despesa",
+    icone: "fa-cart-shopping",
+    cor: "#10b981",
+  },
+  { nome: "Restaurante", tipo: "despesa", icone: "fa-burger", cor: "#ef4444" },
+  {
+    nome: "Combustível",
+    tipo: "despesa",
+    icone: "fa-gas-pump",
+    cor: "#f97316",
+  },
+  { nome: "Farmácia", tipo: "despesa", icone: "fa-pills", cor: "#ec4899" },
+  { nome: "Outros", tipo: "despesa", icone: "fa-tag", cor: "#6b7280" },
+  // Receitas
+  { nome: "Salário", tipo: "receita", icone: "fa-money-bill", cor: "#10b981" },
+  { nome: "Freelance", tipo: "receita", icone: "fa-briefcase", cor: "#06b6d4" },
+  {
+    nome: "Investimentos",
+    tipo: "receita",
+    icone: "fa-piggy-bank",
+    cor: "#8b5cf6",
+  },
+  {
+    nome: "Transferência",
+    tipo: "receita",
+    icone: "fa-right-left",
+    cor: "#3b82f6",
+  },
+  { nome: "Outros", tipo: "receita", icone: "fa-tag", cor: "#6b7280" },
+];
+
 // Cadastro
 router.post("/cadastro", async (req, res) => {
   const { nome, email, username, senha } = req.body;
   try {
     const hash = await bcrypt.hash(senha, 10);
-    await db.query(
+    const [result] = await db.query(
       "INSERT INTO Usuarios (nome, email, username, senha) VALUES (?, ?, ?, ?)",
       [nome, email, username, hash],
     );
+    const usuarioId = result.insertId;
+
+    // Cria categorias padrão
+    for (const cat of CATEGORIAS_PADRAO) {
+      await db.query(
+        "INSERT INTO Categorias (usuario_id, nome, tipo, icone, cor) VALUES (?, ?, ?, ?, ?)",
+        [usuarioId, cat.nome, cat.tipo, cat.icone, cat.cor],
+      );
+    }
+
+    // Cria conta padrão
+    await db.query(
+      "INSERT INTO Contas (usuario_id, nome, tipo, saldo_inicial, cor) VALUES (?, ?, ?, ?, ?)",
+      [usuarioId, "Carteira", "carteira", 0, "#10b981"],
+    );
+
     res.status(201).json({ mensagem: "Usuário criado com sucesso!" });
   } catch (err) {
     res.status(400).json({ erro: "Email ou username já cadastrado." });
