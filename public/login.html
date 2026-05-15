@@ -254,9 +254,9 @@
             erro.textContent = data.erro;
             return;
           }
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("nome", data.nome);
-          localStorage.setItem("username", data.username);
+          localStorage.setItem("controlai_token", data.token);
+          localStorage.setItem("controlai_nome", data.nome);
+          localStorage.setItem("controlai_username", data.username);
           window.location.href = "/dashboard.html";
         } catch {
           erro.style.display = "block";

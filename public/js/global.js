@@ -1,21 +1,22 @@
 const API = "";
+const PREFIX = "controlai_";
 
 function getToken() {
-  return localStorage.getItem("token");
+  return localStorage.getItem(PREFIX + "token");
 }
 
 function getNome() {
-  return localStorage.getItem("nome") || "Usuário";
+  return localStorage.getItem(PREFIX + "nome") || "Usuário";
 }
 
 function getUsername() {
-  return localStorage.getItem("username") || "";
+  return localStorage.getItem(PREFIX + "username") || "";
 }
 
 function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("nome");
-  localStorage.removeItem("username");
+  localStorage.removeItem(PREFIX + "token");
+  localStorage.removeItem(PREFIX + "nome");
+  localStorage.removeItem(PREFIX + "username");
   window.location.href = "/login.html";
 }
 
