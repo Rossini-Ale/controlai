@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controlaí — Relatórios</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/css/global.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+      .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .chart-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+      }
+      .chart-card h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+      }
+      .filtros {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .filtros select {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        color: var(--text-primary);
+        border-radius: 9px;
+        padding: 8px 12px;
+        font-size: 14px;
+        outline: none;
+      }
+      .saldo-contas {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .saldo-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        border-left: 3px solid var(--cor);
+      }
+      .saldo-card-nome {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+      }
+      .saldo-card-valor {
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .categoria-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .categoria-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .categoria-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .categoria-nome {
+        flex: 1;
+        font-size: 13px;
+      }
+      .categoria-barra {
+        flex: 2;
+        background: var(--bg-tertiary);
+        border-radius: 99px;
+        height: 6px;
+        overflow: hidden;
+      }
+      .categoria-fill {
+        height: 100%;
+        border-radius: 99px;
+      }
+      .categoria-valor {
+        font-size: 13px;
+        font-weight: 600;
+        min-width: 80px;
+        text-align: right;
+      }
+      @media (max-width: 900px) {
+        .charts-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar" id="sidebar"></div>
+
+    <div class="main">
+      <h1 class="page-title">Relatórios</h1>
+
+      <div class="filtros">
+        <select id="filtro-mes">
+          <option value="1">Janeiro</option>
+          <option value="2">Fevereiro</option>
+          <option value="3">Março</option>
+          <option value="4">Abril</option>
+          <option value="5">Maio</option>
+          <option value="6">Junho</option>
+          <option value="7">Julho</option>
+          <option value="8">Agosto</option>
+          <option value="9">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+        <select id="filtro-ano"></select>
+        <button class="btn" onclick="carregarTudo()">
+          <i class="fa-solid fa-rotate"></i> Atualizar
+        </button>
+      </div>
+
+      <!-- Saldo por conta -->
+      <h2
+        style="
+          font-size: 15px;
+          font-weight: 600;
+          margin-bottom: 12px;
+          color: var(--text-secondary);
+        "
+      >
+        Saldo por conta
+      </h2>
+      <div class="saldo-contas" id="saldo-contas">
+        <p style="color: var(--text-muted)">Carregando...</p>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>Evolução dos últimos 6 meses</h3>
+          <canvas id="chart-evolucao" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Receitas vs Despesas</h3>
+          <canvas id="chart-pizza" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- Despesas por categoria -->
+      <div class="chart-card" style="margin-bottom: 24px">
+        <h3>Despesas por categoria — <span id="label-mes-cat"></span></h3>
+        <div class="categoria-lista" id="categoria-lista">
+          <p style="color: var(--text-muted)">Carregando...</p>
+        </div>
+      </div>
+
+      <!-- Receitas por categoria -->
+      <div class="chart-card">
+        <h3>Receitas por categoria — <span id="label-mes-rec"></span></h3>
+        <div class="categoria-lista" id="categoria-lista-rec">
+          <p style="color: var(--text-muted)">Carregando...</p>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/global.js"></script>
+    <script>
+      verificarAuth();
+      document.getElementById("sidebar").innerHTML =
+        renderSidebar("Relatórios");
+
+      let chartEvolucao = null;
+      let chartPizza = null;
+      const { mes, ano } = getMesAno();
+
+      document.getElementById("filtro-mes").value = mes;
+      const selectAno = document.getElementById("filtro-ano");
+      for (let a = ano; a >= ano - 3; a--) {
+        selectAno.innerHTML += `<option value="${a}">${a}</option>`;
+      }
+
+      async function carregarTudo() {
+        await Promise.all([
+          carregarSaldoContas(),
+          carregarEvolucao(),
+          carregarResumo(),
+          carregarCategorias(),
+          carregarCategoriasReceita(),
+        ]);
+      }
+
+      async function carregarSaldoContas() {
+        const data = (await fetchAPI("/api/relatorios/saldo-contas")) || [];
+        const wrap = document.getElementById("saldo-contas");
+        if (data.length === 0) {
+          wrap.innerHTML = `<p style="color:var(--text-muted)">Nenhuma conta cadastrada.</p>`;
+          return;
+        }
+        wrap.innerHTML = data
+          .map((c) => {
+            const saldo = parseFloat(c.saldo_atual) || 0;
+            const cor = c.cor || "#10b981";
+            return `
+        <div class="saldo-card" style="--cor:${cor}">
+          <div class="saldo-card-nome">${c.nome}</div>
+          <div class="saldo-card-valor" style="color:${saldo >= 0 ? "var(--green)" : "var(--red)"}">
+            ${formatarMoeda(saldo)}
+          </div>
+        </div>
+      `;
+          })
+          .join("");
+      }
+
+      async function carregarEvolucao() {
+        const data = (await fetchAPI("/api/relatorios/evolucao")) || [];
+        const labels = data.map(
+          (d) => `${nomeMes(d.mes).substring(0, 3)} ${d.ano}`,
+        );
+        const receitas = data.map((d) => parseFloat(d.receitas) || 0);
+        const despesas = data.map((d) => parseFloat(d.despesas) || 0);
+
+        if (chartEvolucao) chartEvolucao.destroy();
+        chartEvolucao = new Chart(document.getElementById("chart-evolucao"), {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Receitas",
+                data: receitas,
+                backgroundColor: "#10b981",
+                borderRadius: 4,
+              },
+              {
+                label: "Despesas",
+                data: despesas,
+                backgroundColor: "#ef4444",
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { labels: { color: "#9ca3af", font: { size: 12 } } },
+            },
+            scales: {
+              x: { ticks: { color: "#6b7280" }, grid: { color: "#2d3748" } },
+              y: { ticks: { color: "#6b7280" }, grid: { color: "#2d3748" } },
+            },
+          },
+        });
+      }
+
+      async function carregarResumo() {
+        const m = document.getElementById("filtro-mes").value;
+        const a = document.getElementById("filtro-ano").value;
+        const data = await fetchAPI(`/api/relatorios/resumo?mes=${m}&ano=${a}`);
+        if (!data) return;
+
+        const receitas = parseFloat(data.total_receitas) || 0;
+        const despesas = parseFloat(data.total_despesas) || 0;
+
+        if (chartPizza) chartPizza.destroy();
+        chartPizza = new Chart(document.getElementById("chart-pizza"), {
+          type: "doughnut",
+          data: {
+            labels: ["Receitas", "Despesas"],
+            datasets: [
+              {
+                data: [receitas, despesas],
+                backgroundColor: ["#10b981", "#ef4444"],
+                borderWidth: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { color: "#9ca3af", font: { size: 12 }, padding: 16 },
+              },
+            },
+          },
+        });
+      }
+
+      async function carregarCategorias() {
+        const m = document.getElementById("filtro-mes").value;
+        const a = document.getElementById("filtro-ano").value;
+        document.getElementById("label-mes-cat").textContent =
+          `${nomeMes(parseInt(m))} ${a}`;
+        document.getElementById("label-mes-rec").textContent =
+          `${nomeMes(parseInt(m))} ${a}`;
+
+        const data =
+          (await fetchAPI(
+            `/api/relatorios/por-categoria?mes=${m}&ano=${a}&tipo=despesa`,
+          )) || [];
+        const lista = document.getElementById("categoria-lista");
+
+        if (data.length === 0) {
+          lista.innerHTML = `<p style="color:var(--text-muted)">Sem despesas neste mês.</p>`;
+          return;
+        }
+
+        const max = Math.max(...data.map((d) => parseFloat(d.total) || 0));
+        lista.innerHTML = data
+          .map((d) => {
+            const total = parseFloat(d.total) || 0;
+            const pct = max > 0 ? (total / max) * 100 : 0;
+            const cor = d.cor || "#6b7280";
+            return `
+        <div class="categoria-item">
+          <div class="categoria-dot" style="background:${cor}"></div>
+          <div class="categoria-nome">${d.nome || "Sem categoria"}</div>
+          <div class="categoria-barra">
+            <div class="categoria-fill" style="width:${pct}%;background:${cor}"></div>
+          </div>
+          <div class="categoria-valor">${formatarMoeda(total)}</div>
+        </div>
+      `;
+          })
+          .join("");
+      }
+
+      async function carregarCategoriasReceita() {
+        const m = document.getElementById("filtro-mes").value;
+        const a = document.getElementById("filtro-ano").value;
+        const data =
+          (await fetchAPI(
+            `/api/relatorios/por-categoria?mes=${m}&ano=${a}&tipo=receita`,
+          )) || [];
+        const lista = document.getElementById("categoria-lista-rec");
+
+        if (data.length === 0) {
+          lista.innerHTML = `<p style="color:var(--text-muted)">Sem receitas neste mês.</p>`;
+          return;
+        }
+
+        const max = Math.max(...data.map((d) => parseFloat(d.total) || 0));
+        lista.innerHTML = data
+          .map((d) => {
+            const total = parseFloat(d.total) || 0;
+            const pct = max > 0 ? (total / max) * 100 : 0;
+            const cor = d.cor || "#10b981";
+            return `
+        <div class="categoria-item">
+          <div class="categoria-dot" style="background:${cor}"></div>
+          <div class="categoria-nome">${d.nome || "Sem categoria"}</div>
+          <div class="categoria-barra">
+            <div class="categoria-fill" style="width:${pct}%;background:${cor}"></div>
+          </div>
+          <div class="categoria-valor">${formatarMoeda(total)}</div>
+        </div>
+      `;
+          })
+          .join("");
+      }
+
+      carregarTudo();
+    </script>
+  </body>
+</html>

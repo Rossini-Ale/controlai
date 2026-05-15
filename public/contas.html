@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controlaí — Contas</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/css/global.css" />
+    <style>
+      .contas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 16px;
+      }
+      .conta-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+      .conta-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--cor);
+      }
+      .conta-tipo {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+      }
+      .conta-nome {
+        font-size: 17px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+      .conta-saldo-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+      }
+      .conta-saldo {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--green);
+        margin-bottom: 16px;
+      }
+      .conta-acoes {
+        display: flex;
+        gap: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar" id="sidebar"></div>
+
+    <div class="main">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 24px;
+        "
+      >
+        <h1 class="page-title" style="margin: 0">Contas</h1>
+        <button class="btn" onclick="abrirModal()">
+          <i class="fa-solid fa-plus"></i> Nova conta
+        </button>
+      </div>
+
+      <div class="contas-grid" id="contas-grid">
+        <p style="color: var(--text-muted)">Carregando...</p>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+      <div class="modal">
+        <h2 id="modal-titulo">Nova conta</h2>
+        <div class="form-group">
+          <label>Nome da conta</label>
+          <input
+            type="text"
+            id="f-nome"
+            placeholder="Ex: Nubank, Carteira..."
+          />
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="f-tipo">
+            <option value="corrente">Conta corrente</option>
+            <option value="poupanca">Poupança</option>
+            <option value="carteira">Carteira</option>
+            <option value="investimento">Investimento</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Saldo inicial</label>
+          <input type="number" id="f-saldo" placeholder="0,00" step="0.01" />
+        </div>
+        <div class="form-group">
+          <label>Cor</label>
+          <input
+            type="color"
+            id="f-cor"
+            value="#10b981"
+            style="height: 40px; cursor: pointer"
+          />
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+          <button class="btn" onclick="salvar()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/global.js"></script>
+    <script>
+      verificarAuth();
+      document.getElementById("sidebar").innerHTML = renderSidebar("Contas");
+
+      let editandoId = null;
+      let saldosAtuais = {};
+
+      async function carregarContas() {
+        const contas = (await fetchAPI("/api/contas")) || [];
+        const saldos = (await fetchAPI("/api/relatorios/saldo-contas")) || [];
+
+        saldos.forEach((s) => {
+          saldosAtuais[s.nome] = s.saldo_atual;
+        });
+
+        const grid = document.getElementById("contas-grid");
+        if (contas.length === 0) {
+          grid.innerHTML = `<p style="color:var(--text-muted)">Nenhuma conta cadastrada.</p>`;
+          return;
+        }
+
+        grid.innerHTML = contas
+          .map((c) => {
+            const saldo = saldos.find((s) => s.nome === c.nome);
+            const saldoAtual = saldo
+              ? parseFloat(saldo.saldo_atual) || 0
+              : parseFloat(c.saldo_inicial) || 0;
+            const cor = c.cor || "#10b981";
+            const tipoLabel =
+              {
+                corrente: "Conta corrente",
+                poupanca: "Poupança",
+                carteira: "Carteira",
+                investimento: "Investimento",
+              }[c.tipo] || c.tipo;
+
+            return `
+        <div class="conta-card" style="--cor: ${cor}">
+          <div class="conta-tipo">${tipoLabel}</div>
+          <div class="conta-nome">${c.nome}</div>
+          <div class="conta-saldo-label">Saldo atual</div>
+          <div class="conta-saldo" style="color:${saldoAtual >= 0 ? "var(--green)" : "var(--red)"}">
+            ${formatarMoeda(saldoAtual)}
+          </div>
+          <div class="conta-acoes">
+            <button class="btn-edit" onclick="editar(${c.id}, '${c.nome}', '${c.tipo}', ${c.saldo_inicial}, '${cor}')">
+              <i class="fa-solid fa-pen"></i> Editar
+            </button>
+            <button class="btn-danger" onclick="deletar(${c.id})">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `;
+          })
+          .join("");
+      }
+
+      function abrirModal() {
+        editandoId = null;
+        document.getElementById("modal-titulo").textContent = "Nova conta";
+        document.getElementById("f-nome").value = "";
+        document.getElementById("f-tipo").value = "corrente";
+        document.getElementById("f-saldo").value = "";
+        document.getElementById("f-cor").value = "#10b981";
+        document.getElementById("modal").classList.add("active");
+      }
+
+      function fecharModal() {
+        document.getElementById("modal").classList.remove("active");
+      }
+
+      function editar(id, nome, tipo, saldo, cor) {
+        editandoId = id;
+        document.getElementById("modal-titulo").textContent = "Editar conta";
+        document.getElementById("f-nome").value = nome;
+        document.getElementById("f-tipo").value = tipo;
+        document.getElementById("f-saldo").value = saldo;
+        document.getElementById("f-cor").value = cor;
+        document.getElementById("modal").classList.add("active");
+      }
+
+      async function salvar() {
+        const body = {
+          nome: document.getElementById("f-nome").value,
+          tipo: document.getElementById("f-tipo").value,
+          saldo_inicial:
+            parseFloat(document.getElementById("f-saldo").value) || 0,
+          cor: document.getElementById("f-cor").value,
+        };
+        if (!body.nome) {
+          alert("Informe o nome da conta.");
+          return;
+        }
+        if (editandoId) {
+          await fetchAPI(`/api/contas/${editandoId}`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+        } else {
+          await fetchAPI("/api/contas", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+        }
+        fecharModal();
+        carregarContas();
+      }
+
+      async function deletar(id) {
+        if (!confirm("Deletar esta conta?")) return;
+        await fetchAPI(`/api/contas/${id}`, { method: "DELETE" });
+        carregarContas();
+      }
+
+      carregarContas();
+    </script>
+  </body>
+</html>

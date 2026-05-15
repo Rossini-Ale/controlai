@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controlaí — Lançamentos</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/css/global.css" />
+  </head>
+  <body>
+    <div class="sidebar" id="sidebar"></div>
+
+    <div class="main">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 24px;
+        "
+      >
+        <h1 class="page-title" style="margin: 0">Lançamentos</h1>
+        <button class="btn" onclick="abrirModal()">
+          <i class="fa-solid fa-plus"></i> Novo lançamento
+        </button>
+      </div>
+
+      <!-- Filtros -->
+      <div
+        style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap"
+      >
+        <select
+          id="filtro-mes"
+          onchange="carregarTransacoes()"
+          style="
+            background: var(--bg-secondary);
+            border: 0.5px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 9px;
+            padding: 8px 12px;
+            font-size: 14px;
+            outline: none;
+          "
+        >
+          <option value="1">Janeiro</option>
+          <option value="2">Fevereiro</option>
+          <option value="3">Março</option>
+          <option value="4">Abril</option>
+          <option value="5">Maio</option>
+          <option value="6">Junho</option>
+          <option value="7">Julho</option>
+          <option value="8">Agosto</option>
+          <option value="9">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+        <select
+          id="filtro-ano"
+          onchange="carregarTransacoes()"
+          style="
+            background: var(--bg-secondary);
+            border: 0.5px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 9px;
+            padding: 8px 12px;
+            font-size: 14px;
+            outline: none;
+          "
+        ></select>
+        <select
+          id="filtro-tipo"
+          onchange="carregarTransacoes()"
+          style="
+            background: var(--bg-secondary);
+            border: 0.5px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 9px;
+            padding: 8px 12px;
+            font-size: 14px;
+            outline: none;
+          "
+        >
+          <option value="">Todos</option>
+          <option value="receita">Receitas</option>
+          <option value="despesa">Despesas</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Conta</th>
+              <th>Tipo</th>
+              <th>Valor</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-transacoes">
+            <tr>
+              <td
+                colspan="7"
+                style="
+                  text-align: center;
+                  color: var(--text-muted);
+                  padding: 24px;
+                "
+              >
+                Carregando...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+      <div class="modal">
+        <h2 id="modal-titulo">Novo lançamento</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="form-group">
+            <label>Tipo</label>
+            <select id="f-tipo" onchange="filtrarCategorias()">
+              <option value="despesa">Despesa</option>
+              <option value="receita">Receita</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Valor</label>
+            <input
+              type="number"
+              id="f-valor"
+              placeholder="0,00"
+              step="0.01"
+              min="0"
+            />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Descrição</label>
+          <input
+            type="text"
+            id="f-descricao"
+            placeholder="Ex: Aluguel, Salário..."
+          />
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="form-group">
+            <label>Categoria</label>
+            <select id="f-categoria"></select>
+          </div>
+          <div class="form-group">
+            <label>Conta</label>
+            <select id="f-conta"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" id="f-data" />
+        </div>
+        <div class="form-group">
+          <label>Observação (opcional)</label>
+          <input type="text" id="f-obs" placeholder="Alguma observação..." />
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+          <button class="btn" onclick="salvar()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/global.js"></script>
+    <script>
+      verificarAuth();
+      document.getElementById("sidebar").innerHTML =
+        renderSidebar("Lançamentos");
+
+      let editandoId = null;
+      let categorias = [];
+      let contas = [];
+      const { mes, ano } = getMesAno();
+
+      // Preenche filtros
+      document.getElementById("filtro-mes").value = mes;
+      const selectAno = document.getElementById("filtro-ano");
+      for (let a = ano; a >= ano - 3; a--) {
+        selectAno.innerHTML += `<option value="${a}">${a}</option>`;
+      }
+
+      // Define data padrão do form
+      document.getElementById("f-data").value = new Date()
+        .toISOString()
+        .split("T")[0];
+
+      async function carregarTransacoes() {
+        const m = document.getElementById("filtro-mes").value;
+        const a = document.getElementById("filtro-ano").value;
+        const tipo = document.getElementById("filtro-tipo").value;
+        let url = `/api/transacoes?mes=${m}&ano=${a}`;
+        if (tipo) url += `&tipo=${tipo}`;
+        const data = await fetchAPI(url);
+        if (!data) return;
+        const tbody = document.getElementById("tabela-transacoes");
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">Nenhuma transação encontrada</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = data
+          .map(
+            (t) => `
+      <tr>
+        <td>${formatarData(t.data)}</td>
+        <td>${t.descricao}</td>
+        <td>
+          <span style="display:inline-flex;align-items:center;gap:5px">
+            <span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
+            ${t.categoria_nome || "—"}
+          </span>
+        </td>
+        <td>${t.conta_nome || "—"}</td>
+        <td><span class="badge ${t.tipo}">${t.tipo}</span></td>
+        <td><span class="badge ${t.tipo}">${formatarMoeda(t.valor)}</span></td>
+        <td>
+          <button class="btn-edit" onclick="editar(${t.id})"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn-danger" onclick="deletar(${t.id})"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+    `,
+          )
+          .join("");
+      }
+
+      async function carregarCategorias() {
+        categorias = (await fetchAPI("/api/categorias")) || [];
+        filtrarCategorias();
+      }
+
+      function filtrarCategorias() {
+        const tipo = document.getElementById("f-tipo").value;
+        const select = document.getElementById("f-categoria");
+        const filtradas = categorias.filter((c) => c.tipo === tipo);
+        select.innerHTML = filtradas.length
+          ? filtradas
+              .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+              .join("")
+          : `<option value="">Sem categorias</option>`;
+      }
+
+      async function carregarContas() {
+        contas = (await fetchAPI("/api/contas")) || [];
+        const select = document.getElementById("f-conta");
+        select.innerHTML = contas.length
+          ? contas
+              .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+              .join("")
+          : `<option value="">Sem contas</option>`;
+      }
+
+      function abrirModal() {
+        editandoId = null;
+        document.getElementById("modal-titulo").textContent = "Novo lançamento";
+        document.getElementById("f-tipo").value = "despesa";
+        document.getElementById("f-valor").value = "";
+        document.getElementById("f-descricao").value = "";
+        document.getElementById("f-data").value = new Date()
+          .toISOString()
+          .split("T")[0];
+        document.getElementById("f-obs").value = "";
+        filtrarCategorias();
+        document.getElementById("modal").classList.add("active");
+      }
+
+      function fecharModal() {
+        document.getElementById("modal").classList.remove("active");
+      }
+
+      async function editar(id) {
+        const t = await fetchAPI(`/api/transacoes?mes=0&ano=0`);
+        const item = ((await fetchAPI("/api/transacoes")) || []).find(
+          (x) => x.id === id,
+        );
+        if (!item) return;
+        editandoId = id;
+        document.getElementById("modal-titulo").textContent =
+          "Editar lançamento";
+        document.getElementById("f-tipo").value = item.tipo;
+        document.getElementById("f-valor").value = item.valor;
+        document.getElementById("f-descricao").value = item.descricao;
+        document.getElementById("f-data").value =
+          item.data?.split("T")[0] || "";
+        document.getElementById("f-obs").value = item.observacao || "";
+        filtrarCategorias();
+        document.getElementById("f-categoria").value = item.categoria_id;
+        document.getElementById("f-conta").value = item.conta_id;
+        document.getElementById("modal").classList.add("active");
+      }
+
+      async function salvar() {
+        const body = {
+          tipo: document.getElementById("f-tipo").value,
+          valor: parseFloat(document.getElementById("f-valor").value),
+          descricao: document.getElementById("f-descricao").value,
+          categoria_id: document.getElementById("f-categoria").value,
+          conta_id: document.getElementById("f-conta").value,
+          data: document.getElementById("f-data").value,
+          observacao: document.getElementById("f-obs").value,
+        };
+        if (!body.descricao || !body.valor || !body.data) {
+          alert("Preencha descrição, valor e data.");
+          return;
+        }
+        if (editandoId) {
+          await fetchAPI(`/api/transacoes/${editandoId}`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+        } else {
+          await fetchAPI("/api/transacoes", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+        }
+        fecharModal();
+        carregarTransacoes();
+      }
+
+      async function deletar(id) {
+        if (!confirm("Deletar esta transação?")) return;
+        await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
+        carregarTransacoes();
+      }
+
+      carregarCategorias();
+      carregarContas();
+      carregarTransacoes();
+    </script>
+  </body>
+</html>

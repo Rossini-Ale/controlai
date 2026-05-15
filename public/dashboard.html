@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controlaí — Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/css/global.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+      .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 24px;
+      }
+      .chart-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+      }
+      .chart-card h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+      }
+      .ultimas-wrap {
+        margin-top: 16px;
+      }
+      .mes-nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .mes-nav button {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        color: var(--text-primary);
+        border-radius: 8px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+      .mes-nav button:hover {
+        background: var(--bg-tertiary);
+      }
+      .mes-nav span {
+        font-size: 15px;
+        font-weight: 600;
+        min-width: 140px;
+        text-align: center;
+      }
+      @media (max-width: 900px) {
+        .charts-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar" id="sidebar"></div>
+
+    <div class="main">
+      <div class="mes-nav">
+        <button onclick="mudarMes(-1)">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <span id="mes-label"></span>
+        <button onclick="mudarMes(1)">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-label">Receitas</div>
+          <div class="card-value green" id="total-receitas">R$ 0,00</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Despesas</div>
+          <div class="card-value red" id="total-despesas">R$ 0,00</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Saldo do mês</div>
+          <div class="card-value blue" id="saldo-mes">R$ 0,00</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Transações</div>
+          <div class="card-value" id="total-transacoes">0</div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>Evolução dos últimos 6 meses</h3>
+          <canvas id="chart-evolucao" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Despesas por categoria</h3>
+          <canvas id="chart-categorias" height="200"></canvas>
+        </div>
+      </div>
+
+      <div class="ultimas-wrap">
+        <div class="table-wrap" style="margin-top: 0">
+          <div class="table-header">
+            <h2>Últimas transações</h2>
+            <a href="/lancamentos.html" class="btn">
+              <i class="fa-solid fa-plus"></i> Nova
+            </a>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Conta</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-transacoes">
+              <tr>
+                <td
+                  colspan="5"
+                  style="
+                    text-align: center;
+                    color: var(--text-muted);
+                    padding: 24px;
+                  "
+                >
+                  Carregando...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/global.js"></script>
+    <script>
+      verificarAuth();
+      document.getElementById("sidebar").innerHTML = renderSidebar("Dashboard");
+
+      let { mes, ano } = getMesAno();
+      let chartEvolucao = null;
+      let chartCategorias = null;
+
+      function atualizarLabel() {
+        document.getElementById("mes-label").textContent =
+          `${nomeMes(mes)} ${ano}`;
+      }
+
+      function mudarMes(delta) {
+        mes += delta;
+        if (mes > 12) {
+          mes = 1;
+          ano++;
+        }
+        if (mes < 1) {
+          mes = 12;
+          ano--;
+        }
+        atualizarLabel();
+        carregarDados();
+      }
+
+      async function carregarDados() {
+        await Promise.all([
+          carregarResumo(),
+          carregarTransacoes(),
+          carregarEvolucao(),
+          carregarCategorias(),
+        ]);
+      }
+
+      async function carregarResumo() {
+        const data = await fetchAPI(
+          `/api/relatorios/resumo?mes=${mes}&ano=${ano}`,
+        );
+        if (!data) return;
+        document.getElementById("total-receitas").textContent = formatarMoeda(
+          data.total_receitas,
+        );
+        document.getElementById("total-despesas").textContent = formatarMoeda(
+          data.total_despesas,
+        );
+        document.getElementById("saldo-mes").textContent = formatarMoeda(
+          data.saldo,
+        );
+      }
+
+      async function carregarTransacoes() {
+        const data = await fetchAPI(`/api/transacoes?mes=${mes}&ano=${ano}`);
+        if (!data) return;
+        document.getElementById("total-transacoes").textContent = data.length;
+        const tbody = document.getElementById("tabela-transacoes");
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px">Nenhuma transação neste mês</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = data
+          .slice(0, 8)
+          .map(
+            (t) => `
+      <tr>
+        <td>${formatarData(t.data)}</td>
+        <td>${t.descricao}</td>
+        <td>
+          <span style="display:inline-flex;align-items:center;gap:5px">
+            <span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
+            ${t.categoria_nome || "—"}
+          </span>
+        </td>
+        <td>${t.conta_nome || "—"}</td>
+        <td>
+          <span class="badge ${t.tipo}">${formatarMoeda(t.valor)}</span>
+        </td>
+      </tr>
+    `,
+          )
+          .join("");
+      }
+
+      async function carregarEvolucao() {
+        const data = await fetchAPI("/api/relatorios/evolucao");
+        if (!data) return;
+
+        const labels = data.map(
+          (d) => `${nomeMes(d.mes).substring(0, 3)} ${d.ano}`,
+        );
+        const receitas = data.map((d) => parseFloat(d.receitas) || 0);
+        const despesas = data.map((d) => parseFloat(d.despesas) || 0);
+
+        if (chartEvolucao) chartEvolucao.destroy();
+        chartEvolucao = new Chart(document.getElementById("chart-evolucao"), {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              { label: "Receitas", data: receitas, backgroundColor: "#10b981" },
+              { label: "Despesas", data: despesas, backgroundColor: "#ef4444" },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { labels: { color: "#9ca3af", font: { size: 12 } } },
+            },
+            scales: {
+              x: { ticks: { color: "#6b7280" }, grid: { color: "#2d3748" } },
+              y: { ticks: { color: "#6b7280" }, grid: { color: "#2d3748" } },
+            },
+          },
+        });
+      }
+
+      async function carregarCategorias() {
+        const data = await fetchAPI(
+          `/api/relatorios/por-categoria?mes=${mes}&ano=${ano}&tipo=despesa`,
+        );
+        if (!data || data.length === 0) return;
+
+        const labels = data.map((d) => d.nome || "Sem categoria");
+        const valores = data.map((d) => parseFloat(d.total) || 0);
+        const cores = data.map((d) => d.cor || "#6b7280");
+
+        if (chartCategorias) chartCategorias.destroy();
+        chartCategorias = new Chart(
+          document.getElementById("chart-categorias"),
+          {
+            type: "doughnut",
+            data: {
+              labels,
+              datasets: [
+                { data: valores, backgroundColor: cores, borderWidth: 0 },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: "bottom",
+                  labels: { color: "#9ca3af", font: { size: 12 }, padding: 12 },
+                },
+              },
+            },
+          },
+        );
+      }
+
+      atualizarLabel();
+      carregarDados();
+    </script>
+  </body>
+</html>
