@@ -2,7 +2,7 @@ const TelegramBot = require("node-telegram-bot-api");
 const db = require("../config/db");
 
 const token = process.env.TELEGRAM_TOKEN;
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token, { webHook: true });
 
 // Mapa de chat_id → usuario_id (persistido no banco)
 async function getUsuario(chatId) {

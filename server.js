@@ -3,7 +3,15 @@ const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
 require("./config/db");
-require("./routes/telegram");
+// Telegram webhook
+const bot = require("./routes/telegram");
+bot.setWebHook(
+  `https://controlai.up.railway.app/bot${process.env.TELEGRAM_TOKEN}`,
+);
+app.post(`/bot${process.env.TELEGRAM_TOKEN}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
 const app = express();
 
 app.use(cors());
