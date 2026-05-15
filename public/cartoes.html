@@ -109,46 +109,6 @@
         background: #6366f1;
         color: #fff;
       }
-      .fatura-section {
-        margin-top: 8px;
-      }
-      .fatura-section h2 {
-        font-size: 15px;
-        font-weight: 600;
-        color: var(--text-secondary);
-        margin-bottom: 12px;
-      }
-      .fatura-mes-nav {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 16px;
-      }
-      .fatura-mes-nav button {
-        background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
-        color: var(--text-primary);
-        border-radius: 8px;
-        padding: 6px 12px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: all 0.2s;
-      }
-      .fatura-mes-nav button:hover {
-        background: var(--bg-tertiary);
-      }
-      .fatura-mes-nav span {
-        font-size: 15px;
-        font-weight: 600;
-        min-width: 130px;
-        text-align: center;
-      }
-      .fatura-resumo {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-bottom: 16px;
-      }
       .fatura-status {
         padding: 3px 10px;
         border-radius: 20px;
@@ -168,6 +128,12 @@
       .fatura-status.paga {
         background: rgba(16, 185, 129, 0.15);
         color: var(--green);
+      }
+      .fatura-resumo {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        padding: 16px 20px;
       }
     </style>
   </head>
@@ -193,7 +159,6 @@
         <p style="color: var(--text-muted)">Carregando...</p>
       </div>
 
-      <!-- Fatura detalhada -->
       <div id="fatura-section" style="display: none">
         <div class="table-wrap">
           <div class="table-header">
@@ -203,10 +168,15 @@
               </h2>
               <span class="fatura-status" id="fatura-status">aberta</span>
             </div>
-            <div style="display: flex; gap: 8px">
+            <div
+              style="
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                flex-wrap: wrap;
+              "
+            >
               <button
-                class="fatura-mes-nav"
-                id="btn-mes-ant"
                 onclick="mudarMesFatura(-1)"
                 style="
                   background: var(--bg-tertiary);
@@ -224,10 +194,8 @@
                 style="
                   font-size: 14px;
                   font-weight: 600;
-                  display: flex;
-                  align-items: center;
                   min-width: 110px;
-                  justify-content: center;
+                  text-align: center;
                 "
               ></span>
               <button
@@ -256,7 +224,7 @@
               </button>
             </div>
           </div>
-          <div class="fatura-resumo" style="padding: 16px 20px">
+          <div class="fatura-resumo">
             <div class="card" style="margin: 0">
               <div class="card-label">Total da fatura</div>
               <div class="card-value red" id="fatura-total">R$ 0,00</div>
@@ -471,10 +439,13 @@
       </div>
     </div>
 
+    <div id="tabbar"></div>
+
     <script src="/js/global.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML = renderSidebar("Cartões");
+      document.getElementById("tabbar").innerHTML = renderTabBar("Cartões");
 
       let editandoId = null;
       let cartaoAtivo = null;
@@ -595,21 +566,16 @@
           `/api/faturas/${cartaoAtivo.id}/${faturaMes}/${faturaAno}/transacoes`,
         );
         if (!data) return;
-
         const { fatura, transacoes } = data;
         const total = transacoes.reduce((s, t) => s + parseFloat(t.valor), 0);
-
         document.getElementById("fatura-total").textContent =
           formatarMoeda(total);
         document.getElementById("fatura-qtd").textContent = transacoes.length;
-
         const statusEl = document.getElementById("fatura-status");
         statusEl.textContent = fatura.status;
         statusEl.className = `fatura-status ${fatura.status}`;
-
         document.getElementById("btn-pagar").style.display =
           fatura.status === "paga" ? "none" : "flex";
-
         const tbody = document.getElementById("tabela-fatura");
         if (transacoes.length === 0) {
           tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">Nenhum lançamento nesta fatura</td></tr>`;
@@ -627,9 +593,7 @@
             ${t.categoria_nome || "—"}
           </span>
         </td>
-        <td style="color:var(--text-muted)">
-          ${t.parcelas > 1 ? `${t.parcela_atual}/${t.parcelas}` : "À vista"}
-        </td>
+        <td style="color:var(--text-muted)">${t.parcelas > 1 ? `${t.parcela_atual}/${t.parcelas}` : "À vista"}</td>
         <td><span class="badge despesa">${formatarMoeda(t.valor)}</span></td>
         <td>
           <button class="btn-danger" onclick="deletarLancamento(${t.id})">
@@ -787,11 +751,10 @@
           `/api/faturas/${cartaoAtivo.id}/${faturaMes}/${faturaAno}/pagar`,
           { method: "POST", body: JSON.stringify(body) },
         );
-        if (res?.mensagem) {
+        if (res?.mensagem)
           alert(
             `✅ ${res.mensagem} — ${formatarMoeda(res.valor)} debitado da conta.`,
           );
-        }
         fecharModalPagar();
         carregarFatura();
         carregarCartoes();

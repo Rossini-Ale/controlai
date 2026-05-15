@@ -70,7 +70,6 @@
       .progress-fill {
         height: 100%;
         border-radius: 99px;
-        background: var(--green);
         transition: width 0.4s ease;
       }
       .meta-prazo {
@@ -179,10 +178,13 @@
       </div>
     </div>
 
+    <div id="tabbar"></div>
+
     <script src="/js/global.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML = renderSidebar("Metas");
+      document.getElementById("tabbar").innerHTML = renderTabBar("Metas");
 
       let editandoId = null;
       let progressoId = null;
@@ -190,12 +192,10 @@
       async function carregarMetas() {
         const metas = (await fetchAPI("/api/metas")) || [];
         const grid = document.getElementById("metas-grid");
-
         if (metas.length === 0) {
           grid.innerHTML = `<p style="color:var(--text-muted)">Nenhuma meta cadastrada.</p>`;
           return;
         }
-
         grid.innerHTML = metas
           .map((m) => {
             const alvo = parseFloat(m.valor_alvo) || 0;
@@ -207,7 +207,6 @@
                 : pct >= 50
                   ? "var(--blue)"
                   : "#f59e0b";
-
             return `
         <div class="meta-card">
           <div class="meta-header">
@@ -276,7 +275,7 @@
           valor_atual:
             parseFloat(document.getElementById("f-atual").value) || 0,
           prazo: document.getElementById("f-prazo").value,
-          status: document.getElementById("f-status").value || "ativa",
+          status: document.getElementById("f-status")?.value || "ativa",
         };
         if (!body.nome || !body.valor_alvo) {
           alert("Informe o nome e o valor alvo.");

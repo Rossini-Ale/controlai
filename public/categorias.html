@@ -206,11 +206,14 @@
       </div>
     </div>
 
+    <div id="tabbar"></div>
+
     <script src="/js/global.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML =
         renderSidebar("Categorias");
+      document.getElementById("tabbar").innerHTML = renderTabBar("Categorias");
 
       let editandoId = null;
       let iconeSelecionado = "fa-tag";

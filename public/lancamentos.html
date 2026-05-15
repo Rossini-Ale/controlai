@@ -24,11 +24,10 @@
       >
         <h1 class="page-title" style="margin: 0">Lançamentos</h1>
         <button class="btn" onclick="abrirModal()">
-          <i class="fa-solid fa-plus"></i> Novo lançamento
+          <i class="fa-solid fa-plus"></i> Novo
         </button>
       </div>
 
-      <!-- Filtros -->
       <div
         style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap"
       >
@@ -177,25 +176,26 @@
       </div>
     </div>
 
+    <div id="tabbar"></div>
+
     <script src="/js/global.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML =
         renderSidebar("Lançamentos");
+      document.getElementById("tabbar").innerHTML = renderTabBar("Lançamentos");
 
       let editandoId = null;
       let categorias = [];
       let contas = [];
       const { mes, ano } = getMesAno();
 
-      // Preenche filtros
       document.getElementById("filtro-mes").value = mes;
       const selectAno = document.getElementById("filtro-ano");
       for (let a = ano; a >= ano - 3; a--) {
         selectAno.innerHTML += `<option value="${a}">${a}</option>`;
       }
 
-      // Define data padrão do form
       document.getElementById("f-data").value = new Date()
         .toISOString()
         .split("T")[0];
@@ -283,10 +283,8 @@
       }
 
       async function editar(id) {
-        const t = await fetchAPI(`/api/transacoes?mes=0&ano=0`);
-        const item = ((await fetchAPI("/api/transacoes")) || []).find(
-          (x) => x.id === id,
-        );
+        const todos = (await fetchAPI("/api/transacoes")) || [];
+        const item = todos.find((x) => x.id === id);
         if (!item) return;
         editandoId = id;
         document.getElementById("modal-titulo").textContent =

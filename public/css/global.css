@@ -75,7 +75,6 @@ body {
   color: var(--text-secondary);
   text-decoration: none;
   font-size: 14px;
-  border-radius: 0;
   transition: all 0.2s;
   cursor: pointer;
 }
@@ -435,7 +434,7 @@ tbody td {
   color: var(--red);
 }
 
-/* ── Responsivo ── */
+/* ── Mobile ── */
 @media (max-width: 768px) {
   .sidebar {
     display: none;
@@ -443,6 +442,92 @@ tbody td {
   .main {
     margin-left: 0;
     width: 100%;
-    padding: 20px;
+    padding: 16px 16px 80px;
+  }
+
+  .tab-bar {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border-top: 0.5px solid var(--border);
+    z-index: 99;
+    padding: 8px 0 env(safe-area-inset-bottom);
+  }
+
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 0;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 10px;
+    transition: color 0.2s;
+  }
+
+  .tab-item i {
+    font-size: 20px;
+  }
+  .tab-item.active {
+    color: var(--green);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+  table {
+    min-width: 500px;
+  }
+
+  .cards-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  .contas-grid {
+    grid-template-columns: 1fr;
+  }
+  .cartoes-grid {
+    grid-template-columns: 1fr;
+  }
+  .metas-grid {
+    grid-template-columns: 1fr;
+  }
+  .categorias-grid {
+    grid-template-columns: 1fr;
+  }
+  .saldo-contas {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .modal {
+    max-width: 100% !important;
+    margin: 0;
+    border-radius: 20px 20px 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-overlay {
+    align-items: flex-end;
+  }
+  .page-title {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 769px) {
+  .tab-bar {
+    display: none;
   }
 }

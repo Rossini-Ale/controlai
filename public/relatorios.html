@@ -104,11 +104,6 @@
         min-width: 80px;
         text-align: right;
       }
-      @media (max-width: 900px) {
-        .charts-grid {
-          grid-template-columns: 1fr;
-        }
-      }
     </style>
   </head>
   <body>
@@ -138,7 +133,6 @@
         </button>
       </div>
 
-      <!-- Saldo por conta -->
       <h2
         style="
           font-size: 15px;
@@ -153,7 +147,6 @@
         <p style="color: var(--text-muted)">Carregando...</p>
       </div>
 
-      <!-- Gráficos -->
       <div class="charts-grid">
         <div class="chart-card">
           <h3>Evolução dos últimos 6 meses</h3>
@@ -165,7 +158,6 @@
         </div>
       </div>
 
-      <!-- Despesas por categoria -->
       <div class="chart-card" style="margin-bottom: 24px">
         <h3>Despesas por categoria — <span id="label-mes-cat"></span></h3>
         <div class="categoria-lista" id="categoria-lista">
@@ -173,8 +165,7 @@
         </div>
       </div>
 
-      <!-- Receitas por categoria -->
-      <div class="chart-card">
+      <div class="chart-card" style="margin-bottom: 24px">
         <h3>Receitas por categoria — <span id="label-mes-rec"></span></h3>
         <div class="categoria-lista" id="categoria-lista-rec">
           <p style="color: var(--text-muted)">Carregando...</p>
@@ -182,11 +173,14 @@
       </div>
     </div>
 
+    <div id="tabbar"></div>
+
     <script src="/js/global.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML =
         renderSidebar("Relatórios");
+      document.getElementById("tabbar").innerHTML = renderTabBar("Relatórios");
 
       let chartEvolucao = null;
       let chartPizza = null;
@@ -238,7 +232,6 @@
         );
         const receitas = data.map((d) => parseFloat(d.receitas) || 0);
         const despesas = data.map((d) => parseFloat(d.despesas) || 0);
-
         if (chartEvolucao) chartEvolucao.destroy();
         chartEvolucao = new Chart(document.getElementById("chart-evolucao"), {
           type: "bar",
@@ -277,10 +270,8 @@
         const a = document.getElementById("filtro-ano").value;
         const data = await fetchAPI(`/api/relatorios/resumo?mes=${m}&ano=${a}`);
         if (!data) return;
-
         const receitas = parseFloat(data.total_receitas) || 0;
         const despesas = parseFloat(data.total_despesas) || 0;
-
         if (chartPizza) chartPizza.destroy();
         chartPizza = new Chart(document.getElementById("chart-pizza"), {
           type: "doughnut",
@@ -311,20 +302,15 @@
         const a = document.getElementById("filtro-ano").value;
         document.getElementById("label-mes-cat").textContent =
           `${nomeMes(parseInt(m))} ${a}`;
-        document.getElementById("label-mes-rec").textContent =
-          `${nomeMes(parseInt(m))} ${a}`;
-
         const data =
           (await fetchAPI(
             `/api/relatorios/por-categoria?mes=${m}&ano=${a}&tipo=despesa`,
           )) || [];
         const lista = document.getElementById("categoria-lista");
-
         if (data.length === 0) {
           lista.innerHTML = `<p style="color:var(--text-muted)">Sem despesas neste mês.</p>`;
           return;
         }
-
         const max = Math.max(...data.map((d) => parseFloat(d.total) || 0));
         lista.innerHTML = data
           .map((d) => {
@@ -348,17 +334,17 @@
       async function carregarCategoriasReceita() {
         const m = document.getElementById("filtro-mes").value;
         const a = document.getElementById("filtro-ano").value;
+        document.getElementById("label-mes-rec").textContent =
+          `${nomeMes(parseInt(m))} ${a}`;
         const data =
           (await fetchAPI(
             `/api/relatorios/por-categoria?mes=${m}&ano=${a}&tipo=receita`,
           )) || [];
         const lista = document.getElementById("categoria-lista-rec");
-
         if (data.length === 0) {
           lista.innerHTML = `<p style="color:var(--text-muted)">Sem receitas neste mês.</p>`;
           return;
         }
-
         const max = Math.max(...data.map((d) => parseFloat(d.total) || 0));
         lista.innerHTML = data
           .map((d) => {

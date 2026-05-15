@@ -39,6 +39,7 @@ function formatarData(data) {
   if (isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
+
 function getMesAno() {
   const agora = new Date();
   return {
@@ -101,6 +102,7 @@ function renderSidebar(paginaAtiva) {
     { href: "/metas.html", icon: "fa-bullseye", label: "Metas" },
     { href: "/relatorios.html", icon: "fa-chart-bar", label: "Relatórios" },
   ];
+
   return `
     <div class="sidebar-logo">
       <div class="icon"><i class="fa-solid fa-chart-pie"></i></div>
@@ -128,5 +130,30 @@ function renderSidebar(paginaAtiva) {
         Sair
       </button>
     </div>
+  `;
+}
+
+function renderTabBar(paginaAtiva) {
+  const tabs = [
+    { href: "/dashboard.html", icon: "fa-house", label: "Início" },
+    { href: "/lancamentos.html", icon: "fa-right-left", label: "Lançamentos" },
+    { href: "/cartoes.html", icon: "fa-credit-card", label: "Cartões" },
+    { href: "/contas.html", icon: "fa-wallet", label: "Contas" },
+    { href: "/relatorios.html", icon: "fa-chart-bar", label: "Relatórios" },
+  ];
+
+  return `
+    <nav class="tab-bar">
+      ${tabs
+        .map(
+          (t) => `
+        <a href="${t.href}" class="tab-item ${paginaAtiva === t.label ? "active" : ""}">
+          <i class="fa-solid ${t.icon}"></i>
+          ${t.label}
+        </a>
+      `,
+        )
+        .join("")}
+    </nav>
   `;
 }

@@ -29,9 +29,6 @@
         color: var(--text-secondary);
         margin-bottom: 16px;
       }
-      .ultimas-wrap {
-        margin-top: 16px;
-      }
       .mes-nav {
         display: flex;
         align-items: center;
@@ -56,11 +53,6 @@
         font-weight: 600;
         min-width: 140px;
         text-align: center;
-      }
-      @media (max-width: 900px) {
-        .charts-grid {
-          grid-template-columns: 1fr;
-        }
       }
     </style>
   </head>
@@ -108,8 +100,8 @@
         </div>
       </div>
 
-      <div class="ultimas-wrap">
-        <div class="table-wrap" style="margin-top: 0">
+      <div style="margin-top: 24px">
+        <div class="table-wrap">
           <div class="table-header">
             <h2>Últimas transações</h2>
             <a href="/lancamentos.html" class="btn">
@@ -145,10 +137,13 @@
       </div>
     </div>
 
+    <div id="tabbar"></div>
+
     <script src="/js/global.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML = renderSidebar("Dashboard");
+      document.getElementById("tabbar").innerHTML = renderTabBar("Início");
 
       let { mes, ano } = getMesAno();
       let chartEvolucao = null;
@@ -221,9 +216,7 @@
           </span>
         </td>
         <td>${t.conta_nome || "—"}</td>
-        <td>
-          <span class="badge ${t.tipo}">${formatarMoeda(t.valor)}</span>
-        </td>
+        <td><span class="badge ${t.tipo}">${formatarMoeda(t.valor)}</span></td>
       </tr>
     `,
           )
@@ -233,21 +226,29 @@
       async function carregarEvolucao() {
         const data = await fetchAPI("/api/relatorios/evolucao");
         if (!data) return;
-
         const labels = data.map(
           (d) => `${nomeMes(d.mes).substring(0, 3)} ${d.ano}`,
         );
         const receitas = data.map((d) => parseFloat(d.receitas) || 0);
         const despesas = data.map((d) => parseFloat(d.despesas) || 0);
-
         if (chartEvolucao) chartEvolucao.destroy();
         chartEvolucao = new Chart(document.getElementById("chart-evolucao"), {
           type: "bar",
           data: {
             labels,
             datasets: [
-              { label: "Receitas", data: receitas, backgroundColor: "#10b981" },
-              { label: "Despesas", data: despesas, backgroundColor: "#ef4444" },
+              {
+                label: "Receitas",
+                data: receitas,
+                backgroundColor: "#10b981",
+                borderRadius: 4,
+              },
+              {
+                label: "Despesas",
+                data: despesas,
+                backgroundColor: "#ef4444",
+                borderRadius: 4,
+              },
             ],
           },
           options: {
@@ -268,11 +269,9 @@
           `/api/relatorios/por-categoria?mes=${mes}&ano=${ano}&tipo=despesa`,
         );
         if (!data || data.length === 0) return;
-
         const labels = data.map((d) => d.nome || "Sem categoria");
         const valores = data.map((d) => parseFloat(d.total) || 0);
         const cores = data.map((d) => d.cor || "#6b7280");
-
         if (chartCategorias) chartCategorias.destroy();
         chartCategorias = new Chart(
           document.getElementById("chart-categorias"),
