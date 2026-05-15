@@ -35,9 +35,10 @@ function formatarMoeda(valor) {
 
 function formatarData(data) {
   if (!data) return "—";
-  return new Date(data + "T00:00:00").toLocaleDateString("pt-BR");
+  const d = new Date(data);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
-
 function getMesAno() {
   const agora = new Date();
   return {
