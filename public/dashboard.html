@@ -71,23 +71,8 @@
         </button>
       </div>
 
-      <div class="cards-grid">
-        <div class="card">
-          <div class="card-label">Receitas</div>
-          <div class="card-value green" id="total-receitas">R$ 0,00</div>
-        </div>
-        <div class="card">
-          <div class="card-label">Despesas</div>
-          <div class="card-value red" id="total-despesas">R$ 0,00</div>
-        </div>
-        <div class="card">
-          <div class="card-label">Saldo do mês</div>
-          <div class="card-value blue" id="saldo-mes">R$ 0,00</div>
-        </div>
-        <div class="card">
-          <div class="card-label">Transações</div>
-          <div class="card-value" id="total-transacoes">0</div>
-        </div>
+      <div class="cards-grid" id="cards-resumo">
+        <!-- skeleton -->
       </div>
 
       <div class="charts-grid">
@@ -109,30 +94,7 @@
               <i class="fa-solid fa-plus"></i> Nova
             </a>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Descrição</th>
-                <th>Categoria</th>
-                <th>Valor</th>
-              </tr>
-            </thead>
-            <tbody id="tabela-transacoes">
-              <tr>
-                <td
-                  colspan="4"
-                  style="
-                    text-align: center;
-                    color: var(--text-muted);
-                    padding: 24px;
-                  "
-                >
-                  Carregando...
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div id="lista-dashboard"></div>
         </div>
       </div>
     </div>
@@ -140,6 +102,7 @@
     <div id="tabbar"></div>
 
     <script src="/js/global.js"></script>
+    <script src="/js/ui.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML = renderSidebar("Dashboard");
@@ -169,6 +132,8 @@
       }
 
       async function carregarDados() {
+        document.getElementById("cards-resumo").innerHTML = skeletonCards(4);
+        document.getElementById("lista-dashboard").innerHTML = skeletonLista(3);
         await Promise.all([
           carregarResumo(),
           carregarTransacoes(),
@@ -182,44 +147,49 @@
           `/api/relatorios/resumo?mes=${mes}&ano=${ano}`,
         );
         if (!data) return;
-        document.getElementById("total-receitas").textContent = formatarMoeda(
-          data.total_receitas,
-        );
-        document.getElementById("total-despesas").textContent = formatarMoeda(
-          data.total_despesas,
-        );
-        document.getElementById("saldo-mes").textContent = formatarMoeda(
-          data.saldo,
-        );
+        document.getElementById("cards-resumo").innerHTML = `
+      <div class="card"><div class="card-label">Receitas</div><div class="card-value green">${formatarMoeda(data.total_receitas)}</div></div>
+      <div class="card"><div class="card-label">Despesas</div><div class="card-value red">${formatarMoeda(data.total_despesas)}</div></div>
+      <div class="card"><div class="card-label">Saldo do mês</div><div class="card-value blue">${formatarMoeda(data.saldo)}</div></div>
+      <div class="card"><div class="card-label">Transações</div><div class="card-value" id="total-transacoes">0</div></div>
+    `;
       }
 
       async function carregarTransacoes() {
         const data = await fetchAPI(`/api/transacoes?mes=${mes}&ano=${ano}`);
         if (!data) return;
-        document.getElementById("total-transacoes").textContent = data.length;
-        const tbody = document.getElementById("tabela-transacoes");
+        const el = document.getElementById("total-transacoes");
+        if (el) el.textContent = data.length;
+        const lista = document.getElementById("lista-dashboard");
         if (data.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:24px">Nenhuma transação neste mês</td></tr>`;
+          lista.innerHTML = emptyState(
+            "fa-right-left",
+            "Nenhuma transação",
+            "Nenhuma transação encontrada neste mês.",
+            "Novo lançamento",
+            "window.location.href='/lancamentos.html'",
+          );
           return;
         }
-        tbody.innerHTML = data
-          .slice(0, 8)
-          .map(
-            (t) => `
-      <tr>
-        <td>${formatarData(t.data)}</td>
-        <td>${t.descricao}</td>
-        <td>
-          <span style="display:inline-flex;align-items:center;gap:5px">
+        lista.innerHTML = `<table>
+      <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th></tr></thead>
+      <tbody>${data
+        .slice(0, 8)
+        .map(
+          (t) => `
+        <tr>
+          <td>${formatarData(t.data)}</td>
+          <td>${t.descricao}</td>
+          <td><span style="display:inline-flex;align-items:center;gap:5px">
             <span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
             ${t.categoria_nome || "—"}
-          </span>
-        </td>
-        <td><span class="badge ${t.tipo}">${formatarMoeda(t.valor)}</span></td>
-      </tr>
-    `,
-          )
-          .join("");
+          </span></td>
+          <td><span class="badge ${t.tipo}">${formatarMoeda(t.valor)}</span></td>
+        </tr>
+      `,
+        )
+        .join("")}</tbody>
+    </table>`;
       }
 
       async function carregarEvolucao() {

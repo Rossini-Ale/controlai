@@ -209,6 +209,7 @@
     <div id="tabbar"></div>
 
     <script src="/js/global.js"></script>
+    <script src="/js/ui.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML =
@@ -279,12 +280,10 @@
       ];
 
       function renderIcones() {
-        const seletor = document.getElementById("icone-seletor");
-        seletor.innerHTML = icones
+        document.getElementById("icone-seletor").innerHTML = icones
           .map(
             (ic) => `
-      <div class="icone-opcao ${ic === iconeSelecionado ? "selecionado" : ""}"
-           onclick="selecionarIcone('${ic}')" title="${ic}">
+      <div class="icone-opcao ${ic === iconeSelecionado ? "selecionado" : ""}" onclick="selecionarIcone('${ic}')" title="${ic}">
         <i class="fa-solid ${ic}"></i>
       </div>
     `,
@@ -327,7 +326,7 @@
         <i class="fa-solid ${c.icone || "fa-tag"}" style="color:${c.cor || "#6b7280"};font-size:14px"></i>
         <span class="categoria-nome">${c.nome}</span>
         <div class="categoria-acoes">
-          <button class="btn-edit" onclick="editar(${c.id}, '${c.nome}', '${c.tipo}', '${c.icone || "fa-tag"}', '${c.cor || "#6b7280"}')">
+          <button class="btn-edit" onclick="editar(${c.id},'${c.nome}','${c.tipo}','${c.icone || "fa-tag"}','${c.cor || "#6b7280"}')">
             <i class="fa-solid fa-pen"></i>
           </button>
           <button class="btn-danger" onclick="deletar(${c.id})">
@@ -382,7 +381,7 @@
           cor: document.getElementById("f-cor").value,
         };
         if (!body.nome) {
-          alert("Informe o nome da categoria.");
+          toast("Informe o nome da categoria.", "erro");
           return;
         }
         if (editandoId) {
@@ -390,25 +389,29 @@
             method: "PUT",
             body: JSON.stringify(body),
           });
+          toast("Categoria atualizada!");
         } else {
           await fetchAPI("/api/categorias", {
             method: "POST",
             body: JSON.stringify(body),
           });
+          toast("Categoria criada!");
         }
         fecharModal();
         carregarCategorias();
       }
 
       async function deletar(id) {
-        if (!confirm("Deletar esta categoria?")) return;
+        const ok = await confirmar("Deseja deletar esta categoria?");
+        if (!ok) return;
         const res = await fetchAPI(`/api/categorias/${id}`, {
           method: "DELETE",
         });
         if (res?.erro) {
-          alert("⚠️ " + res.erro);
+          toast(res.erro, "aviso");
           return;
         }
+        toast("Categoria deletada!", "info");
         carregarCategorias();
       }
 

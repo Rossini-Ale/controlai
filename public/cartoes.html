@@ -109,8 +109,6 @@
         background: #6366f1;
         color: #fff;
       }
-
-      /* Fatura */
       .fatura-wrap {
         background: var(--bg-secondary);
         border: 0.5px solid var(--border);
@@ -163,7 +161,6 @@
         flex: 1;
         justify-content: center;
       }
-
       .fatura-status {
         padding: 3px 10px;
         border-radius: 20px;
@@ -184,7 +181,6 @@
         background: rgba(16, 185, 129, 0.15);
         color: var(--green);
       }
-
       .fatura-resumo {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -202,8 +198,6 @@
       .fatura-resumo .card-label {
         font-size: 10px;
       }
-
-      /* Cards da fatura no mobile */
       .fatura-lista-mobile {
         padding: 12px;
       }
@@ -261,11 +255,8 @@
         </button>
       </div>
 
-      <div class="cartoes-grid" id="cartoes-grid">
-        <p style="color: var(--text-muted)">Carregando...</p>
-      </div>
+      <div class="cartoes-grid" id="cartoes-grid"></div>
 
-      <!-- Fatura -->
       <div id="fatura-section" style="display: none">
         <div class="fatura-wrap">
           <div class="fatura-header">
@@ -298,7 +289,6 @@
               </button>
             </div>
           </div>
-
           <div class="fatura-resumo">
             <div class="card">
               <div class="card-label">Total</div>
@@ -319,8 +309,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Desktop: tabela -->
           <div class="desktop-only">
             <table>
               <thead>
@@ -336,8 +324,6 @@
               <tbody id="tabela-fatura-desktop"></tbody>
             </table>
           </div>
-
-          <!-- Mobile: cards -->
           <div
             class="fatura-lista-mobile mobile-only"
             id="fatura-lista-mobile"
@@ -356,12 +342,17 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <div class="form-group">
-            <label>Limite (R$)</label>
-            <input type="number" id="f-limite" placeholder="0,00" step="0.01" />
+            <label>Limite (R$)</label
+            ><input
+              type="number"
+              id="f-limite"
+              placeholder="0,00"
+              step="0.01"
+            />
           </div>
           <div class="form-group">
-            <label>Cor</label>
-            <input
+            <label>Cor</label
+            ><input
               type="color"
               id="f-cor"
               value="#6366f1"
@@ -371,8 +362,8 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <div class="form-group">
-            <label>Dia fechamento</label>
-            <input
+            <label>Dia fechamento</label
+            ><input
               type="number"
               id="f-fechamento"
               min="1"
@@ -381,8 +372,8 @@
             />
           </div>
           <div class="form-group">
-            <label>Dia vencimento</label>
-            <input
+            <label>Dia vencimento</label
+            ><input
               type="number"
               id="f-vencimento"
               min="1"
@@ -403,8 +394,8 @@
       <div class="modal">
         <h2>Lançar no cartão</h2>
         <div class="form-group">
-          <label>Descrição</label>
-          <input
+          <label>Descrição</label
+          ><input
             type="text"
             id="l-descricao"
             placeholder="Ex: Mercado, Netflix..."
@@ -412,8 +403,8 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <div class="form-group">
-            <label>Valor total (R$)</label>
-            <input
+            <label>Valor total (R$)</label
+            ><input
               type="number"
               id="l-valor"
               placeholder="0,00"
@@ -451,20 +442,19 @@
             display: none;
           "
         >
-          <i class="fa-solid fa-circle-info" style="margin-right: 6px"></i>
-          <span id="parcela-texto"></span>
+          <i class="fa-solid fa-circle-info" style="margin-right: 6px"></i
+          ><span id="parcela-texto"></span>
         </div>
         <div class="form-group">
-          <label>Categoria</label>
-          <select id="l-categoria"></select>
+          <label>Categoria</label
+          ><select id="l-categoria"></select>
         </div>
         <div class="form-group">
-          <label>Data da compra</label>
-          <input type="date" id="l-data" />
+          <label>Data da compra</label><input type="date" id="l-data" />
         </div>
         <div class="form-group">
-          <label>Observação (opcional)</label>
-          <input type="text" id="l-obs" placeholder="Alguma observação..." />
+          <label>Observação (opcional)</label
+          ><input type="text" id="l-obs" placeholder="Alguma observação..." />
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" onclick="fecharModalLancar()">
@@ -475,7 +465,7 @@
       </div>
     </div>
 
-    <!-- Modal pagar fatura -->
+    <!-- Modal pagar -->
     <div class="modal-overlay" id="modal-pagar">
       <div class="modal">
         <h2>Pagar fatura</h2>
@@ -489,12 +479,11 @@
           O valor será debitado da conta selecionada.
         </p>
         <div class="form-group">
-          <label>Conta para débito</label>
-          <select id="p-conta"></select>
+          <label>Conta para débito</label
+          ><select id="p-conta"></select>
         </div>
         <div class="form-group">
-          <label>Data do pagamento</label>
-          <input type="date" id="p-data" />
+          <label>Data do pagamento</label><input type="date" id="p-data" />
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" onclick="fecharModalPagar()">
@@ -514,6 +503,7 @@
     <div id="tabbar"></div>
 
     <script src="/js/global.js"></script>
+    <script src="/js/ui.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML = renderSidebar("Cartões");
@@ -538,10 +528,17 @@
       }
 
       async function carregarCartoes() {
+        document.getElementById("cartoes-grid").innerHTML = skeletonCards(2);
         const data = (await fetchAPI("/api/cartoes")) || [];
         const grid = document.getElementById("cartoes-grid");
         if (data.length === 0) {
-          grid.innerHTML = `<p style="color:var(--text-muted)">Nenhum cartão cadastrado.</p>`;
+          grid.innerHTML = emptyState(
+            "fa-credit-card",
+            "Nenhum cartão",
+            "Adicione seu primeiro cartão de crédito.",
+            "Novo cartão",
+            "abrirModal()",
+          );
           return;
         }
         grid.innerHTML = data
@@ -564,23 +561,19 @@
             <div class="cartao-info-item"><label>Fechamento</label><span>Dia ${c.dia_fechamento}</span></div>
             <div class="cartao-info-item"><label>Vencimento</label><span>Dia ${c.dia_vencimento}</span></div>
           </div>
-          <div class="limite-bar">
-            <div class="limite-fill" style="width:${pct}%;background:${corBarra}"></div>
-          </div>
+          <div class="limite-bar"><div class="limite-fill" style="width:${pct}%;background:${corBarra}"></div></div>
           <div class="limite-texto">
             <span>${pct.toFixed(0)}% do limite usado</span>
             <span>Disponível: ${formatarMoeda(limite - fatura)}</span>
           </div>
           <div class="cartao-acoes">
-            <button class="btn-fatura" onclick="verFatura(${c.id}, '${c.nome}', ${c.dia_vencimento})">
+            <button class="btn-fatura" onclick="verFatura(${c.id},'${c.nome}',${c.dia_vencimento})">
               <i class="fa-solid fa-file-invoice"></i> Ver fatura
             </button>
             <button class="btn-edit" onclick="editar(${c.id},'${c.nome}',${limite},${c.dia_fechamento},${c.dia_vencimento},'${cor}')">
               <i class="fa-solid fa-pen"></i>
             </button>
-            <button class="btn-danger" onclick="deletar(${c.id})">
-              <i class="fa-solid fa-trash"></i>
-            </button>
+            <button class="btn-danger" onclick="deletar(${c.id})"><i class="fa-solid fa-trash"></i></button>
           </div>
         </div>
       `;
@@ -632,28 +625,22 @@
         if (!data) return;
         const { fatura, transacoes } = data;
         const total = transacoes.reduce((s, t) => s + parseFloat(t.valor), 0);
-
         document.getElementById("fatura-total").textContent =
           formatarMoeda(total);
         document.getElementById("fatura-qtd").textContent = transacoes.length;
-
         const statusEl = document.getElementById("fatura-status");
         statusEl.textContent = fatura.status;
         statusEl.className = `fatura-status ${fatura.status}`;
         document.getElementById("btn-pagar").style.display =
           fatura.status === "paga" ? "none" : "flex";
-
-        if (isMobile()) {
-          renderFaturaMobile(transacoes);
-        } else {
-          renderFaturaDesktop(transacoes);
-        }
+        if (isMobile()) renderFaturaMobile(transacoes);
+        else renderFaturaDesktop(transacoes);
       }
 
       function renderFaturaDesktop(transacoes) {
         const tbody = document.getElementById("tabela-fatura-desktop");
         if (transacoes.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px">Nenhum lançamento</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" style="padding:16px">${emptyState("fa-receipt", "Fatura vazia", "Nenhum lançamento nesta fatura.", "Lançar", "abrirModalLancar()")}</td></tr>`;
           return;
         }
         tbody.innerHTML = transacoes
@@ -678,7 +665,13 @@
       function renderFaturaMobile(transacoes) {
         const lista = document.getElementById("fatura-lista-mobile");
         if (transacoes.length === 0) {
-          lista.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:24px 0">Nenhum lançamento nesta fatura</p>`;
+          lista.innerHTML = emptyState(
+            "fa-receipt",
+            "Fatura vazia",
+            "Nenhum lançamento nesta fatura.",
+            "Lançar",
+            "abrirModalLancar()",
+          );
           return;
         }
         lista.innerHTML = transacoes
@@ -688,13 +681,11 @@
         <div class="fatura-item-info">
           <div class="fatura-item-desc">${t.descricao}</div>
           <div class="fatura-item-meta">
-            <span>${formatarData(t.data)}</span>
-            <span>·</span>
+            <span>${formatarData(t.data)}</span><span>·</span>
             <span style="display:inline-flex;align-items:center;gap:4px">
               <span style="width:7px;height:7px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
               ${t.categoria_nome || "—"}
-            </span>
-            <span>·</span>
+            </span><span>·</span>
             <span>${t.parcelas > 1 ? `${t.parcela_atual}/${t.parcelas}` : "À vista"}</span>
           </div>
         </div>
@@ -747,7 +738,7 @@
             parseInt(document.getElementById("f-vencimento").value) || 10,
         };
         if (!body.nome) {
-          alert("Informe o nome do cartão.");
+          toast("Informe o nome do cartão.", "erro");
           return;
         }
         if (editandoId) {
@@ -755,19 +746,25 @@
             method: "PUT",
             body: JSON.stringify(body),
           });
+          toast("Cartão atualizado!");
         } else {
           await fetchAPI("/api/cartoes", {
             method: "POST",
             body: JSON.stringify(body),
           });
+          toast("Cartão criado!");
         }
         fecharModal();
         carregarCartoes();
       }
 
       async function deletar(id) {
-        if (!confirm("Deletar este cartão?")) return;
+        const ok = await confirmar(
+          "Deseja deletar este cartão? Todas as faturas serão perdidas.",
+        );
+        if (!ok) return;
         await fetchAPI(`/api/cartoes/${id}`, { method: "DELETE" });
+        toast("Cartão deletado!", "info");
         carregarCartoes();
       }
 
@@ -797,9 +794,8 @@
           parseInt(document.getElementById("l-parcelas").value) || 1;
         const preview = document.getElementById("parcela-preview");
         if (valor > 0 && parcelas > 1) {
-          const vp = (valor / parcelas).toFixed(2);
           document.getElementById("parcela-texto").textContent =
-            `${parcelas}x de ${formatarMoeda(vp)} — Total: ${formatarMoeda(valor)}`;
+            `${parcelas}x de ${formatarMoeda(valor / parcelas)} — Total: ${formatarMoeda(valor)}`;
           preview.style.display = "block";
         } else {
           preview.style.display = "none";
@@ -816,13 +812,14 @@
           observacao: document.getElementById("l-obs").value,
         };
         if (!body.descricao || !body.valor || !body.data) {
-          alert("Preencha descrição, valor e data.");
+          toast("Preencha descrição, valor e data.", "erro");
           return;
         }
         await fetchAPI(`/api/faturas/${cartaoAtivo.id}/lancar`, {
           method: "POST",
           body: JSON.stringify(body),
         });
+        toast("Lançamento adicionado à fatura!");
         fecharModalLancar();
         carregarFatura();
         carregarCartoes();
@@ -848,7 +845,7 @@
           data_pagamento: document.getElementById("p-data").value,
         };
         if (!body.conta_id || !body.data_pagamento) {
-          alert("Selecione a conta e a data.");
+          toast("Selecione a conta e a data.", "erro");
           return;
         }
         const res = await fetchAPI(
@@ -856,17 +853,17 @@
           { method: "POST", body: JSON.stringify(body) },
         );
         if (res?.mensagem)
-          alert(
-            `✅ ${res.mensagem} — ${formatarMoeda(res.valor)} debitado da conta.`,
-          );
+          toast(`Fatura paga! ${formatarMoeda(res.valor)} debitado.`);
         fecharModalPagar();
         carregarFatura();
         carregarCartoes();
       }
 
       async function deletarLancamento(id) {
-        if (!confirm("Deletar este lançamento?")) return;
+        const ok = await confirmar("Deseja deletar este lançamento da fatura?");
+        if (!ok) return;
         await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
+        toast("Lançamento deletado!", "info");
         carregarFatura();
         carregarCartoes();
       }
@@ -874,7 +871,6 @@
       window.addEventListener("resize", () => {
         if (cartaoAtivo) carregarFatura();
       });
-
       carregarCartoes();
     </script>
   </body>

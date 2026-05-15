@@ -144,9 +144,7 @@
       >
         Saldo por conta
       </h2>
-      <div class="saldo-contas" id="saldo-contas">
-        <p style="color: var(--text-muted)">Carregando...</p>
-      </div>
+      <div class="saldo-contas" id="saldo-contas"></div>
 
       <div class="charts-grid">
         <div class="chart-card" style="margin-bottom: 0">
@@ -161,22 +159,19 @@
 
       <div class="chart-card">
         <h3>Despesas por categoria — <span id="label-mes-cat"></span></h3>
-        <div class="categoria-lista" id="categoria-lista">
-          <p style="color: var(--text-muted)">Carregando...</p>
-        </div>
+        <div class="categoria-lista" id="categoria-lista"></div>
       </div>
 
       <div class="chart-card">
         <h3>Receitas por categoria — <span id="label-mes-rec"></span></h3>
-        <div class="categoria-lista" id="categoria-lista-rec">
-          <p style="color: var(--text-muted)">Carregando...</p>
-        </div>
+        <div class="categoria-lista" id="categoria-lista-rec"></div>
       </div>
     </div>
 
     <div id="tabbar"></div>
 
     <script src="/js/global.js"></script>
+    <script src="/js/ui.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML =
@@ -194,6 +189,7 @@
       }
 
       async function carregarTudo() {
+        document.getElementById("saldo-contas").innerHTML = skeletonCards(2);
         await Promise.all([
           carregarSaldoContas(),
           carregarEvolucao(),
@@ -207,7 +203,13 @@
         const data = (await fetchAPI("/api/relatorios/saldo-contas")) || [];
         const wrap = document.getElementById("saldo-contas");
         if (data.length === 0) {
-          wrap.innerHTML = `<p style="color:var(--text-muted)">Nenhuma conta cadastrada.</p>`;
+          wrap.innerHTML = emptyState(
+            "fa-wallet",
+            "Nenhuma conta",
+            "Cadastre uma conta para ver o saldo.",
+            "",
+            "",
+          );
           return;
         }
         wrap.innerHTML = data
@@ -333,9 +335,7 @@
         <div class="categoria-item">
           <div class="categoria-dot" style="background:${cor}"></div>
           <div class="categoria-nome">${d.nome || "Sem categoria"}</div>
-          <div class="categoria-barra">
-            <div class="categoria-fill" style="width:${pct}%;background:${cor}"></div>
-          </div>
+          <div class="categoria-barra"><div class="categoria-fill" style="width:${pct}%;background:${cor}"></div></div>
           <div class="categoria-valor">${formatarMoeda(total)}</div>
         </div>
       `;
@@ -367,9 +367,7 @@
         <div class="categoria-item">
           <div class="categoria-dot" style="background:${cor}"></div>
           <div class="categoria-nome">${d.nome || "Sem categoria"}</div>
-          <div class="categoria-barra">
-            <div class="categoria-fill" style="width:${pct}%;background:${cor}"></div>
-          </div>
+          <div class="categoria-barra"><div class="categoria-fill" style="width:${pct}%;background:${cor}"></div></div>
           <div class="categoria-valor">${formatarMoeda(total)}</div>
         </div>
       `;

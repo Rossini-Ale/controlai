@@ -93,7 +93,7 @@
         </select>
       </div>
 
-      <!-- Desktop: tabela -->
+      <!-- Desktop -->
       <div class="table-wrap desktop-only">
         <table>
           <thead>
@@ -107,24 +107,11 @@
               <th>Ações</th>
             </tr>
           </thead>
-          <tbody id="tabela-transacoes-desktop">
-            <tr>
-              <td
-                colspan="7"
-                style="
-                  text-align: center;
-                  color: var(--text-muted);
-                  padding: 24px;
-                "
-              >
-                Carregando...
-              </td>
-            </tr>
-          </tbody>
+          <tbody id="tabela-transacoes-desktop"></tbody>
         </table>
       </div>
 
-      <!-- Mobile: cards -->
+      <!-- Mobile -->
       <div id="lista-mobile" class="mobile-only"></div>
     </div>
 
@@ -187,6 +174,7 @@
     <div id="tabbar"></div>
 
     <script src="/js/global.js"></script>
+    <script src="/js/ui.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML =
@@ -215,22 +203,29 @@
         const m = document.getElementById("filtro-mes").value;
         const a = document.getElementById("filtro-ano").value;
         const tipo = document.getElementById("filtro-tipo").value;
+
+        if (isMobile()) {
+          document.getElementById("lista-mobile").innerHTML = skeletonLista(3);
+        } else {
+          document.getElementById("tabela-transacoes-desktop").innerHTML =
+            `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">${skeletonLista(1)}</td></tr>`;
+        }
+
         let url = `/api/transacoes?mes=${m}&ano=${a}`;
         if (tipo) url += `&tipo=${tipo}`;
         const data = await fetchAPI(url);
         if (!data) return;
 
-        if (isMobile()) {
-          renderMobile(data);
-        } else {
-          renderDesktop(data);
-        }
+        if (isMobile()) renderMobile(data);
+        else renderDesktop(data);
       }
 
       function renderDesktop(data) {
         const tbody = document.getElementById("tabela-transacoes-desktop");
         if (data.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">Nenhuma transação encontrada</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="7" style="padding:0">
+        <div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transação", "Nenhuma transação encontrada neste período.", "Novo lançamento", "abrirModal()")}</div>
+      </td></tr>`;
           return;
         }
         tbody.innerHTML = data
@@ -239,12 +234,10 @@
       <tr>
         <td>${formatarData(t.data)}</td>
         <td>${t.descricao}</td>
-        <td>
-          <span style="display:inline-flex;align-items:center;gap:5px">
-            <span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
-            ${t.categoria_nome || "—"}
-          </span>
-        </td>
+        <td><span style="display:inline-flex;align-items:center;gap:5px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
+          ${t.categoria_nome || "—"}
+        </span></td>
         <td>${t.conta_nome || "—"}</td>
         <td><span class="badge ${t.tipo}">${t.tipo}</span></td>
         <td><span class="badge ${t.tipo}">${formatarMoeda(t.valor)}</span></td>
@@ -261,7 +254,13 @@
       function renderMobile(data) {
         const lista = document.getElementById("lista-mobile");
         if (data.length === 0) {
-          lista.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:32px 0">Nenhuma transação encontrada</p>`;
+          lista.innerHTML = emptyState(
+            "fa-right-left",
+            "Nenhuma transação",
+            "Nenhuma transação encontrada neste período.",
+            "Novo lançamento",
+            "abrirModal()",
+          );
           return;
         }
         lista.innerHTML = data
@@ -271,18 +270,18 @@
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
           <div style="flex:1;margin-right:8px">
             <div style="font-size:15px;font-weight:600;margin-bottom:3px">${t.descricao}</div>
-            <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+            <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
               <span>${formatarData(t.data)}</span>
               <span>·</span>
               <span style="display:inline-flex;align-items:center;gap:4px">
                 <span style="width:7px;height:7px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
                 ${t.categoria_nome || "—"}
               </span>
+              ${t.conta_nome ? `<span>·</span><span>${t.conta_nome}</span>` : ""}
             </div>
           </div>
           <div style="text-align:right">
             <div style="font-size:16px;font-weight:700;color:${t.tipo === "receita" ? "var(--green)" : "var(--red)"}">${t.tipo === "receita" ? "+" : "-"}${formatarMoeda(t.valor)}</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${t.conta_nome || "—"}</div>
           </div>
         </div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -369,7 +368,7 @@
           observacao: document.getElementById("f-obs").value,
         };
         if (!body.descricao || !body.valor || !body.data) {
-          alert("Preencha descrição, valor e data.");
+          toast("Preencha descrição, valor e data.", "erro");
           return;
         }
         if (editandoId) {
@@ -377,23 +376,28 @@
             method: "PUT",
             body: JSON.stringify(body),
           });
+          toast("Lançamento atualizado!");
         } else {
           await fetchAPI("/api/transacoes", {
             method: "POST",
             body: JSON.stringify(body),
           });
+          toast("Lançamento criado!");
         }
         fecharModal();
         carregarTransacoes();
       }
 
       async function deletar(id) {
-        if (!confirm("Deletar esta transação?")) return;
+        const ok = await confirmar(
+          "Deseja deletar este lançamento? Esta ação não pode ser desfeita.",
+        );
+        if (!ok) return;
         await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
+        toast("Lançamento deletado!", "info");
         carregarTransacoes();
       }
 
-      // Mostra/esconde baseado no tamanho
       function ajustarLayout() {
         const desktopTable = document.querySelector(".desktop-only");
         const mobileLista = document.getElementById("lista-mobile");

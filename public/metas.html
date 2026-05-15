@@ -115,9 +115,7 @@
         </button>
       </div>
 
-      <div class="metas-grid" id="metas-grid">
-        <p style="color: var(--text-muted)">Carregando...</p>
-      </div>
+      <div class="metas-grid" id="metas-grid"></div>
     </div>
 
     <!-- Modal nova/editar meta -->
@@ -134,17 +132,16 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <div class="form-group">
-            <label>Valor alvo</label>
-            <input type="number" id="f-alvo" placeholder="0,00" step="0.01" />
+            <label>Valor alvo</label
+            ><input type="number" id="f-alvo" placeholder="0,00" step="0.01" />
           </div>
           <div class="form-group">
-            <label>Valor atual</label>
-            <input type="number" id="f-atual" placeholder="0,00" step="0.01" />
+            <label>Valor atual</label
+            ><input type="number" id="f-atual" placeholder="0,00" step="0.01" />
           </div>
         </div>
         <div class="form-group">
-          <label>Prazo</label>
-          <input type="date" id="f-prazo" />
+          <label>Prazo</label><input type="date" id="f-prazo" />
         </div>
         <div class="form-group" id="grupo-status" style="display: none">
           <label>Status</label>
@@ -161,13 +158,13 @@
       </div>
     </div>
 
-    <!-- Modal atualizar progresso -->
+    <!-- Modal progresso -->
     <div class="modal-overlay" id="modal-progresso">
       <div class="modal">
         <h2>Atualizar progresso</h2>
         <div class="form-group">
-          <label>Valor atual</label>
-          <input type="number" id="p-atual" placeholder="0,00" step="0.01" />
+          <label>Valor atual</label
+          ><input type="number" id="p-atual" placeholder="0,00" step="0.01" />
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" onclick="fecharModalProgresso()">
@@ -181,6 +178,7 @@
     <div id="tabbar"></div>
 
     <script src="/js/global.js"></script>
+    <script src="/js/ui.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML = renderSidebar("Metas");
@@ -190,12 +188,21 @@
       let progressoId = null;
 
       async function carregarMetas() {
+        document.getElementById("metas-grid").innerHTML = skeletonCards(3);
         const metas = (await fetchAPI("/api/metas")) || [];
         const grid = document.getElementById("metas-grid");
+
         if (metas.length === 0) {
-          grid.innerHTML = `<p style="color:var(--text-muted)">Nenhuma meta cadastrada.</p>`;
+          grid.innerHTML = emptyState(
+            "fa-bullseye",
+            "Nenhuma meta",
+            "Defina uma meta financeira e acompanhe seu progresso.",
+            "Nova meta",
+            "abrirModal()",
+          );
           return;
         }
+
         grid.innerHTML = metas
           .map((m) => {
             const alvo = parseFloat(m.valor_alvo) || 0;
@@ -228,7 +235,7 @@
             <button class="btn-progresso" onclick="abrirProgresso(${m.id}, ${atual})">
               <i class="fa-solid fa-arrow-up"></i> Progresso
             </button>
-            <button class="btn-edit" onclick="editar(${m.id}, '${m.nome}', ${alvo}, ${atual}, '${m.prazo?.split("T")[0] || ""}', '${m.status}')">
+            <button class="btn-edit" onclick="editar(${m.id},'${m.nome}',${alvo},${atual},'${m.prazo?.split("T")[0] || ""}','${m.status}')">
               <i class="fa-solid fa-pen"></i>
             </button>
             <button class="btn-danger" onclick="deletar(${m.id})">
@@ -278,7 +285,7 @@
           status: document.getElementById("f-status")?.value || "ativa",
         };
         if (!body.nome || !body.valor_alvo) {
-          alert("Informe o nome e o valor alvo.");
+          toast("Informe o nome e o valor alvo.", "erro");
           return;
         }
         if (editandoId) {
@@ -286,11 +293,13 @@
             method: "PUT",
             body: JSON.stringify(body),
           });
+          toast("Meta atualizada!");
         } else {
           await fetchAPI("/api/metas", {
             method: "POST",
             body: JSON.stringify(body),
           });
+          toast("Meta criada!");
         }
         fecharModal();
         carregarMetas();
@@ -313,13 +322,16 @@
           method: "PATCH",
           body: JSON.stringify({ valor_atual }),
         });
+        toast("Progresso atualizado!");
         fecharModalProgresso();
         carregarMetas();
       }
 
       async function deletar(id) {
-        if (!confirm("Deletar esta meta?")) return;
+        const ok = await confirmar("Deseja deletar esta meta?");
+        if (!ok) return;
         await fetchAPI(`/api/metas/${id}`, { method: "DELETE" });
+        toast("Meta deletada!", "info");
         carregarMetas();
       }
 

@@ -79,7 +79,7 @@
       </div>
 
       <div class="contas-grid" id="contas-grid">
-        <p style="color: var(--text-muted)">Carregando...</p>
+        <!-- skeleton -->
       </div>
     </div>
 
@@ -127,6 +127,7 @@
     <div id="tabbar"></div>
 
     <script src="/js/global.js"></script>
+    <script src="/js/ui.js"></script>
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML = renderSidebar("Contas");
@@ -135,12 +136,19 @@
       let editandoId = null;
 
       async function carregarContas() {
+        document.getElementById("contas-grid").innerHTML = skeletonCards(3);
         const contas = (await fetchAPI("/api/contas")) || [];
         const saldos = (await fetchAPI("/api/relatorios/saldo-contas")) || [];
         const grid = document.getElementById("contas-grid");
 
         if (contas.length === 0) {
-          grid.innerHTML = `<p style="color:var(--text-muted)">Nenhuma conta cadastrada.</p>`;
+          grid.innerHTML = emptyState(
+            "fa-wallet",
+            "Nenhuma conta",
+            "Adicione sua primeira conta bancária ou carteira.",
+            "Nova conta",
+            "abrirModal()",
+          );
           return;
         }
 
@@ -214,7 +222,7 @@
           cor: document.getElementById("f-cor").value,
         };
         if (!body.nome) {
-          alert("Informe o nome da conta.");
+          toast("Informe o nome da conta.", "erro");
           return;
         }
         if (editandoId) {
@@ -222,19 +230,25 @@
             method: "PUT",
             body: JSON.stringify(body),
           });
+          toast("Conta atualizada!");
         } else {
           await fetchAPI("/api/contas", {
             method: "POST",
             body: JSON.stringify(body),
           });
+          toast("Conta criada!");
         }
         fecharModal();
         carregarContas();
       }
 
       async function deletar(id) {
-        if (!confirm("Deletar esta conta?")) return;
+        const ok = await confirmar(
+          "Deseja deletar esta conta? Esta ação não pode ser desfeita.",
+        );
+        if (!ok) return;
         await fetchAPI(`/api/contas/${id}`, { method: "DELETE" });
+        toast("Conta deletada!", "info");
         carregarContas();
       }
 
