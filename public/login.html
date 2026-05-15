@@ -254,6 +254,7 @@
             erro.textContent = data.erro;
             return;
           }
+          localStorage.clear();
           localStorage.setItem("controlai_token", data.token);
           localStorage.setItem("controlai_nome", data.nome);
           localStorage.setItem("controlai_username", data.username);
