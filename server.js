@@ -17,6 +17,8 @@ app.use("/api/categorias", require("./routes/categorias"));
 app.use("/api/contas", require("./routes/contas"));
 app.use("/api/metas", require("./routes/metas"));
 app.use("/api/relatorios", require("./routes/relatorios"));
+app.use("/api/cartoes", require("./routes/cartoes"));
+app.use("/api/faturas", require("./routes/faturas"));
 
 // Rota raiz → login
 app.get("/", (req, res) => {
