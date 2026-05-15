@@ -3,17 +3,8 @@ const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
 require("./config/db");
-// Telegram webhook
-const bot = require("./routes/telegram");
-bot.setWebHook(
-  `https://controlai.up.railway.app/bot${process.env.TELEGRAM_TOKEN}`,
-);
-app.post(`/bot${process.env.TELEGRAM_TOKEN}`, (req, res) => {
-  bot.processUpdate(req.body);
-  res.sendStatus(200);
-});
-const app = express();
 
+const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -27,6 +18,16 @@ app.use("/api/metas", require("./routes/metas"));
 app.use("/api/relatorios", require("./routes/relatorios"));
 app.use("/api/cartoes", require("./routes/cartoes"));
 app.use("/api/faturas", require("./routes/faturas"));
+
+// Telegram webhook
+const bot = require("./routes/telegram");
+bot.setWebHook(
+  `https://controlai.up.railway.app/bot${process.env.TELEGRAM_TOKEN}`,
+);
+app.post(`/bot${process.env.TELEGRAM_TOKEN}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
 
 // Rota raiz → login
 app.get("/", (req, res) => {
