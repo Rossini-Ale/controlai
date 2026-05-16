@@ -11,25 +11,6 @@
     <link rel="stylesheet" href="/css/global.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
-      .charts-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 16px;
-        margin-bottom: 24px;
-      }
-      .chart-card {
-        background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
-        border-radius: 14px;
-        padding: 20px;
-        margin-bottom: 16px;
-      }
-      .chart-card h3 {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--text-secondary);
-        margin-bottom: 16px;
-      }
       .filtros {
         display: flex;
         gap: 12px;
@@ -46,11 +27,28 @@
         font-size: 14px;
         outline: none;
       }
+
+      /* Seções */
+      .secao {
+        margin-bottom: 28px;
+      }
+      .secao-titulo {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      /* Cards saldo */
       .saldo-contas {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
         gap: 12px;
-        margin-bottom: 24px;
       }
       .saldo-card {
         background: var(--bg-secondary);
@@ -68,51 +66,147 @@
         font-size: 20px;
         font-weight: 700;
       }
-      .categoria-lista {
+
+      /* Gráficos */
+      .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .chart-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+      }
+      .chart-card h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+      }
+
+      /* Orçamento por categoria */
+      .orc-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .orc-item {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .orc-item-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .orc-item-nome {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .orc-item-valores {
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        gap: 12px;
+      }
+      .orc-item-valores strong {
+        color: var(--text-primary);
+      }
+      .orc-bar {
+        background: var(--bg-tertiary);
+        border-radius: 99px;
+        height: 7px;
+        overflow: hidden;
+        margin-bottom: 4px;
+      }
+      .orc-fill {
+        height: 100%;
+        border-radius: 99px;
+        transition: width 0.4s;
+      }
+      .orc-badge {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-weight: 600;
+      }
+      .orc-badge.ok {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--green);
+      }
+      .orc-badge.atencao {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+      }
+      .orc-badge.ultrapassado {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--red);
+      }
+
+      /* Categorias */
+      .cat-lista {
         display: flex;
         flex-direction: column;
         gap: 10px;
       }
-      .categoria-item {
+      .cat-item {
         display: flex;
         align-items: center;
         gap: 10px;
       }
-      .categoria-dot {
+      .cat-dot {
         width: 10px;
         height: 10px;
         border-radius: 50%;
         flex-shrink: 0;
       }
-      .categoria-nome {
+      .cat-nome {
         flex: 1;
         font-size: 13px;
       }
-      .categoria-barra {
+      .cat-bar {
         flex: 2;
         background: var(--bg-tertiary);
         border-radius: 99px;
         height: 6px;
         overflow: hidden;
       }
-      .categoria-fill {
+      .cat-fill {
         height: 100%;
         border-radius: 99px;
       }
-      .categoria-valor {
+      .cat-valor {
         font-size: 13px;
         font-weight: 600;
         min-width: 80px;
         text-align: right;
       }
+
+      @media (max-width: 768px) {
+        .charts-grid {
+          grid-template-columns: 1fr;
+        }
+        .saldo-contas {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="sidebar" id="sidebar"></div>
-
     <div class="main">
       <h1 class="page-title">Relatórios</h1>
 
+      <!-- Filtros -->
       <div class="filtros">
         <select id="filtro-mes">
           <option value="1">Janeiro</option>
@@ -134,42 +228,55 @@
         </button>
       </div>
 
-      <h2
-        style="
-          font-size: 15px;
-          font-weight: 600;
-          margin-bottom: 12px;
-          color: var(--text-secondary);
-        "
-      >
-        Saldo por conta
-      </h2>
-      <div class="saldo-contas" id="saldo-contas"></div>
+      <!-- Saldo por conta -->
+      <div class="secao">
+        <div class="secao-titulo">
+          <i class="fa-solid fa-wallet"></i> Saldo por conta
+        </div>
+        <div class="saldo-contas" id="saldo-contas"></div>
+      </div>
 
+      <!-- Resumo do mês -->
+      <div
+        class="cards-grid"
+        id="cards-resumo"
+        style="margin-bottom: 24px"
+      ></div>
+
+      <!-- Gráficos -->
       <div class="charts-grid">
-        <div class="chart-card" style="margin-bottom: 0">
+        <div class="chart-card">
           <h3>Evolução dos últimos 6 meses</h3>
           <canvas id="chart-evolucao" height="220"></canvas>
         </div>
-        <div class="chart-card" style="margin-bottom: 0">
+        <div class="chart-card">
           <h3>Receitas vs Despesas</h3>
           <canvas id="chart-pizza" height="220"></canvas>
         </div>
       </div>
 
-      <div class="chart-card">
-        <h3>Despesas por categoria — <span id="label-mes-cat"></span></h3>
-        <div class="categoria-lista" id="categoria-lista"></div>
+      <!-- Orçamento por categoria -->
+      <div class="secao" id="secao-orcamento" style="display: none">
+        <div class="secao-titulo">
+          <i class="fa-solid fa-bullseye"></i> Orçamento por categoria
+        </div>
+        <div class="orc-grid" id="orc-grid"></div>
       </div>
 
+      <!-- Despesas por categoria -->
+      <div class="chart-card" style="margin-bottom: 16px">
+        <h3>Despesas por categoria — <span id="label-mes-cat"></span></h3>
+        <div class="cat-lista" id="cat-lista-desp"></div>
+      </div>
+
+      <!-- Receitas por categoria -->
       <div class="chart-card">
         <h3>Receitas por categoria — <span id="label-mes-rec"></span></h3>
-        <div class="categoria-lista" id="categoria-lista-rec"></div>
+        <div class="cat-lista" id="cat-lista-rec"></div>
       </div>
     </div>
 
     <div id="tabbar"></div>
-
     <script src="/js/global.js"></script>
     <script src="/js/ui.js"></script>
     <script>
@@ -178,25 +285,32 @@
         renderSidebar("Relatórios");
       document.getElementById("tabbar").innerHTML = renderTabBar("Relatórios");
 
-      let chartEvolucao = null;
-      let chartPizza = null;
+      let chartEvolucao = null,
+        chartPizza = null;
       const { mes, ano } = getMesAno();
 
       document.getElementById("filtro-mes").value = mes;
-      const selectAno = document.getElementById("filtro-ano");
-      for (let a = ano; a >= ano - 3; a--) {
-        selectAno.innerHTML += `<option value="${a}">${a}</option>`;
-      }
+      const selAno = document.getElementById("filtro-ano");
+      for (let a = ano; a >= ano - 3; a--)
+        selAno.innerHTML += `<option value="${a}">${a}</option>`;
 
       async function carregarTudo() {
         document.getElementById("saldo-contas").innerHTML = skeletonCards(2);
+        document.getElementById("cards-resumo").innerHTML = skeletonCards(3);
         await Promise.all([
           carregarSaldoContas(),
-          carregarEvolucao(),
           carregarResumo(),
+          carregarEvolucao(),
+          carregarOrcamento(),
           carregarCategorias(),
-          carregarCategoriasReceita(),
         ]);
+      }
+
+      function getMF() {
+        return {
+          m: document.getElementById("filtro-mes").value,
+          a: document.getElementById("filtro-ano").value,
+        };
       }
 
       async function carregarSaldoContas() {
@@ -216,16 +330,22 @@
           .map((c) => {
             const saldo = parseFloat(c.saldo_atual) || 0;
             const cor = c.cor || "#10b981";
-            return `
-        <div class="saldo-card" style="--cor:${cor}">
-          <div class="saldo-card-nome">${c.nome}</div>
-          <div class="saldo-card-valor" style="color:${saldo >= 0 ? "var(--green)" : "var(--red)"}">
-            ${formatarMoeda(saldo)}
-          </div>
-        </div>
-      `;
+            return `<div class="saldo-card" style="--cor:${cor}">
+            <div class="saldo-card-nome">${c.nome}</div>
+            <div class="saldo-card-valor" style="color:${saldo >= 0 ? "var(--green)" : "var(--red)"}">${formatarMoeda(saldo)}</div>
+          </div>`;
           })
           .join("");
+      }
+
+      async function carregarResumo() {
+        const { m, a } = getMF();
+        const data = await fetchAPI(`/api/relatorios/resumo?mes=${m}&ano=${a}`);
+        if (!data) return;
+        document.getElementById("cards-resumo").innerHTML = `
+          <div class="card"><div class="card-label">Receitas</div><div class="card-value green">${formatarMoeda(data.total_receitas)}</div></div>
+          <div class="card"><div class="card-label">Despesas</div><div class="card-value red">${formatarMoeda(data.total_despesas)}</div></div>
+          <div class="card"><div class="card-label">Saldo do mês</div><div class="card-value ${parseFloat(data.saldo) >= 0 ? "green" : "red"}">${formatarMoeda(data.saldo)}</div></div>`;
       }
 
       async function carregarEvolucao() {
@@ -272,15 +392,12 @@
             },
           },
         });
-      }
-
-      async function carregarResumo() {
-        const m = document.getElementById("filtro-mes").value;
-        const a = document.getElementById("filtro-ano").value;
-        const data = await fetchAPI(`/api/relatorios/resumo?mes=${m}&ano=${a}`);
-        if (!data) return;
-        const receitas = parseFloat(data.total_receitas) || 0;
-        const despesas = parseFloat(data.total_despesas) || 0;
+        // Pizza
+        const { m, a } = getMF();
+        const resumo = await fetchAPI(
+          `/api/relatorios/resumo?mes=${m}&ano=${a}`,
+        );
+        if (!resumo) return;
         if (chartPizza) chartPizza.destroy();
         chartPizza = new Chart(document.getElementById("chart-pizza"), {
           type: "doughnut",
@@ -288,7 +405,10 @@
             labels: ["Receitas", "Despesas"],
             datasets: [
               {
-                data: [receitas, despesas],
+                data: [
+                  parseFloat(resumo.total_receitas) || 0,
+                  parseFloat(resumo.total_despesas) || 0,
+                ],
                 backgroundColor: ["#10b981", "#ef4444"],
                 borderWidth: 0,
               },
@@ -311,66 +431,95 @@
         });
       }
 
-      async function carregarCategorias() {
-        const m = document.getElementById("filtro-mes").value;
-        const a = document.getElementById("filtro-ano").value;
-        document.getElementById("label-mes-cat").textContent =
-          `${nomeMes(parseInt(m))} ${a}`;
-        const data =
-          (await fetchAPI(
-            `/api/relatorios/por-categoria?mes=${m}&ano=${a}&tipo=despesa`,
-          )) || [];
-        const lista = document.getElementById("categoria-lista");
-        if (data.length === 0) {
-          lista.innerHTML = `<p style="color:var(--text-muted)">Sem despesas neste mês.</p>`;
+      async function carregarOrcamento() {
+        const { m, a } = getMF();
+        const data = await fetchAPI(`/api/orcamentos/resumo?mes=${m}&ano=${a}`);
+        const secao = document.getElementById("secao-orcamento");
+        const grid = document.getElementById("orc-grid");
+
+        if (!data || data.categorias.length === 0) {
+          secao.style.display = "none";
           return;
         }
-        const max = Math.max(...data.map((d) => parseFloat(d.total) || 0));
-        lista.innerHTML = data
-          .map((d) => {
-            const total = parseFloat(d.total) || 0;
-            const pct = max > 0 ? (total / max) * 100 : 0;
-            const cor = d.cor || "#6b7280";
-            return `
-        <div class="categoria-item">
-          <div class="categoria-dot" style="background:${cor}"></div>
-          <div class="categoria-nome">${d.nome || "Sem categoria"}</div>
-          <div class="categoria-barra"><div class="categoria-fill" style="width:${pct}%;background:${cor}"></div></div>
-          <div class="categoria-valor">${formatarMoeda(total)}</div>
-        </div>
-      `;
+        secao.style.display = "block";
+
+        grid.innerHTML = data.categorias
+          .map((o) => {
+            const gasto = parseFloat(o.gasto_atual) || 0;
+            const limite = parseFloat(o.limite) || 0;
+            const pct = limite > 0 ? Math.min((gasto / limite) * 100, 100) : 0;
+            const cor =
+              pct >= 100
+                ? "var(--red)"
+                : pct >= 80
+                  ? "#f59e0b"
+                  : "var(--green)";
+            const badgeClass =
+              pct >= 100 ? "ultrapassado" : pct >= 80 ? "atencao" : "ok";
+            const badgeLabel =
+              pct >= 100
+                ? "⚠️ Ultrapassado"
+                : pct >= 80
+                  ? "⚠️ Atenção"
+                  : "✅ Ok";
+            return `<div class="orc-item">
+            <div class="orc-item-header">
+              <div class="orc-item-nome">
+                <span style="width:10px;height:10px;border-radius:50%;background:${o.categoria_cor || "#6b7280"};display:inline-block"></span>
+                <i class="fa-solid ${o.categoria_icone || "fa-tag"}" style="color:${o.categoria_cor || "#6b7280"};font-size:13px"></i>
+                ${o.categoria_nome}
+              </div>
+              <span class="orc-badge ${badgeClass}">${badgeLabel}</span>
+            </div>
+            <div class="orc-bar"><div class="orc-fill" style="width:${pct}%;background:${cor}"></div></div>
+            <div class="orc-item-valores">
+              <span>Gasto: <strong>${formatarMoeda(gasto)}</strong></span>
+              <span>Limite: <strong>${formatarMoeda(limite)}</strong></span>
+              <span>Uso: <strong style="color:${cor}">${pct.toFixed(0)}%</strong></span>
+            </div>
+          </div>`;
           })
           .join("");
       }
 
-      async function carregarCategoriasReceita() {
-        const m = document.getElementById("filtro-mes").value;
-        const a = document.getElementById("filtro-ano").value;
+      async function carregarCategorias() {
+        const { m, a } = getMF();
+        document.getElementById("label-mes-cat").textContent =
+          `${nomeMes(parseInt(m))} ${a}`;
         document.getElementById("label-mes-rec").textContent =
           `${nomeMes(parseInt(m))} ${a}`;
-        const data =
-          (await fetchAPI(
+
+        const [desp, rec] = await Promise.all([
+          fetchAPI(
+            `/api/relatorios/por-categoria?mes=${m}&ano=${a}&tipo=despesa`,
+          ).then((d) => d || []),
+          fetchAPI(
             `/api/relatorios/por-categoria?mes=${m}&ano=${a}&tipo=receita`,
-          )) || [];
-        const lista = document.getElementById("categoria-lista-rec");
+          ).then((d) => d || []),
+        ]);
+
+        renderCatLista("cat-lista-desp", desp);
+        renderCatLista("cat-lista-rec", rec);
+      }
+
+      function renderCatLista(id, data) {
+        const el = document.getElementById(id);
         if (data.length === 0) {
-          lista.innerHTML = `<p style="color:var(--text-muted)">Sem receitas neste mês.</p>`;
+          el.innerHTML = `<p style="color:var(--text-muted);font-size:13px">Sem dados neste mês.</p>`;
           return;
         }
         const max = Math.max(...data.map((d) => parseFloat(d.total) || 0));
-        lista.innerHTML = data
+        el.innerHTML = data
           .map((d) => {
             const total = parseFloat(d.total) || 0;
             const pct = max > 0 ? (total / max) * 100 : 0;
-            const cor = d.cor || "#10b981";
-            return `
-        <div class="categoria-item">
-          <div class="categoria-dot" style="background:${cor}"></div>
-          <div class="categoria-nome">${d.nome || "Sem categoria"}</div>
-          <div class="categoria-barra"><div class="categoria-fill" style="width:${pct}%;background:${cor}"></div></div>
-          <div class="categoria-valor">${formatarMoeda(total)}</div>
-        </div>
-      `;
+            const cor = d.cor || "#6b7280";
+            return `<div class="cat-item">
+            <div class="cat-dot" style="background:${cor}"></div>
+            <div class="cat-nome">${d.nome || "Sem categoria"}</div>
+            <div class="cat-bar"><div class="cat-fill" style="width:${pct}%;background:${cor}"></div></div>
+            <div class="cat-valor">${formatarMoeda(total)}</div>
+          </div>`;
           })
           .join("");
       }

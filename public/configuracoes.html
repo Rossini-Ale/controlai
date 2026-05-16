@@ -19,13 +19,14 @@
         padding: 4px;
         margin-bottom: 20px;
         width: fit-content;
+        flex-wrap: wrap;
       }
       .aba-btn {
         background: transparent;
         border: none;
         color: var(--text-muted);
         border-radius: 9px;
-        padding: 8px 18px;
+        padding: 8px 16px;
         font-size: 14px;
         font-weight: 500;
         cursor: pointer;
@@ -33,6 +34,7 @@
         display: flex;
         align-items: center;
         gap: 7px;
+        white-space: nowrap;
       }
       .aba-btn.active {
         background: var(--bg-tertiary);
@@ -45,7 +47,7 @@
         display: block;
       }
 
-      /* ── Categorias ── */
+      /* Categorias */
       .categorias-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -74,19 +76,9 @@
         align-items: center;
         gap: 10px;
       }
-      .categoria-cor {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        flex-shrink: 0;
-      }
       .categoria-nome {
         flex: 1;
         font-size: 14px;
-      }
-      .categoria-acoes {
-        display: flex;
-        gap: 6px;
       }
       .icone-seletor {
         display: grid;
@@ -110,14 +102,13 @@
         color: var(--text-secondary);
         transition: all 0.15s;
       }
-      .icone-opcao:hover {
+      .icone-opcao:hover,
+      .icone-opcao.selecionado {
         border-color: var(--green);
         color: var(--green);
       }
       .icone-opcao.selecionado {
-        border-color: var(--green);
         background: rgba(16, 185, 129, 0.15);
-        color: var(--green);
       }
       .icone-preview {
         display: flex;
@@ -139,7 +130,7 @@
         border-radius: 8px;
       }
 
-      /* ── Metas ── */
+      /* Metas */
       .metas-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -179,17 +170,6 @@
         background: rgba(239, 68, 68, 0.15);
         color: var(--red);
       }
-      .meta-valores {
-        display: flex;
-        justify-content: space-between;
-        font-size: 13px;
-        color: var(--text-secondary);
-        margin-bottom: 8px;
-      }
-      .meta-valores span {
-        font-weight: 600;
-        color: var(--text-primary);
-      }
       .progress-bar {
         background: var(--bg-tertiary);
         border-radius: 99px;
@@ -201,15 +181,6 @@
         height: 100%;
         border-radius: 99px;
         transition: width 0.4s ease;
-      }
-      .meta-prazo {
-        font-size: 12px;
-        color: var(--text-muted);
-        margin-bottom: 14px;
-      }
-      .meta-acoes {
-        display: flex;
-        gap: 8px;
       }
       .btn-progresso {
         background: rgba(16, 185, 129, 0.1);
@@ -226,7 +197,135 @@
         color: #fff;
       }
 
-      /* ── Perfil ── */
+      /* Orçamento */
+      .orc-header {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+      }
+      .orc-header select {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        color: var(--text-primary);
+        border-radius: 9px;
+        padding: 8px 12px;
+        font-size: 14px;
+        outline: none;
+      }
+      .orc-secao-titulo {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .orc-geral-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .orc-geral-info {
+        flex: 1;
+        min-width: 160px;
+      }
+      .orc-geral-label {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+      }
+      .orc-geral-valor {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--green);
+      }
+      .orc-cat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+      }
+      .orc-cat-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .orc-cat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .orc-cat-nome {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .orc-cat-valor {
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+      .orc-cat-bar {
+        background: var(--bg-tertiary);
+        border-radius: 99px;
+        height: 6px;
+        overflow: hidden;
+        margin-bottom: 4px;
+      }
+      .orc-cat-fill {
+        height: 100%;
+        border-radius: 99px;
+        transition: width 0.4s;
+      }
+      .orc-cat-footer {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+      .btn-def-limite {
+        background: transparent;
+        border: 0.5px solid var(--border);
+        color: var(--text-secondary);
+        border-radius: 7px;
+        padding: 4px 10px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-def-limite:hover {
+        border-color: var(--green);
+        color: var(--green);
+      }
+      .btn-rem-limite {
+        background: transparent;
+        border: 0.5px solid var(--border);
+        color: var(--red);
+        border-radius: 7px;
+        padding: 4px 10px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-rem-limite:hover {
+        background: var(--red);
+        color: #fff;
+      }
+
+      /* Perfil */
       .perfil-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -270,15 +369,6 @@
         font-weight: 700;
         color: #fff;
         flex-shrink: 0;
-      }
-      .avatar-info h3 {
-        font-size: 16px;
-        font-weight: 600;
-        margin-bottom: 4px;
-      }
-      .avatar-info p {
-        font-size: 13px;
-        color: var(--text-muted);
       }
       .stats-grid {
         display: grid;
@@ -331,15 +421,15 @@
           flex: 1;
           justify-content: center;
           padding: 8px 6px;
-          font-size: 12px;
+          font-size: 11px;
+          gap: 4px;
         }
-        .categorias-grid {
-          grid-template-columns: 1fr;
-        }
+        .categorias-grid,
         .perfil-grid {
           grid-template-columns: 1fr;
         }
-        .metas-grid {
+        .metas-grid,
+        .orc-cat-grid {
           grid-template-columns: 1fr;
         }
       }
@@ -363,6 +453,13 @@
         </button>
         <button
           class="aba-btn"
+          id="aba-orcamento-btn"
+          onclick="trocarAba('orcamento')"
+        >
+          <i class="fa-solid fa-chart-pie"></i> Orçamento
+        </button>
+        <button
+          class="aba-btn"
           id="aba-perfil-btn"
           onclick="trocarAba('perfil')"
         >
@@ -370,7 +467,7 @@
         </button>
       </div>
 
-      <!-- ══ ABA CATEGORIAS ══ -->
+      <!-- ABA CATEGORIAS -->
       <div class="aba-conteudo active" id="aba-categorias">
         <div
           style="display: flex; justify-content: flex-end; margin-bottom: 16px"
@@ -380,7 +477,7 @@
           </button>
         </div>
         <div class="categorias-grid">
-          <div class="categoria-section">
+          <div>
             <h2>
               <span style="color: var(--red)"
                 ><i class="fa-solid fa-arrow-down"></i
@@ -388,19 +485,12 @@
               Despesas
             </h2>
             <div class="categoria-lista" id="lista-despesas">
-              <p
-                style="
-                  color: var(--text-muted);
-                  font-size: 13px;
-                  padding: 16px;
-                  text-align: center;
-                "
-              >
+              <p style="color: var(--text-muted); font-size: 13px">
                 Carregando...
               </p>
             </div>
           </div>
-          <div class="categoria-section">
+          <div>
             <h2>
               <span style="color: var(--green)"
                 ><i class="fa-solid fa-arrow-up"></i
@@ -408,14 +498,7 @@
               Receitas
             </h2>
             <div class="categoria-lista" id="lista-receitas">
-              <p
-                style="
-                  color: var(--text-muted);
-                  font-size: 13px;
-                  padding: 16px;
-                  text-align: center;
-                "
-              >
+              <p style="color: var(--text-muted); font-size: 13px">
                 Carregando...
               </p>
             </div>
@@ -423,7 +506,7 @@
         </div>
       </div>
 
-      <!-- ══ ABA METAS ══ -->
+      <!-- ABA METAS -->
       <div class="aba-conteudo" id="aba-metas">
         <div
           style="display: flex; justify-content: flex-end; margin-bottom: 16px"
@@ -435,34 +518,125 @@
         <div class="metas-grid" id="metas-grid"></div>
       </div>
 
-      <!-- ══ ABA PERFIL ══ -->
+      <!-- ABA ORÇAMENTO -->
+      <div class="aba-conteudo" id="aba-orcamento">
+        <div class="orc-header">
+          <div>
+            <label
+              style="
+                font-size: 12px;
+                color: var(--text-muted);
+                display: block;
+                margin-bottom: 4px;
+              "
+              >Mês</label
+            >
+            <select id="orc-mes">
+              <option value="1">Janeiro</option>
+              <option value="2">Fevereiro</option>
+              <option value="3">Março</option>
+              <option value="4">Abril</option>
+              <option value="5">Maio</option>
+              <option value="6">Junho</option>
+              <option value="7">Julho</option>
+              <option value="8">Agosto</option>
+              <option value="9">Setembro</option>
+              <option value="10">Outubro</option>
+              <option value="11">Novembro</option>
+              <option value="12">Dezembro</option>
+            </select>
+          </div>
+          <div>
+            <label
+              style="
+                font-size: 12px;
+                color: var(--text-muted);
+                display: block;
+                margin-bottom: 4px;
+              "
+              >Ano</label
+            >
+            <select id="orc-ano"></select>
+          </div>
+          <button class="btn" onclick="carregarOrcamento()">
+            <i class="fa-solid fa-rotate"></i> Atualizar
+          </button>
+        </div>
+
+        <!-- Orçamento geral -->
+        <div class="orc-secao-titulo">
+          <i class="fa-solid fa-wallet"></i> Orçamento geral do mês
+        </div>
+        <div class="orc-geral-card" id="orc-geral-card">
+          <div class="orc-geral-info">
+            <div class="orc-geral-label">Limite mensal total</div>
+            <div class="orc-geral-valor" id="orc-geral-valor">Não definido</div>
+          </div>
+          <button
+            class="btn"
+            onclick="abrirModalOrc(null)"
+            style="white-space: nowrap"
+          >
+            <i class="fa-solid fa-pen"></i> Definir limite
+          </button>
+        </div>
+
+        <!-- Por categoria -->
+        <div class="orc-secao-titulo">
+          <i class="fa-solid fa-tag"></i> Limites por categoria
+        </div>
+        <div class="orc-cat-grid" id="orc-cat-grid"></div>
+      </div>
+
+      <!-- ABA PERFIL -->
       <div class="aba-conteudo" id="aba-perfil">
         <div class="perfil-grid">
           <div>
             <div class="perfil-card" style="margin-bottom: 20px">
               <div class="avatar-wrap">
                 <div class="avatar-grande" id="avatar-iniciais">--</div>
-                <div class="avatar-info">
-                  <h3 id="perfil-nome">Carregando...</h3>
-                  <p id="perfil-username">@username</p>
-                  <p id="perfil-membro" style="margin-top: 2px"></p>
+                <div>
+                  <h3
+                    id="perfil-nome"
+                    style="
+                      font-size: 16px;
+                      font-weight: 600;
+                      margin-bottom: 4px;
+                    "
+                  >
+                    Carregando...
+                  </h3>
+                  <p
+                    id="perfil-username"
+                    style="font-size: 13px; color: var(--text-muted)"
+                  >
+                    @username
+                  </p>
+                  <p
+                    id="perfil-membro"
+                    style="
+                      font-size: 13px;
+                      color: var(--text-muted);
+                      margin-top: 2px;
+                    "
+                  ></p>
                 </div>
               </div>
               <div class="stats-grid">
                 <div class="stat-item">
-                  <div class="stat-valor" id="stat-transacoes">—</div>
+                  <div class="stat-valor" id="stat-tx">—</div>
                   <div class="stat-label">Transações</div>
                 </div>
                 <div class="stat-item">
-                  <div class="stat-valor" id="stat-categorias">—</div>
+                  <div class="stat-valor" id="stat-cat">—</div>
                   <div class="stat-label">Categorias</div>
                 </div>
                 <div class="stat-item">
-                  <div class="stat-valor" id="stat-contas">—</div>
+                  <div class="stat-valor" id="stat-con">—</div>
                   <div class="stat-label">Contas</div>
                 </div>
                 <div class="stat-item">
-                  <div class="stat-valor" id="stat-metas">—</div>
+                  <div class="stat-valor" id="stat-met">—</div>
                   <div class="stat-label">Metas</div>
                 </div>
               </div>
@@ -480,8 +654,8 @@
                   line-height: 1.6;
                 "
               >
-                Para lançar gastos pelo Telegram, conecte sua conta usando o
-                comando abaixo no bot <strong>@controlai_seu_nome_bot</strong>:
+                Conecte sua conta usando o comando no bot
+                <strong>@controlai_seu_nome_bot</strong>:
               </p>
               <div
                 style="
@@ -503,12 +677,10 @@
             <div class="perfil-card" style="margin-bottom: 20px">
               <h2><i class="fa-solid fa-pen"></i> Editar informações</h2>
               <div class="form-group">
-                <label>Nome completo</label
-                ><input type="text" id="e-nome" placeholder="Seu nome" />
+                <label>Nome completo</label><input type="text" id="e-nome" />
               </div>
               <div class="form-group">
-                <label>Email</label
-                ><input type="email" id="e-email" placeholder="seu@email.com" />
+                <label>Email</label><input type="email" id="e-email" />
               </div>
               <div class="form-group">
                 <label>Username</label
@@ -524,7 +696,7 @@
                 onclick="salvarPerfil()"
                 style="width: 100%; justify-content: center"
               >
-                <i class="fa-solid fa-check"></i> Salvar alterações
+                <i class="fa-solid fa-check"></i> Salvar
               </button>
             </div>
             <div class="perfil-card">
@@ -630,8 +802,8 @@
           <label>Prazo</label><input type="date" id="m-prazo" />
         </div>
         <div class="form-group" id="grupo-status-meta" style="display: none">
-          <label>Status</label>
-          <select id="m-status">
+          <label>Status</label
+          ><select id="m-status">
             <option value="ativa">Ativa</option>
             <option value="concluida">Concluída</option>
             <option value="cancelada">Cancelada</option>
@@ -663,6 +835,32 @@
       </div>
     </div>
 
+    <!-- Modal orçamento -->
+    <div class="modal-overlay" id="modal-orc">
+      <div class="modal">
+        <h2 id="modal-orc-titulo">Definir limite</h2>
+        <div class="form-group">
+          <label id="modal-orc-label">Limite mensal (R$)</label>
+          <input
+            type="number"
+            id="orc-limite"
+            placeholder="0,00"
+            step="0.01"
+            min="0"
+          />
+        </div>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: -8px">
+          Você receberá alertas no Telegram ao atingir 80% e 100% do limite.
+        </p>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharModalOrc()">
+            Cancelar
+          </button>
+          <button class="btn" onclick="salvarOrc()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
     <div id="tabbar"></div>
     <script src="/js/global.js"></script>
     <script src="/js/ui.js"></script>
@@ -687,12 +885,13 @@
         document.getElementById(`aba-${aba}-btn`).classList.add("active");
         document.getElementById(`aba-${aba}`).classList.add("active");
         if (aba === "metas") carregarMetas();
+        if (aba === "orcamento") carregarOrcamento();
         if (aba === "perfil") carregarPerfil();
       }
 
-      // ════════════════════════════════════════
+      // ══════════════════════════════════════
       // CATEGORIAS
-      // ════════════════════════════════════════
+      // ══════════════════════════════════════
       let editandoCatId = null,
         iconeSelecionado = "fa-tag";
       const icones = [
@@ -763,14 +962,12 @@
           )
           .join("");
       }
-
       function selecionarIcone(ic) {
         iconeSelecionado = ic;
         document.getElementById("preview-icone").className = `fa-solid ${ic}`;
         atualizarPreviewCat();
         renderIcones();
       }
-
       function atualizarPreviewCat() {
         const cor = document.getElementById("c-cor").value;
         document.getElementById("preview-icone").style.color = cor;
@@ -792,13 +989,13 @@
       function renderListaCat(id, lista) {
         const el = document.getElementById(id);
         if (lista.length === 0) {
-          el.innerHTML = `<p style="color:var(--text-muted);font-size:13px;padding:16px;text-align:center;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px">Nenhuma categoria cadastrada.</p>`;
+          el.innerHTML = `<p style="color:var(--text-muted);font-size:13px;padding:16px;text-align:center;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px">Nenhuma categoria.</p>`;
           return;
         }
         el.innerHTML = lista
           .map(
             (c) =>
-              `<div class="categoria-item"><div class="categoria-cor" style="background:${c.cor || "#6b7280"}"></div><i class="fa-solid ${c.icone || "fa-tag"}" style="color:${c.cor || "#6b7280"};font-size:14px"></i><span class="categoria-nome">${c.nome}</span><div class="categoria-acoes"><button class="btn-edit" onclick="editarCategoria(${c.id},'${c.nome}','${c.tipo}','${c.icone || "fa-tag"}','${c.cor || "#6b7280"}')"><i class="fa-solid fa-pen"></i></button><button class="btn-danger" onclick="deletarCategoria(${c.id})"><i class="fa-solid fa-trash"></i></button></div></div>`,
+              `<div class="categoria-item"><div style="width:12px;height:12px;border-radius:50%;background:${c.cor || "#6b7280"};flex-shrink:0"></div><i class="fa-solid ${c.icone || "fa-tag"}" style="color:${c.cor || "#6b7280"};font-size:14px"></i><span class="categoria-nome">${c.nome}</span><div style="display:flex;gap:6px"><button class="btn-edit" onclick="editarCategoria(${c.id},'${c.nome}','${c.tipo}','${c.icone || "fa-tag"}','${c.cor || "#6b7280"}')"><i class="fa-solid fa-pen"></i></button><button class="btn-danger" onclick="deletarCategoria(${c.id})"><i class="fa-solid fa-trash"></i></button></div></div>`,
           )
           .join("");
       }
@@ -808,7 +1005,7 @@
         iconeSelecionado = "fa-tag";
         document.getElementById("modal-cat-titulo").textContent =
           "Nova categoria";
-        document.getElementById("c-nome").value = "";
+        ["c-nome"].forEach((id) => (document.getElementById(id).value = ""));
         document.getElementById("c-tipo").value = "despesa";
         document.getElementById("c-cor").value = "#ef4444";
         document.getElementById("preview-icone").className = "fa-solid fa-tag";
@@ -845,7 +1042,7 @@
           cor: document.getElementById("c-cor").value,
         };
         if (!body.nome) {
-          toast("Informe o nome da categoria.", "erro");
+          toast("Informe o nome.", "erro");
           return;
         }
         if (editandoCatId) {
@@ -879,9 +1076,9 @@
         carregarCategorias();
       }
 
-      // ════════════════════════════════════════
+      // ══════════════════════════════════════
       // METAS
-      // ════════════════════════════════════════
+      // ══════════════════════════════════════
       let editandoMetaId = null,
         progressoId = null;
 
@@ -901,8 +1098,8 @@
         }
         grid.innerHTML = metas
           .map((m) => {
-            const alvo = parseFloat(m.valor_alvo) || 0;
-            const atual = parseFloat(m.valor_atual) || 0;
+            const alvo = parseFloat(m.valor_alvo) || 0,
+              atual = parseFloat(m.valor_atual) || 0;
             const pct = alvo > 0 ? Math.min((atual / alvo) * 100, 100) : 0;
             const cor =
               pct >= 100
@@ -911,14 +1108,11 @@
                   ? "var(--blue)"
                   : "#f59e0b";
             return `<div class="meta-card">
-            <div class="meta-header">
-              <div class="meta-nome">${m.nome}</div>
-              <span class="meta-status ${m.status}">${m.status}</span>
-            </div>
-            <div class="meta-valores"><div>Atual: <span>${formatarMoeda(atual)}</span></div><div>Meta: <span>${formatarMoeda(alvo)}</span></div></div>
+            <div class="meta-header"><div class="meta-nome">${m.nome}</div><span class="meta-status ${m.status}">${m.status}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);margin-bottom:8px"><div>Atual: <span style="font-weight:600;color:var(--text-primary)">${formatarMoeda(atual)}</span></div><div>Meta: <span style="font-weight:600;color:var(--text-primary)">${formatarMoeda(alvo)}</span></div></div>
             <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${cor}"></div></div>
-            <div class="meta-prazo"><i class="fa-solid fa-calendar" style="margin-right:4px"></i>Prazo: ${formatarData(m.prazo)} &nbsp;·&nbsp; ${pct.toFixed(0)}% concluído</div>
-            <div class="meta-acoes">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px"><i class="fa-solid fa-calendar" style="margin-right:4px"></i>Prazo: ${formatarData(m.prazo)} · ${pct.toFixed(0)}% concluído</div>
+            <div style="display:flex;gap:8px">
               <button class="btn-progresso" onclick="abrirProgresso(${m.id},${atual})"><i class="fa-solid fa-arrow-up"></i> Progresso</button>
               <button class="btn-edit" onclick="editarMeta(${m.id},'${m.nome}',${alvo},${atual},'${m.prazo?.split("T")[0] || ""}','${m.status}')"><i class="fa-solid fa-pen"></i></button>
               <button class="btn-danger" onclick="deletarMeta(${m.id})"><i class="fa-solid fa-trash"></i></button>
@@ -941,7 +1135,6 @@
       function fecharModalMeta() {
         document.getElementById("modal-meta").classList.remove("active");
       }
-
       function editarMeta(id, nome, alvo, atual, prazo, status) {
         editandoMetaId = id;
         document.getElementById("modal-meta-titulo").textContent =
@@ -954,7 +1147,6 @@
         document.getElementById("grupo-status-meta").style.display = "block";
         document.getElementById("modal-meta").classList.add("active");
       }
-
       async function salvarMeta() {
         const body = {
           nome: document.getElementById("m-nome").value,
@@ -965,7 +1157,7 @@
           status: document.getElementById("m-status")?.value || "ativa",
         };
         if (!body.nome || !body.valor_alvo) {
-          toast("Informe o nome e o valor alvo.", "erro");
+          toast("Informe nome e valor alvo.", "erro");
           return;
         }
         if (editandoMetaId) {
@@ -984,7 +1176,6 @@
         fecharModalMeta();
         carregarMetas();
       }
-
       function abrirProgresso(id, atual) {
         progressoId = id;
         document.getElementById("p-atual").value = atual;
@@ -993,19 +1184,18 @@
       function fecharModalProgresso() {
         document.getElementById("modal-progresso").classList.remove("active");
       }
-
       async function salvarProgresso() {
-        const valor_atual =
-          parseFloat(document.getElementById("p-atual").value) || 0;
         await fetchAPI(`/api/metas/${progressoId}/progresso`, {
           method: "PATCH",
-          body: JSON.stringify({ valor_atual }),
+          body: JSON.stringify({
+            valor_atual:
+              parseFloat(document.getElementById("p-atual").value) || 0,
+          }),
         });
         toast("Progresso atualizado!");
         fecharModalProgresso();
         carregarMetas();
       }
-
       async function deletarMeta(id) {
         const ok = await confirmar("Deseja deletar esta meta?");
         if (!ok) return;
@@ -1014,9 +1204,160 @@
         carregarMetas();
       }
 
-      // ════════════════════════════════════════
+      // ══════════════════════════════════════
+      // ORÇAMENTO
+      // ══════════════════════════════════════
+      const { mes: mesAtual, ano: anoAtual } = getMesAno();
+      let orcCategoriaId = null;
+      let categoriasCache = [];
+      let orcamentosCache = [];
+
+      // Init selects
+      document.getElementById("orc-mes").value = mesAtual;
+      const selOrcAno = document.getElementById("orc-ano");
+      for (let a = anoAtual; a >= anoAtual - 2; a++) {
+        selOrcAno.innerHTML += `<option value="${a}">${a}</option>`;
+        if (a >= anoAtual + 1) break;
+      }
+      // Preenche ano corretamente
+      selOrcAno.innerHTML = "";
+      for (let a = anoAtual + 1; a >= anoAtual - 2; a--)
+        selOrcAno.innerHTML += `<option value="${a}">${a}</option>`;
+      selOrcAno.value = anoAtual;
+
+      async function carregarOrcamento() {
+        const m = document.getElementById("orc-mes").value;
+        const a = document.getElementById("orc-ano").value;
+
+        [categoriasCache, orcamentosCache] = await Promise.all([
+          fetchAPI("/api/categorias").then((d) => d || []),
+          fetchAPI(`/api/orcamentos?mes=${m}&ano=${a}`).then((d) => d || []),
+        ]);
+
+        // Orçamento geral
+        const geral = orcamentosCache.find((o) => !o.categoria_id);
+        const orcGeralValor = document.getElementById("orc-geral-valor");
+        if (geral) {
+          const gasto = parseFloat(geral.gasto_atual) || 0;
+          const limite = parseFloat(geral.limite) || 0;
+          const pct = limite > 0 ? ((gasto / limite) * 100).toFixed(0) : 0;
+          const cor =
+            pct >= 100 ? "var(--red)" : pct >= 80 ? "#f59e0b" : "var(--green)";
+          orcGeralValor.innerHTML = `<span style="color:${cor}">${formatarMoeda(gasto)}</span> <span style="font-size:14px;color:var(--text-muted)">/ ${formatarMoeda(limite)} (${pct}%)</span>`;
+          document.querySelector("#orc-geral-card .btn").innerHTML =
+            `<i class="fa-solid fa-pen"></i> Editar limite`;
+        } else {
+          orcGeralValor.textContent = "Não definido";
+          document.querySelector("#orc-geral-card .btn").innerHTML =
+            `<i class="fa-solid fa-pen"></i> Definir limite`;
+        }
+
+        // Por categoria (só despesas)
+        const despesas = categoriasCache.filter((c) => c.tipo === "despesa");
+        const grid = document.getElementById("orc-cat-grid");
+
+        if (despesas.length === 0) {
+          grid.innerHTML = `<p style="color:var(--text-muted);font-size:13px">Nenhuma categoria de despesa cadastrada.</p>`;
+          return;
+        }
+
+        grid.innerHTML = despesas
+          .map((cat) => {
+            const orc = orcamentosCache.find((o) => o.categoria_id === cat.id);
+            const gasto = orc ? parseFloat(orc.gasto_atual) || 0 : 0;
+            const limite = orc ? parseFloat(orc.limite) || 0 : 0;
+            const pct = limite > 0 ? Math.min((gasto / limite) * 100, 100) : 0;
+            const cor =
+              pct >= 100
+                ? "var(--red)"
+                : pct >= 80
+                  ? "#f59e0b"
+                  : "var(--green)";
+
+            return `<div class="orc-cat-card">
+            <div class="orc-cat-header">
+              <div class="orc-cat-nome">
+                <span style="width:10px;height:10px;border-radius:50%;background:${cat.cor || "#6b7280"};display:inline-block"></span>
+                <i class="fa-solid ${cat.icone || "fa-tag"}" style="color:${cat.cor || "#6b7280"};font-size:12px"></i>
+                ${cat.nome}
+              </div>
+              <div style="display:flex;gap:6px">
+                <button class="btn-def-limite" onclick="abrirModalOrc(${cat.id},'${cat.nome}',${limite || 0})">
+                  <i class="fa-solid fa-pen"></i> ${orc ? "Editar" : "Definir"}
+                </button>
+                ${orc ? `<button class="btn-rem-limite" onclick="removerOrc(${orc.id})"><i class="fa-solid fa-trash"></i></button>` : ""}
+              </div>
+            </div>
+            ${
+              orc
+                ? `
+              <div class="orc-cat-bar"><div class="orc-cat-fill" style="width:${pct}%;background:${cor}"></div></div>
+              <div class="orc-cat-footer">
+                <span>Gasto: <strong style="color:var(--text-primary)">${formatarMoeda(gasto)}</strong></span>
+                <span>Limite: <strong style="color:var(--text-primary)">${formatarMoeda(limite)}</strong></span>
+                <span style="color:${cor}"><strong>${pct.toFixed(0)}%</strong></span>
+              </div>`
+                : `
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Sem limite definido</div>`
+            }
+          </div>`;
+          })
+          .join("");
+      }
+
+      // Modal orçamento
+      function abrirModalOrc(
+        categoriaId,
+        nomeCategoria = null,
+        limiteAtual = 0,
+      ) {
+        orcCategoriaId = categoriaId;
+        document.getElementById("modal-orc-titulo").textContent = categoriaId
+          ? `Limite — ${nomeCategoria}`
+          : "Orçamento geral do mês";
+        document.getElementById("modal-orc-label").textContent = categoriaId
+          ? `Limite mensal para ${nomeCategoria} (R$)`
+          : "Limite mensal total (R$)";
+        document.getElementById("orc-limite").value = limiteAtual || "";
+        document.getElementById("modal-orc").classList.add("active");
+      }
+      function fecharModalOrc() {
+        document.getElementById("modal-orc").classList.remove("active");
+      }
+
+      async function salvarOrc() {
+        const limite = parseFloat(document.getElementById("orc-limite").value);
+        if (!limite || limite <= 0) {
+          toast("Informe um valor válido.", "erro");
+          return;
+        }
+        const m = document.getElementById("orc-mes").value;
+        const a = document.getElementById("orc-ano").value;
+        await fetchAPI("/api/orcamentos", {
+          method: "POST",
+          body: JSON.stringify({
+            categoria_id: orcCategoriaId || null,
+            mes: m,
+            ano: a,
+            limite,
+          }),
+        });
+        toast("Orçamento salvo!");
+        fecharModalOrc();
+        carregarOrcamento();
+      }
+
+      async function removerOrc(id) {
+        const ok = await confirmar("Deseja remover este limite?");
+        if (!ok) return;
+        await fetchAPI(`/api/orcamentos/${id}`, { method: "DELETE" });
+        toast("Limite removido!", "info");
+        carregarOrcamento();
+      }
+
+      // ══════════════════════════════════════
       // PERFIL
-      // ════════════════════════════════════════
+      // ══════════════════════════════════════
       async function carregarPerfil() {
         const perfil = await fetchAPI("/api/auth/perfil");
         if (!perfil) return;
@@ -1030,41 +1371,34 @@
         document.getElementById("perfil-nome").textContent = perfil.nome;
         document.getElementById("perfil-username").textContent =
           `@${perfil.username}`;
-        const desde = new Date(perfil.created_at).toLocaleDateString("pt-BR", {
-          month: "long",
-          year: "numeric",
-        });
         document.getElementById("perfil-membro").textContent =
-          `Membro desde ${desde}`;
+          `Membro desde ${new Date(perfil.created_at).toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}`;
         document.getElementById("e-nome").value = perfil.nome;
         document.getElementById("e-email").value = perfil.email;
         document.getElementById("e-username").value = perfil.username;
         document.getElementById("telegram-cmd").textContent =
           `/conectar ${perfil.username}`;
-        const statusEl = document.getElementById("telegram-status");
-        const textoEl = document.getElementById("telegram-texto");
+        const st = document.getElementById("telegram-status");
+        const tx = document.getElementById("telegram-texto");
         if (perfil.telegram_chat_id) {
-          statusEl.className = "telegram-status conectado";
-          textoEl.textContent = "Conta conectada ao Telegram";
-          statusEl.querySelector("i").className = "fa-solid fa-circle-check";
+          st.className = "telegram-status conectado";
+          tx.textContent = "Conta conectada ao Telegram";
+          st.querySelector("i").className = "fa-solid fa-circle-check";
         } else {
-          statusEl.className = "telegram-status desconectado";
-          textoEl.textContent = "Telegram não conectado";
-          statusEl.querySelector("i").className = "fa-solid fa-circle-xmark";
+          st.className = "telegram-status desconectado";
+          tx.textContent = "Telegram não conectado";
+          st.querySelector("i").className = "fa-solid fa-circle-xmark";
         }
-        const [transacoes, categorias, contas, metas] = await Promise.all([
+        const [t, c, co, m] = await Promise.all([
           fetchAPI("/api/transacoes"),
           fetchAPI("/api/categorias"),
           fetchAPI("/api/contas"),
           fetchAPI("/api/metas"),
         ]);
-        document.getElementById("stat-transacoes").textContent =
-          transacoes?.length || 0;
-        document.getElementById("stat-categorias").textContent =
-          categorias?.length || 0;
-        document.getElementById("stat-contas").textContent =
-          contas?.length || 0;
-        document.getElementById("stat-metas").textContent = metas?.length || 0;
+        document.getElementById("stat-tx").textContent = t?.length || 0;
+        document.getElementById("stat-cat").textContent = c?.length || 0;
+        document.getElementById("stat-con").textContent = co?.length || 0;
+        document.getElementById("stat-met").textContent = m?.length || 0;
       }
 
       async function salvarPerfil() {
@@ -1090,9 +1424,9 @@
       }
 
       async function alterarSenha() {
-        const atual = document.getElementById("s-atual").value;
-        const nova = document.getElementById("s-nova").value;
-        const confirma = document.getElementById("s-confirma").value;
+        const atual = document.getElementById("s-atual").value,
+          nova = document.getElementById("s-nova").value,
+          confirma = document.getElementById("s-confirma").value;
         if (!atual || !nova || !confirma) {
           toast("Preencha todos os campos.", "erro");
           return;
@@ -1102,7 +1436,7 @@
           return;
         }
         if (nova.length < 6) {
-          toast("A nova senha deve ter pelo menos 6 caracteres.", "aviso");
+          toast("Mínimo 6 caracteres.", "aviso");
           return;
         }
         const res = await fetchAPI("/api/auth/perfil/senha", {
@@ -1113,7 +1447,7 @@
           toast(res.erro, "erro");
           return;
         }
-        toast("Senha alterada com sucesso!");
+        toast("Senha alterada!");
         ["s-atual", "s-nova", "s-confirma"].forEach(
           (id) => (document.getElementById(id).value = ""),
         );

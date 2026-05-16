@@ -1,4 +1,4 @@
-// server.js — Controlaí (com suporte a Transações Recorrentes)
+// server.js — Controlaí
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -21,6 +21,7 @@ app.use("/api/cartoes", require("./routes/cartoes"));
 app.use("/api/faturas", require("./routes/faturas"));
 app.use("/api/recorrentes", require("./routes/recorrentes"));
 app.use("/api/transferencias", require("./routes/transferencias"));
+app.use("/api/orcamentos", require("./routes/orcamentos"));
 
 // ── Telegram webhook ──
 const bot = require("./routes/telegram");
@@ -32,32 +33,19 @@ app.post(`/bot${process.env.TELEGRAM_TOKEN}`, (req, res) => {
   res.sendStatus(200);
 });
 
-// ── Rota raiz → login ──
+// ── Rota raiz ──
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
-// ── Cron: processa recorrentes ──
-// Roda logo ao iniciar e depois a cada 1 hora
-const { processarRecorrentes } = require("./routes/recorrentes-engine");
+// ── Cron: roda tudo a cada hora ──
+const { rodarTudo } = require("./routes/recorrentes-engine");
 
-async function rodarCron() {
-  console.log("[Cron] Verificando transações recorrentes...");
-  try {
-    await processarRecorrentes();
-  } catch (err) {
-    console.error("[Cron] Erro:", err.message);
-  }
-}
-
-// Aguarda 5s para o banco estar pronto antes da primeira execução
 setTimeout(() => {
-  rodarCron();
-  // Depois roda a cada hora (3.600.000 ms)
-  setInterval(rodarCron, 60 * 60 * 1000);
+  rodarTudo();
+  setInterval(rodarTudo, 60 * 60 * 1000);
 }, 5000);
 
-// ── Servidor ──
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Controlaí rodando em: http://localhost:${PORT}`);
