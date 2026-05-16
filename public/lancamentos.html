@@ -9,6 +9,12 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
     <link rel="stylesheet" href="/css/global.css" />
+    <style>
+      .badge.transferencia {
+        background: rgba(99, 102, 241, 0.15);
+        color: #6366f1;
+      }
+    </style>
   </head>
   <body>
     <div class="sidebar" id="sidebar"></div>
@@ -90,6 +96,7 @@
           <option value="">Todos</option>
           <option value="receita">Receitas</option>
           <option value="despesa">Despesas</option>
+          <option value="transferencia">Transferências</option>
         </select>
       </div>
 
@@ -115,7 +122,7 @@
       <div id="lista-mobile" class="mobile-only"></div>
     </div>
 
-    <!-- Modal -->
+    <!-- Modal lançamento -->
     <div class="modal-overlay" id="modal">
       <div class="modal">
         <h2 id="modal-titulo">Novo lançamento</h2>
@@ -199,6 +206,7 @@
         return window.innerWidth <= 768;
       }
 
+      // ── Renderização ──
       async function carregarTransacoes() {
         const m = document.getElementById("filtro-mes").value;
         const a = document.getElementById("filtro-ano").value;
@@ -208,46 +216,83 @@
           document.getElementById("lista-mobile").innerHTML = skeletonLista(3);
         } else {
           document.getElementById("tabela-transacoes-desktop").innerHTML =
-            `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">${skeletonLista(1)}</td></tr>`;
+            `<tr><td colspan="7" style="text-align:center;padding:24px">${skeletonLista(1)}</td></tr>`;
         }
 
+        // Filtro de transferência é client-side (usa flag is_transferencia)
         let url = `/api/transacoes?mes=${m}&ano=${a}`;
-        if (tipo) url += `&tipo=${tipo}`;
-        const data = await fetchAPI(url);
+        if (tipo === "receita" || tipo === "despesa") url += `&tipo=${tipo}`;
+        let data = await fetchAPI(url);
         if (!data) return;
+
+        // Se filtrou transferências, mostra só as de transferência
+        if (tipo === "transferencia") {
+          data = data.filter((t) => t.is_transferencia);
+        } else if (tipo === "receita" || tipo === "despesa") {
+          // Exclui as de transferência dos filtros de receita/despesa puras
+          data = data.filter((t) => !t.is_transferencia);
+        }
+        // "Todos" mostra tudo incluindo transferências
 
         if (isMobile()) renderMobile(data);
         else renderDesktop(data);
+      }
+
+      function tipoLabel(t) {
+        if (t.is_transferencia) return "transferencia";
+        return t.tipo;
+      }
+
+      function tipoTexto(t) {
+        if (t.is_transferencia) return "transferência";
+        return t.tipo;
       }
 
       function renderDesktop(data) {
         const tbody = document.getElementById("tabela-transacoes-desktop");
         if (data.length === 0) {
           tbody.innerHTML = `<tr><td colspan="7" style="padding:0">
-        <div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transação", "Nenhuma transação encontrada neste período.", "Novo lançamento", "abrirModal()")}</div>
-      </td></tr>`;
+            <div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transação", "Nenhuma transação encontrada neste período.", "Novo lançamento", "abrirModal()")}</div>
+          </td></tr>`;
           return;
         }
         tbody.innerHTML = data
-          .map(
-            (t) => `
-      <tr>
-        <td>${formatarData(t.data)}</td>
-        <td>${t.descricao}</td>
-        <td><span style="display:inline-flex;align-items:center;gap:5px">
-          <span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
-          ${t.categoria_nome || "—"}
-        </span></td>
-        <td>${t.conta_nome || "—"}</td>
-        <td><span class="badge ${t.tipo}">${t.tipo}</span></td>
-        <td><span class="badge ${t.tipo}">${formatarMoeda(t.valor)}</span></td>
-        <td>
-          <button class="btn-edit" onclick="editar(${t.id})"><i class="fa-solid fa-pen"></i></button>
-          <button class="btn-danger" onclick="deletar(${t.id})"><i class="fa-solid fa-trash"></i></button>
-        </td>
-      </tr>
-    `,
-          )
+          .map((t) => {
+            const label = tipoLabel(t);
+            const isTransf = !!t.is_transferencia;
+            return `
+            <tr>
+              <td>${formatarData(t.data)}</td>
+              <td>
+                ${isTransf ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}
+                ${t.descricao}
+              </td>
+              <td>
+                ${
+                  isTransf
+                    ? `<span style="color:var(--text-muted);font-size:12px">—</span>`
+                    : `<span style="display:inline-flex;align-items:center;gap:5px">
+                      <span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
+                      ${t.categoria_nome || "—"}
+                    </span>`
+                }
+              </td>
+              <td>${t.conta_nome || "—"}</td>
+              <td><span class="badge ${label}">${tipoTexto(t)}</span></td>
+              <td><span class="badge ${label}">${formatarMoeda(t.valor)}</span></td>
+              <td>
+                ${
+                  isTransf
+                    ? `<button class="btn-danger" onclick="deletarTransferencia('${t.transferencia_id}')">
+                       <i class="fa-solid fa-trash"></i>
+                     </button>`
+                    : `<button class="btn-edit" onclick="editar(${t.id})"><i class="fa-solid fa-pen"></i></button>
+                     <button class="btn-danger" onclick="deletar(${t.id})"><i class="fa-solid fa-trash"></i></button>`
+                }
+              </td>
+            </tr>
+          `;
+          })
           .join("");
       }
 
@@ -264,36 +309,64 @@
           return;
         }
         lista.innerHTML = data
-          .map(
-            (t) => `
-      <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;border-left:3px solid ${t.tipo === "receita" ? "var(--green)" : "var(--red)"}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-          <div style="flex:1;margin-right:8px">
-            <div style="font-size:15px;font-weight:600;margin-bottom:3px">${t.descricao}</div>
-            <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-              <span>${formatarData(t.data)}</span>
-              <span>·</span>
-              <span style="display:inline-flex;align-items:center;gap:4px">
-                <span style="width:7px;height:7px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
-                ${t.categoria_nome || "—"}
-              </span>
-              ${t.conta_nome ? `<span>·</span><span>${t.conta_nome}</span>` : ""}
+          .map((t) => {
+            const isTransf = !!t.is_transferencia;
+            const corBorda = isTransf
+              ? "#6366f1"
+              : t.tipo === "receita"
+                ? "var(--green)"
+                : "var(--red)";
+            const corValor = isTransf
+              ? "#6366f1"
+              : t.tipo === "receita"
+                ? "var(--green)"
+                : "var(--red)";
+            const sinal = isTransf ? "" : t.tipo === "receita" ? "+" : "-";
+
+            return `
+            <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;border-left:3px solid ${corBorda}">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+                <div style="flex:1;margin-right:8px">
+                  <div style="font-size:15px;font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:6px">
+                    ${isTransf ? `<i class="fa-solid fa-right-left" style="color:#6366f1;font-size:11px"></i>` : ""}
+                    ${t.descricao}
+                  </div>
+                  <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span>${formatarData(t.data)}</span>
+                    ${
+                      !isTransf && t.categoria_nome
+                        ? `
+                      <span>·</span>
+                      <span style="display:inline-flex;align-items:center;gap:4px">
+                        <span style="width:7px;height:7px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
+                        ${t.categoria_nome}
+                      </span>`
+                        : ""
+                    }
+                    ${t.conta_nome ? `<span>·</span><span>${t.conta_nome}</span>` : ""}
+                  </div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:16px;font-weight:700;color:${corValor}">${sinal}${formatarMoeda(t.valor)}</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;justify-content:flex-end">
+                ${
+                  isTransf
+                    ? `<button class="btn-danger" style="padding:6px 14px;font-size:12px" onclick="deletarTransferencia('${t.transferencia_id}')">
+                       <i class="fa-solid fa-trash"></i>
+                     </button>`
+                    : `<button class="btn-edit" onclick="editar(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-pen"></i> Editar</button>
+                     <button class="btn-danger" onclick="deletar(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-trash"></i></button>`
+                }
+              </div>
             </div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:16px;font-weight:700;color:${t.tipo === "receita" ? "var(--green)" : "var(--red)"}">${t.tipo === "receita" ? "+" : "-"}${formatarMoeda(t.valor)}</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button class="btn-edit" onclick="editar(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-pen"></i> Editar</button>
-          <button class="btn-danger" onclick="deletar(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-trash"></i></button>
-        </div>
-      </div>
-    `,
-          )
+          `;
+          })
           .join("");
       }
 
+      // ── Categorias / Contas ──
       async function carregarCategorias() {
         categorias = (await fetchAPI("/api/categorias")) || [];
         filtrarCategorias();
@@ -320,6 +393,7 @@
           : `<option value="">Sem contas</option>`;
       }
 
+      // ── Modal lançamento ──
       function abrirModal() {
         editandoId = null;
         document.getElementById("modal-titulo").textContent = "Novo lançamento";
@@ -395,6 +469,18 @@
         if (!ok) return;
         await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
         toast("Lançamento deletado!", "info");
+        carregarTransacoes();
+      }
+
+      async function deletarTransferencia(transferencia_id) {
+        const ok = await confirmar(
+          "Deseja deletar esta transferência? As duas entradas (origem e destino) serão removidas.",
+        );
+        if (!ok) return;
+        await fetchAPI(`/api/transferencias/${transferencia_id}`, {
+          method: "DELETE",
+        });
+        toast("Transferência deletada!", "info");
         carregarTransacoes();
       }
 

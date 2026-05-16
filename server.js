@@ -19,7 +19,8 @@ app.use("/api/metas", require("./routes/metas"));
 app.use("/api/relatorios", require("./routes/relatorios"));
 app.use("/api/cartoes", require("./routes/cartoes"));
 app.use("/api/faturas", require("./routes/faturas"));
-app.use("/api/recorrentes", require("./routes/recorrentes")); // ← NOVO
+app.use("/api/recorrentes", require("./routes/recorrentes"));
+app.use("/api/transferencias", require("./routes/transferencias"));
 
 // ── Telegram webhook ──
 const bot = require("./routes/telegram");

@@ -57,6 +57,101 @@
       .conta-acoes {
         display: flex;
         gap: 8px;
+        flex-wrap: wrap;
+      }
+      .btn-transferir {
+        background: rgba(99, 102, 241, 0.15);
+        border: 0.5px solid #6366f1;
+        color: #6366f1;
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .btn-transferir:hover {
+        background: #6366f1;
+        color: #fff;
+      }
+
+      /* ── Histórico de transferências ── */
+      .transferencias-wrap {
+        margin-top: 32px;
+      }
+      .transferencia-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px;
+        border-bottom: 0.5px solid var(--border);
+        transition: background 0.15s;
+      }
+      .transferencia-item:hover {
+        background: var(--bg-tertiary);
+      }
+      .transferencia-item:last-child {
+        border-bottom: none;
+      }
+      .transfer-icon {
+        width: 36px;
+        height: 36px;
+        background: rgba(99, 102, 241, 0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .transfer-icon i {
+        color: #6366f1;
+        font-size: 14px;
+      }
+      .transfer-info {
+        flex: 1;
+      }
+      .transfer-desc {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 3px;
+      }
+      .transfer-contas {
+        font-size: 12px;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .transfer-conta-badge {
+        padding: 1px 7px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .transfer-right {
+        text-align: right;
+      }
+      .transfer-valor {
+        font-size: 15px;
+        font-weight: 700;
+        color: #6366f1;
+        margin-bottom: 4px;
+      }
+      .transfer-data {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      /* Mobile */
+      .transferencia-item-mobile {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 10px;
+        border-left: 3px solid #6366f1;
       }
     </style>
   </head>
@@ -73,17 +168,61 @@
         "
       >
         <h1 class="page-title" style="margin: 0">Contas</h1>
-        <button class="btn" onclick="abrirModal()">
-          <i class="fa-solid fa-plus"></i> Nova conta
-        </button>
+        <div style="display: flex; gap: 8px">
+          <button
+            class="btn"
+            style="background: #6366f1"
+            onclick="abrirModalTransferir()"
+          >
+            <i class="fa-solid fa-right-left"></i> Transferir
+          </button>
+          <button class="btn" onclick="abrirModal()">
+            <i class="fa-solid fa-plus"></i> Nova conta
+          </button>
+        </div>
       </div>
 
-      <div class="contas-grid" id="contas-grid">
-        <!-- skeleton -->
+      <div class="contas-grid" id="contas-grid"></div>
+
+      <!-- Histórico de transferências -->
+      <div class="transferencias-wrap">
+        <div class="table-wrap">
+          <div class="table-header">
+            <h2>
+              <i
+                class="fa-solid fa-right-left"
+                style="color: #6366f1; margin-right: 6px"
+              ></i
+              >Transferências
+            </h2>
+          </div>
+          <!-- Desktop -->
+          <div class="desktop-only" id="tabela-transferencias-desktop">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Descrição</th>
+                  <th>Origem</th>
+                  <th>Destino</th>
+                  <th>Valor</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-transferencias"></tbody>
+            </table>
+          </div>
+          <!-- Mobile -->
+          <div
+            class="mobile-only"
+            id="lista-transferencias-mobile"
+            style="padding: 12px"
+          ></div>
+        </div>
       </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Modal nova/editar conta -->
     <div class="modal-overlay" id="modal">
       <div class="modal">
         <h2 id="modal-titulo">Nova conta</h2>
@@ -124,6 +263,67 @@
       </div>
     </div>
 
+    <!-- Modal transferência -->
+    <div class="modal-overlay" id="modal-transferir">
+      <div class="modal">
+        <h2 id="modal-transferir-titulo">Nova transferência</h2>
+
+        <div class="form-group">
+          <label>Valor (R$)</label>
+          <input
+            type="number"
+            id="t-valor"
+            placeholder="0,00"
+            step="0.01"
+            min="0"
+          />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="form-group">
+            <label>Conta origem</label>
+            <select id="t-origem"></select>
+          </div>
+          <div class="form-group">
+            <label>Conta destino</label>
+            <select id="t-destino"></select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Data</label>
+          <input type="date" id="t-data" />
+        </div>
+
+        <div class="form-group">
+          <label>Descrição (opcional)</label>
+          <input
+            type="text"
+            id="t-descricao"
+            placeholder="Ex: Reserva de emergência..."
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Observação (opcional)</label>
+          <input type="text" id="t-obs" placeholder="Alguma observação..." />
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharModalTransferir()">
+            Cancelar
+          </button>
+          <button
+            class="btn"
+            style="background: #6366f1"
+            onclick="salvarTransferencia()"
+          >
+            <i class="fa-solid fa-right-left"></i> Transferir
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="tabbar"></div>
 
     <script src="/js/global.js"></script>
@@ -134,14 +334,25 @@
       document.getElementById("tabbar").innerHTML = renderTabBar("Contas");
 
       let editandoId = null;
+      let editandoTransferenciaId = null;
+      let contasCache = [];
 
+      document.getElementById("t-data").value = new Date()
+        .toISOString()
+        .split("T")[0];
+
+      function isMobile() {
+        return window.innerWidth <= 768;
+      }
+
+      // ── Contas ──
       async function carregarContas() {
         document.getElementById("contas-grid").innerHTML = skeletonCards(3);
-        const contas = (await fetchAPI("/api/contas")) || [];
+        contasCache = (await fetchAPI("/api/contas")) || [];
         const saldos = (await fetchAPI("/api/relatorios/saldo-contas")) || [];
         const grid = document.getElementById("contas-grid");
 
-        if (contas.length === 0) {
+        if (contasCache.length === 0) {
           grid.innerHTML = emptyState(
             "fa-wallet",
             "Nenhuma conta",
@@ -152,7 +363,7 @@
           return;
         }
 
-        grid.innerHTML = contas
+        grid.innerHTML = contasCache
           .map((c) => {
             const saldo = saldos.find((s) => s.nome === c.nome);
             const saldoAtual = saldo
@@ -168,27 +379,129 @@
               }[c.tipo] || c.tipo;
 
             return `
-        <div class="conta-card" style="--cor:${cor}">
-          <div class="conta-tipo">${tipoLabel}</div>
-          <div class="conta-nome">${c.nome}</div>
-          <div class="conta-saldo-label">Saldo atual</div>
-          <div class="conta-saldo" style="color:${saldoAtual >= 0 ? "var(--green)" : "var(--red)"}">
-            ${formatarMoeda(saldoAtual)}
-          </div>
-          <div class="conta-acoes">
-            <button class="btn-edit" onclick="editar(${c.id}, '${c.nome}', '${c.tipo}', ${c.saldo_inicial}, '${cor}')">
-              <i class="fa-solid fa-pen"></i> Editar
-            </button>
-            <button class="btn-danger" onclick="deletar(${c.id})">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </div>
-        </div>
-      `;
+            <div class="conta-card" style="--cor:${cor}">
+              <div class="conta-tipo">${tipoLabel}</div>
+              <div class="conta-nome">${c.nome}</div>
+              <div class="conta-saldo-label">Saldo atual</div>
+              <div class="conta-saldo" style="color:${saldoAtual >= 0 ? "var(--green)" : "var(--red)"}">
+                ${formatarMoeda(saldoAtual)}
+              </div>
+              <div class="conta-acoes">
+                <button class="btn-transferir" onclick="abrirModalTransferir(${c.id})">
+                  <i class="fa-solid fa-right-left"></i> Transferir
+                </button>
+                <button class="btn-edit" onclick="editar(${c.id},'${c.nome}','${c.tipo}',${c.saldo_inicial},'${cor}')">
+                  <i class="fa-solid fa-pen"></i> Editar
+                </button>
+                <button class="btn-danger" onclick="deletar(${c.id})">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          `;
           })
           .join("");
       }
 
+      // ── Transferências ──
+      async function carregarTransferencias() {
+        const data = (await fetchAPI("/api/transferencias")) || [];
+        if (isMobile()) renderTransferenciasMobile(data);
+        else renderTransferenciasDesktop(data);
+      }
+
+      function renderTransferenciasDesktop(data) {
+        const tbody = document.getElementById("tbody-transferencias");
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="padding:0">
+            <div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transferência", "Transfira valores entre suas contas.", "Transferir", "abrirModalTransferir()")}</div>
+          </td></tr>`;
+          return;
+        }
+        tbody.innerHTML = data
+          .map(
+            (t) => `
+          <tr>
+            <td>${formatarData(t.data)}</td>
+            <td>${t.descricao}</td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:5px">
+                <span style="width:8px;height:8px;border-radius:50%;background:${t.conta_origem_cor || "#6b7280"}"></span>
+                ${t.conta_origem}
+              </span>
+            </td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:5px">
+                <span style="width:8px;height:8px;border-radius:50%;background:${t.conta_destino_cor || "#6b7280"}"></span>
+                ${t.conta_destino}
+              </span>
+            </td>
+            <td><span style="font-weight:700;color:#6366f1">${formatarMoeda(t.valor)}</span></td>
+            <td style="display:flex;gap:6px">
+              <button class="btn-edit" onclick="editarTransferencia('${t.transferencia_id}')">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+              <button class="btn-danger" onclick="deletarTransferencia('${t.transferencia_id}')">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `,
+          )
+          .join("");
+      }
+
+      function renderTransferenciasMobile(data) {
+        const lista = document.getElementById("lista-transferencias-mobile");
+        if (data.length === 0) {
+          lista.innerHTML = emptyState(
+            "fa-right-left",
+            "Nenhuma transferência",
+            "Transfira valores entre suas contas.",
+            "Transferir",
+            "abrirModalTransferir()",
+          );
+          return;
+        }
+        lista.innerHTML = data
+          .map(
+            (t) => `
+          <div class="transferencia-item-mobile">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+              <div>
+                <div style="font-size:14px;font-weight:600;margin-bottom:4px">${t.descricao}</div>
+                <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+                  <span style="display:inline-flex;align-items:center;gap:3px">
+                    <span style="width:7px;height:7px;border-radius:50%;background:${t.conta_origem_cor || "#6b7280"}"></span>
+                    ${t.conta_origem}
+                  </span>
+                  <i class="fa-solid fa-arrow-right" style="font-size:10px"></i>
+                  <span style="display:inline-flex;align-items:center;gap:3px">
+                    <span style="width:7px;height:7px;border-radius:50%;background:${t.conta_destino_cor || "#6b7280"}"></span>
+                    ${t.conta_destino}
+                  </span>
+                </div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:16px;font-weight:700;color:#6366f1">${formatarMoeda(t.valor)}</div>
+                <div style="font-size:11px;color:var(--text-muted)">${formatarData(t.data)}</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn-edit" style="padding:6px 14px;font-size:12px" onclick="editarTransferencia('${t.transferencia_id}')">
+                <i class="fa-solid fa-pen"></i> Editar
+              </button>
+              <button class="btn-danger" style="padding:6px 14px;font-size:12px" onclick="deletarTransferencia('${t.transferencia_id}')">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `,
+          )
+          .join("");
+      }
+
+      // ── Modal conta ──
       function abrirModal() {
         editandoId = null;
         document.getElementById("modal-titulo").textContent = "Nova conta";
@@ -240,6 +553,7 @@
         }
         fecharModal();
         carregarContas();
+        carregarTransferencias();
       }
 
       async function deletar(id) {
@@ -250,9 +564,134 @@
         await fetchAPI(`/api/contas/${id}`, { method: "DELETE" });
         toast("Conta deletada!", "info");
         carregarContas();
+        carregarTransferencias();
       }
 
-      carregarContas();
+      // ── Modal transferência ──
+      function preencherSelectsTransferencia(origemId = null) {
+        const selOrigem = document.getElementById("t-origem");
+        const selDestino = document.getElementById("t-destino");
+        const opts = contasCache.length
+          ? contasCache
+              .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+              .join("")
+          : `<option value="">Sem contas</option>`;
+        selOrigem.innerHTML = opts;
+        selDestino.innerHTML = opts;
+        if (origemId) selOrigem.value = origemId;
+        // Destino padrão: diferente da origem
+        const primeiroDestino = contasCache.find(
+          (c) => c.id !== parseInt(selOrigem.value),
+        );
+        if (primeiroDestino) selDestino.value = primeiroDestino.id;
+      }
+
+      function abrirModalTransferir(origemId = null) {
+        editandoTransferenciaId = null;
+        document.getElementById("modal-transferir-titulo").textContent =
+          "Nova transferência";
+        document.getElementById("t-valor").value = "";
+        document.getElementById("t-data").value = new Date()
+          .toISOString()
+          .split("T")[0];
+        document.getElementById("t-descricao").value = "";
+        document.getElementById("t-obs").value = "";
+        preencherSelectsTransferencia(origemId);
+        document.getElementById("modal-transferir").classList.add("active");
+      }
+
+      function fecharModalTransferir() {
+        document.getElementById("modal-transferir").classList.remove("active");
+      }
+
+      async function salvarTransferencia() {
+        const body = {
+          conta_origem_id: parseInt(document.getElementById("t-origem").value),
+          conta_destino_id: parseInt(
+            document.getElementById("t-destino").value,
+          ),
+          valor: parseFloat(document.getElementById("t-valor").value),
+          data: document.getElementById("t-data").value,
+          descricao:
+            document.getElementById("t-descricao").value ||
+            "Transferência entre contas",
+          observacao: document.getElementById("t-obs").value || null,
+        };
+
+        if (!body.valor || isNaN(body.valor) || body.valor <= 0) {
+          toast("Informe um valor válido.", "erro");
+          return;
+        }
+        if (!body.data) {
+          toast("Informe a data.", "erro");
+          return;
+        }
+        if (body.conta_origem_id === body.conta_destino_id) {
+          toast("Origem e destino devem ser diferentes.", "erro");
+          return;
+        }
+
+        if (editandoTransferenciaId) {
+          await fetchAPI(`/api/transferencias/${editandoTransferenciaId}`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+          toast("Transferência atualizada!");
+        } else {
+          await fetchAPI("/api/transferencias", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+          toast("Transferência realizada!");
+        }
+
+        fecharModalTransferir();
+        carregarContas();
+        carregarTransferencias();
+      }
+
+      async function editarTransferencia(transferencia_id) {
+        const data = await fetchAPI(`/api/transferencias/${transferencia_id}`);
+        if (!data || data.length < 2) return;
+        const despesa = data.find((t) => t.tipo === "despesa");
+        const receita = data.find((t) => t.tipo === "receita");
+
+        editandoTransferenciaId = transferencia_id;
+        document.getElementById("modal-transferir-titulo").textContent =
+          "Editar transferência";
+        document.getElementById("t-valor").value = despesa.valor;
+        document.getElementById("t-data").value =
+          despesa.data?.split("T")[0] || "";
+        document.getElementById("t-descricao").value = despesa.descricao;
+        document.getElementById("t-obs").value = despesa.observacao || "";
+        preencherSelectsTransferencia();
+        document.getElementById("t-origem").value = despesa.conta_id;
+        document.getElementById("t-destino").value = receita.conta_id;
+        document.getElementById("modal-transferir").classList.add("active");
+      }
+
+      async function deletarTransferencia(transferencia_id) {
+        const ok = await confirmar(
+          "Deseja deletar esta transferência? As duas entradas (origem e destino) serão removidas.",
+        );
+        if (!ok) return;
+        await fetchAPI(`/api/transferencias/${transferencia_id}`, {
+          method: "DELETE",
+        });
+        toast("Transferência deletada!", "info");
+        carregarContas();
+        carregarTransferencias();
+      }
+
+      window.addEventListener("resize", carregarTransferencias);
+
+      // ── Init ──
+      async function init() {
+        await carregarContas();
+        await carregarTransferencias();
+      }
+
+      init();
     </script>
   </body>
 </html>
