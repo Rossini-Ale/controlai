@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controlaí — Recorrentes</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/css/global.css" />
+    <style>
+      /* ── Cards de recorrência ── */
+      .rec-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+      }
+
+      .rec-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 18px 20px;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s;
+      }
+
+      .rec-card.pausada {
+        opacity: 0.6;
+      }
+
+      .rec-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--cor-tipo);
+      }
+
+      .rec-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        gap: 8px;
+      }
+
+      .rec-titulo {
+        font-size: 15px;
+        font-weight: 700;
+        flex: 1;
+        line-height: 1.3;
+      }
+
+      .rec-valor {
+        font-size: 18px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .rec-valor.receita {
+        color: var(--green);
+      }
+      .rec-valor.despesa {
+        color: var(--red);
+      }
+
+      .rec-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 12px;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 14px;
+      }
+
+      .rec-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .rec-meta-item i {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      .rec-proxima {
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .rec-proxima-label {
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .rec-proxima-data {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+
+      .rec-proxima-data.vencida {
+        color: var(--red);
+      }
+
+      .badge-freq {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-weight: 600;
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--blue);
+        white-space: nowrap;
+      }
+
+      .badge-pausada {
+        background: rgba(107, 114, 128, 0.15);
+        color: var(--text-muted);
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-weight: 600;
+      }
+
+      .rec-acoes {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .btn-toggle {
+        background: transparent;
+        border: 0.5px solid var(--border);
+        color: var(--text-secondary);
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .btn-toggle:hover {
+        border-color: #f59e0b;
+        color: #f59e0b;
+      }
+
+      .btn-historico {
+        background: transparent;
+        border: 0.5px solid var(--border);
+        color: var(--text-secondary);
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .btn-historico:hover {
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+
+      /* ── Modal histórico ── */
+      .historico-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 0.5px solid var(--border);
+        font-size: 13px;
+      }
+
+      .historico-item:last-child {
+        border-bottom: none;
+      }
+
+      /* ── Filtros ── */
+      .filtro-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .filtro-btn {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        color: var(--text-secondary);
+        border-radius: 9px;
+        padding: 7px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .filtro-btn.active {
+        background: var(--green);
+        border-color: var(--green);
+        color: #fff;
+      }
+
+      /* ── Resumo no topo ── */
+      .rec-resumo {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      @media (max-width: 768px) {
+        .rec-grid {
+          grid-template-columns: 1fr;
+        }
+        .rec-resumo {
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+        }
+        .rec-resumo .card {
+          padding: 12px 10px;
+        }
+        .rec-resumo .card-value {
+          font-size: 15px;
+        }
+        .rec-resumo .card-label {
+          font-size: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar" id="sidebar"></div>
+
+    <div class="main">
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 20px;
+        "
+      >
+        <h1 class="page-title" style="margin: 0">Recorrentes</h1>
+        <button class="btn" onclick="abrirModal()">
+          <i class="fa-solid fa-plus"></i> Nova recorrência
+        </button>
+      </div>
+
+      <!-- Resumo -->
+      <div class="rec-resumo" id="resumo-cards">
+        <div class="card">
+          <div class="card-label">Receitas/mês</div>
+          <div class="card-value green" id="res-receitas">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Despesas/mês</div>
+          <div class="card-value red" id="res-despesas">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Saldo recorrente</div>
+          <div class="card-value blue" id="res-saldo">—</div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filtro-bar">
+        <button class="filtro-btn active" onclick="filtrar('todos', this)">
+          Todas
+        </button>
+        <button class="filtro-btn" onclick="filtrar('despesa', this)">
+          Despesas
+        </button>
+        <button class="filtro-btn" onclick="filtrar('receita', this)">
+          Receitas
+        </button>
+        <button class="filtro-btn" onclick="filtrar('pausada', this)">
+          Pausadas
+        </button>
+      </div>
+
+      <!-- Grid -->
+      <div class="rec-grid" id="rec-grid"></div>
+    </div>
+
+    <!-- ── Modal criar/editar ── -->
+    <div class="modal-overlay" id="modal">
+      <div class="modal" style="max-width: 480px">
+        <h2 id="modal-titulo">Nova recorrência</h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="form-group">
+            <label>Tipo</label>
+            <select id="f-tipo" onchange="filtrarCategorias()">
+              <option value="despesa">Despesa</option>
+              <option value="receita">Receita</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Valor (R$)</label>
+            <input
+              type="number"
+              id="f-valor"
+              placeholder="0,00"
+              step="0.01"
+              min="0"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Descrição</label>
+          <input
+            type="text"
+            id="f-descricao"
+            placeholder="Ex: Aluguel, Netflix, Salário..."
+          />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="form-group">
+            <label>Categoria</label>
+            <select id="f-categoria"></select>
+          </div>
+          <div class="form-group">
+            <label>Conta</label>
+            <select id="f-conta"></select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="form-group">
+            <label>Frequência</label>
+            <select id="f-frequencia" onchange="atualizarCampoDia()">
+              <option value="diaria">Diária</option>
+              <option value="semanal">Semanal</option>
+              <option value="quinzenal">Quinzenal</option>
+              <option value="mensal" selected>Mensal</option>
+              <option value="bimestral">Bimestral</option>
+              <option value="trimestral">Trimestral</option>
+              <option value="semestral">Semestral</option>
+              <option value="anual">Anual</option>
+            </select>
+          </div>
+          <div class="form-group" id="grupo-dia">
+            <label id="label-dia">Dia do mês</label>
+            <input
+              type="number"
+              id="f-dia"
+              min="1"
+              max="31"
+              value="1"
+              placeholder="1"
+            />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="form-group">
+            <label>Início</label>
+            <input type="date" id="f-inicio" />
+          </div>
+          <div class="form-group">
+            <label>Fim (opcional)</label>
+            <input type="date" id="f-fim" placeholder="Sem fim" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Observação (opcional)</label>
+          <input type="text" id="f-obs" placeholder="Alguma observação..." />
+        </div>
+
+        <!-- Preview da próxima geração -->
+        <div
+          id="preview-proxima"
+          style="
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            display: none;
+          "
+        >
+          <i
+            class="fa-solid fa-calendar-check"
+            style="margin-right: 6px; color: var(--green)"
+          ></i>
+          <span id="preview-texto"></span>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+          <button class="btn" onclick="salvar()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Modal histórico ── -->
+    <div class="modal-overlay" id="modal-hist">
+      <div class="modal" style="max-width: 480px">
+        <h2 id="hist-titulo">Histórico</h2>
+        <div id="hist-lista" style="max-height: 360px; overflow-y: auto"></div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharHist()">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tabbar"></div>
+
+    <script src="/js/global.js"></script>
+    <script src="/js/ui.js"></script>
+    <script>
+      verificarAuth();
+      document.getElementById("sidebar").innerHTML =
+        renderSidebar("Recorrentes");
+      document.getElementById("tabbar").innerHTML = renderTabBar("Recorrentes");
+
+      // ── Estado ──
+      let editandoId = null;
+      let todasRec = [];
+      let filtroAtual = "todos";
+      let categorias = [];
+      let contas = [];
+
+      // ── Frequência → label do campo dia ──
+      const FREQ_DIA_LABEL = {
+        diaria: null,
+        semanal: "Dia da semana",
+        quinzenal: null,
+        mensal: "Dia do mês",
+        bimestral: "Dia do mês",
+        trimestral: "Dia do mês",
+        semestral: "Dia do mês",
+        anual: "Dia do mês",
+      };
+
+      const FREQ_LABEL = {
+        diaria: "Diária",
+        semanal: "Semanal",
+        quinzenal: "Quinzenal",
+        mensal: "Mensal",
+        bimestral: "Bimestral",
+        trimestral: "Trimestral",
+        semestral: "Semestral",
+        anual: "Anual",
+      };
+
+      const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+      // ── Init ──
+      document.getElementById("f-inicio").value = new Date()
+        .toISOString()
+        .split("T")[0];
+      atualizarCampoDia();
+      carregarTudo();
+
+      // ── Carregar dados ──
+      async function carregarTudo() {
+        [categorias, contas] = await Promise.all([
+          fetchAPI("/api/categorias").then((d) => d || []),
+          fetchAPI("/api/contas").then((d) => d || []),
+        ]);
+        filtrarCategorias();
+        preencherContas();
+        await carregarRecorrentes();
+      }
+
+      async function carregarRecorrentes() {
+        document.getElementById("rec-grid").innerHTML = skeletonCards(3);
+        todasRec = (await fetchAPI("/api/recorrentes")) || [];
+        calcularResumo();
+        renderGrid();
+      }
+
+      // ── Resumo mensal estimado ──
+      function calcularResumo() {
+        const ativas = todasRec.filter((r) => r.ativa);
+        const MULT = {
+          diaria: 30,
+          semanal: 4.3,
+          quinzenal: 2,
+          mensal: 1,
+          bimestral: 0.5,
+          trimestral: 0.33,
+          semestral: 0.17,
+          anual: 0.083,
+        };
+        let receitas = 0,
+          despesas = 0;
+        for (const r of ativas) {
+          const v = parseFloat(r.valor) * (MULT[r.frequencia] || 1);
+          if (r.tipo === "receita") receitas += v;
+          else despesas += v;
+        }
+        document.getElementById("res-receitas").textContent =
+          formatarMoeda(receitas);
+        document.getElementById("res-despesas").textContent =
+          formatarMoeda(despesas);
+        const saldo = receitas - despesas;
+        const el = document.getElementById("res-saldo");
+        el.textContent = formatarMoeda(saldo);
+        el.className = "card-value " + (saldo >= 0 ? "green" : "red");
+      }
+
+      // ── Renderizar grid ──
+      function renderGrid() {
+        const grid = document.getElementById("rec-grid");
+        let lista = todasRec;
+
+        if (filtroAtual === "despesa")
+          lista = lista.filter((r) => r.tipo === "despesa");
+        else if (filtroAtual === "receita")
+          lista = lista.filter((r) => r.tipo === "receita");
+        else if (filtroAtual === "pausada")
+          lista = lista.filter((r) => !r.ativa);
+
+        if (lista.length === 0) {
+          grid.innerHTML = emptyState(
+            "fa-rotate",
+            "Nenhuma recorrência",
+            "Adicione contas fixas como aluguel, salário, assinaturas...",
+            "Nova recorrência",
+            "abrirModal()",
+          );
+          return;
+        }
+
+        grid.innerHTML = lista.map((r) => renderCard(r)).join("");
+      }
+
+      function renderCard(r) {
+        const hoje = new Date().toISOString().split("T")[0];
+        const proxima = r.proxima_geracao
+          ? r.proxima_geracao.split("T")[0]
+          : null;
+        const vencida = proxima && proxima < hoje;
+        const corTipo = r.tipo === "receita" ? "var(--green)" : "var(--red)";
+        const sinal = r.tipo === "receita" ? "+" : "-";
+
+        const diaLabel =
+          r.frequencia === "semanal"
+            ? `Toda ${DIAS_SEMANA[r.dia_vencimento] || "—"}`
+            : r.frequencia === "diaria" || r.frequencia === "quinzenal"
+              ? FREQ_LABEL[r.frequencia]
+              : `Dia ${r.dia_vencimento} — ${FREQ_LABEL[r.frequencia]}`;
+
+        return `
+          <div class="rec-card ${r.ativa ? "" : "pausada"}" style="--cor-tipo:${corTipo}">
+            <div class="rec-top">
+              <div>
+                <div class="rec-titulo">${r.descricao}</div>
+                <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+                  <span class="badge-freq">${FREQ_LABEL[r.frequencia] || r.frequencia}</span>
+                  ${!r.ativa ? `<span class="badge-pausada"><i class="fa-solid fa-pause" style="margin-right:3px"></i>Pausada</span>` : ""}
+                </div>
+              </div>
+              <div class="rec-valor ${r.tipo}">${sinal}${formatarMoeda(r.valor)}</div>
+            </div>
+
+            <div class="rec-meta">
+              <div class="rec-meta-item">
+                <i class="fa-solid fa-rotate"></i>
+                <span>${diaLabel}</span>
+              </div>
+              ${
+                r.categoria_nome
+                  ? `
+              <div class="rec-meta-item">
+                <i class="fa-solid fa-tag" style="color:${r.categoria_cor || "#6b7280"}"></i>
+                <span>${r.categoria_nome}</span>
+              </div>`
+                  : ""
+              }
+              ${
+                r.conta_nome
+                  ? `
+              <div class="rec-meta-item">
+                <i class="fa-solid fa-wallet"></i>
+                <span>${r.conta_nome}</span>
+              </div>`
+                  : ""
+              }
+              ${
+                r.data_fim
+                  ? `
+              <div class="rec-meta-item">
+                <i class="fa-solid fa-calendar-xmark"></i>
+                <span>Até ${formatarData(r.data_fim)}</span>
+              </div>`
+                  : ""
+              }
+            </div>
+
+            <div class="rec-proxima">
+              <span class="rec-proxima-label">
+                <i class="fa-solid fa-calendar-day"></i>
+                Próxima geração
+              </span>
+              <span class="rec-proxima-data ${vencida ? "vencida" : ""}">
+                ${proxima ? formatarData(proxima) : "—"}
+                ${vencida ? " ⚠️" : ""}
+              </span>
+            </div>
+
+            <div class="rec-acoes">
+              <button class="btn-toggle" onclick="toggleAtiva(${r.id}, ${r.ativa})">
+                <i class="fa-solid fa-${r.ativa ? "pause" : "play"}"></i>
+                ${r.ativa ? "Pausar" : "Ativar"}
+              </button>
+              <button class="btn-historico" onclick="verHistorico(${r.id}, '${r.descricao}')">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                Histórico
+              </button>
+              <button class="btn-edit" onclick="editar(${r.id})">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+              <button class="btn-danger" onclick="deletar(${r.id})">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      // ── Filtros ──
+      function filtrar(tipo, btn) {
+        filtroAtual = tipo;
+        document
+          .querySelectorAll(".filtro-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderGrid();
+      }
+
+      // ── Modal ──
+      function abrirModal() {
+        editandoId = null;
+        document.getElementById("modal-titulo").textContent =
+          "Nova recorrência";
+        document.getElementById("f-tipo").value = "despesa";
+        document.getElementById("f-valor").value = "";
+        document.getElementById("f-descricao").value = "";
+        document.getElementById("f-frequencia").value = "mensal";
+        document.getElementById("f-dia").value = "1";
+        document.getElementById("f-inicio").value = new Date()
+          .toISOString()
+          .split("T")[0];
+        document.getElementById("f-fim").value = "";
+        document.getElementById("f-obs").value = "";
+        document.getElementById("preview-proxima").style.display = "none";
+        filtrarCategorias();
+        atualizarCampoDia();
+        document.getElementById("modal").classList.add("active");
+      }
+
+      function fecharModal() {
+        document.getElementById("modal").classList.remove("active");
+      }
+
+      async function editar(id) {
+        const rec = todasRec.find((r) => r.id === id);
+        if (!rec) return;
+        editandoId = id;
+        document.getElementById("modal-titulo").textContent =
+          "Editar recorrência";
+        document.getElementById("f-tipo").value = rec.tipo;
+        document.getElementById("f-valor").value = rec.valor;
+        document.getElementById("f-descricao").value = rec.descricao;
+        document.getElementById("f-frequencia").value = rec.frequencia;
+        document.getElementById("f-dia").value = rec.dia_vencimento;
+        document.getElementById("f-inicio").value =
+          rec.data_inicio?.split("T")[0] || "";
+        document.getElementById("f-fim").value =
+          rec.data_fim?.split("T")[0] || "";
+        document.getElementById("f-obs").value = rec.observacao || "";
+        filtrarCategorias();
+        document.getElementById("f-categoria").value = rec.categoria_id || "";
+        document.getElementById("f-conta").value = rec.conta_id || "";
+        atualizarCampoDia();
+        document.getElementById("modal").classList.add("active");
+      }
+
+      // ── Campo dia dinâmico ──
+      function atualizarCampoDia() {
+        const freq = document.getElementById("f-frequencia").value;
+        const grupo = document.getElementById("grupo-dia");
+        const label = document.getElementById("label-dia");
+        const input = document.getElementById("f-dia");
+
+        if (freq === "diaria") {
+          grupo.style.display = "none";
+        } else if (freq === "semanal") {
+          grupo.style.display = "block";
+          label.textContent = "Dia da semana";
+          // Transforma em select
+          input.type = "number";
+          input.min = "0";
+          input.max = "6";
+          input.placeholder = "0=Dom, 6=Sáb";
+        } else if (freq === "quinzenal") {
+          grupo.style.display = "none";
+        } else {
+          grupo.style.display = "block";
+          label.textContent = "Dia do mês";
+          input.type = "number";
+          input.min = "1";
+          input.max = "31";
+          input.placeholder = "1-31";
+        }
+      }
+
+      // ── Categorias filtradas por tipo ──
+      function filtrarCategorias() {
+        const tipo = document.getElementById("f-tipo").value;
+        const sel = document.getElementById("f-categoria");
+        const filtradas = categorias.filter((c) => c.tipo === tipo);
+        sel.innerHTML = filtradas.length
+          ? `<option value="">Sem categoria</option>` +
+            filtradas
+              .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+              .join("")
+          : `<option value="">Sem categorias</option>`;
+      }
+
+      function preencherContas() {
+        const sel = document.getElementById("f-conta");
+        sel.innerHTML =
+          `<option value="">Sem conta</option>` +
+          (contas.length
+            ? contas
+                .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+                .join("")
+            : "");
+      }
+
+      // ── Salvar ──
+      async function salvar() {
+        const body = {
+          tipo: document.getElementById("f-tipo").value,
+          valor: parseFloat(document.getElementById("f-valor").value),
+          descricao: document.getElementById("f-descricao").value,
+          categoria_id: document.getElementById("f-categoria").value || null,
+          conta_id: document.getElementById("f-conta").value || null,
+          frequencia: document.getElementById("f-frequencia").value,
+          dia_vencimento: parseInt(document.getElementById("f-dia").value) || 1,
+          data_inicio: document.getElementById("f-inicio").value,
+          data_fim: document.getElementById("f-fim").value || null,
+          observacao: document.getElementById("f-obs").value || null,
+        };
+
+        if (
+          !body.descricao ||
+          !body.valor ||
+          isNaN(body.valor) ||
+          !body.data_inicio
+        ) {
+          toast("Preencha descrição, valor e data de início.", "erro");
+          return;
+        }
+
+        if (body.valor <= 0) {
+          toast("O valor deve ser maior que zero.", "erro");
+          return;
+        }
+
+        let res;
+        if (editandoId) {
+          res = await fetchAPI(`/api/recorrentes/${editandoId}`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+          toast("Recorrência atualizada!");
+        } else {
+          res = await fetchAPI("/api/recorrentes", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+          if (res?.proxima_geracao) {
+            toast(
+              `Recorrência criada! Próxima: ${formatarData(res.proxima_geracao)}`,
+            );
+          } else {
+            toast("Recorrência criada!");
+          }
+        }
+
+        fecharModal();
+        carregarRecorrentes();
+      }
+
+      // ── Ativar/Pausar ──
+      async function toggleAtiva(id, ativaAtual) {
+        const novaAtiva = !ativaAtual;
+        await fetchAPI(`/api/recorrentes/${id}/ativar`, {
+          method: "PATCH",
+          body: JSON.stringify({ ativa: novaAtiva }),
+        });
+        toast(
+          novaAtiva ? "Recorrência ativada!" : "Recorrência pausada.",
+          "info",
+        );
+        carregarRecorrentes();
+      }
+
+      // ── Deletar ──
+      async function deletar(id) {
+        const ok = await confirmar(
+          "Deseja deletar esta recorrência? As transações já geradas não serão afetadas.",
+        );
+        if (!ok) return;
+        await fetchAPI(`/api/recorrentes/${id}`, { method: "DELETE" });
+        toast("Recorrência deletada!", "info");
+        carregarRecorrentes();
+      }
+
+      // ── Histórico ──
+      async function verHistorico(id, nome) {
+        document.getElementById("hist-titulo").textContent =
+          `Histórico — ${nome}`;
+        document.getElementById("hist-lista").innerHTML = skeletonLista(3);
+        document.getElementById("modal-hist").classList.add("active");
+
+        const data = await fetchAPI(`/api/recorrentes/${id}/historico`);
+        const lista = document.getElementById("hist-lista");
+
+        if (!data || data.length === 0) {
+          lista.innerHTML = `
+            <div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px">
+              <i class="fa-solid fa-clock-rotate-left" style="font-size:28px;margin-bottom:10px;display:block"></i>
+              Nenhuma transação gerada ainda.
+            </div>
+          `;
+          return;
+        }
+
+        lista.innerHTML = data
+          .map(
+            (t) => `
+          <div class="historico-item">
+            <div>
+              <div style="font-weight:600;font-size:13px">${formatarData(t.data)}</div>
+              <div style="font-size:11px;color:var(--text-muted)">${t.descricao}</div>
+            </div>
+            <span class="badge ${t.tipo}">${formatarMoeda(t.valor)}</span>
+          </div>
+        `,
+          )
+          .join("");
+      }
+
+      function fecharHist() {
+        document.getElementById("modal-hist").classList.remove("active");
+      }
+    </script>
+  </body>
+</html>

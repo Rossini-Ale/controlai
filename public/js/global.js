@@ -96,6 +96,7 @@ function renderSidebar(paginaAtiva) {
   const navItems = [
     { href: "/dashboard.html", icon: "fa-house", label: "Dashboard" },
     { href: "/lancamentos.html", icon: "fa-right-left", label: "Lançamentos" },
+    { href: "/recorrentes.html", icon: "fa-rotate", label: "Recorrentes" },
     { href: "/contas.html", icon: "fa-wallet", label: "Contas" },
     { href: "/cartoes.html", icon: "fa-credit-card", label: "Cartões" },
     { href: "/categorias.html", icon: "fa-tag", label: "Categorias" },
@@ -165,6 +166,9 @@ function renderTabBar(paginaAtiva) {
     <div class="mais-menu" id="mais-menu" style="display:none">
       <a href="/contas.html" class="mais-item">
         <i class="fa-solid fa-wallet"></i> Contas
+      </a>
+      <a href="/recorrentes.html" class="mais-item">
+        <i class="fa-solid fa-rotate"></i> Recorrentes
       </a>
       <a href="/categorias.html" class="mais-item">
         <i class="fa-solid fa-tag"></i> Categorias

@@ -1,3 +1,4 @@
+// server.js — Controlaí (com suporte a Transações Recorrentes)
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -9,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// Rotas
+// ── Rotas ──
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/transacoes", require("./routes/transacoes"));
 app.use("/api/categorias", require("./routes/categorias"));
@@ -18,8 +19,9 @@ app.use("/api/metas", require("./routes/metas"));
 app.use("/api/relatorios", require("./routes/relatorios"));
 app.use("/api/cartoes", require("./routes/cartoes"));
 app.use("/api/faturas", require("./routes/faturas"));
+app.use("/api/recorrentes", require("./routes/recorrentes")); // ← NOVO
 
-// Telegram webhook
+// ── Telegram webhook ──
 const bot = require("./routes/telegram");
 bot.setWebHook(
   `https://controlai.up.railway.app/bot${process.env.TELEGRAM_TOKEN}`,
@@ -29,11 +31,32 @@ app.post(`/bot${process.env.TELEGRAM_TOKEN}`, (req, res) => {
   res.sendStatus(200);
 });
 
-// Rota raiz → login
+// ── Rota raiz → login ──
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
+// ── Cron: processa recorrentes ──
+// Roda logo ao iniciar e depois a cada 1 hora
+const { processarRecorrentes } = require("./routes/recorrentes-engine");
+
+async function rodarCron() {
+  console.log("[Cron] Verificando transações recorrentes...");
+  try {
+    await processarRecorrentes();
+  } catch (err) {
+    console.error("[Cron] Erro:", err.message);
+  }
+}
+
+// Aguarda 5s para o banco estar pronto antes da primeira execução
+setTimeout(() => {
+  rodarCron();
+  // Depois roda a cada hora (3.600.000 ms)
+  setInterval(rodarCron, 60 * 60 * 1000);
+}, 5000);
+
+// ── Servidor ──
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Controlaí rodando em: http://localhost:${PORT}`);
