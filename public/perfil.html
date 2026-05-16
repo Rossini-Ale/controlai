@@ -68,7 +68,6 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10px;
-        margin-bottom: 0;
       }
       .stat-item {
         background: var(--bg-tertiary);
@@ -121,10 +120,9 @@
       <h1 class="page-title">Perfil</h1>
 
       <div class="perfil-grid">
-        <!-- Card perfil -->
         <div>
           <div class="perfil-card" style="margin-bottom: 20px">
-            <div class="avatar-wrap" id="avatar-wrap">
+            <div class="avatar-wrap">
               <div class="avatar-grande" id="avatar-iniciais">--</div>
               <div class="avatar-info">
                 <h3 id="perfil-nome">Carregando...</h3>
@@ -132,7 +130,7 @@
                 <p id="perfil-membro" style="margin-top: 2px"></p>
               </div>
             </div>
-            <div class="stats-grid" id="stats-grid">
+            <div class="stats-grid">
               <div class="stat-item">
                 <div class="stat-valor" id="stat-transacoes">—</div>
                 <div class="stat-label">Transações</div>
@@ -152,7 +150,6 @@
             </div>
           </div>
 
-          <!-- Telegram -->
           <div class="perfil-card">
             <h2><i class="fa-brands fa-telegram"></i> Telegram Bot</h2>
             <div class="telegram-status" id="telegram-status">
@@ -167,7 +164,7 @@
               "
             >
               Para lançar gastos pelo Telegram, conecte sua conta usando o
-              comando abaixo no bot <strong>@controlai_bot</strong>:
+              comando abaixo no bot <strong>@controlai_seu_nome_bot</strong>:
             </p>
             <div
               style="
@@ -186,7 +183,6 @@
           </div>
         </div>
 
-        <!-- Card editar -->
         <div>
           <div class="perfil-card" style="margin-bottom: 20px">
             <h2><i class="fa-solid fa-pen"></i> Editar informações</h2>
@@ -280,7 +276,6 @@
         document.getElementById("telegram-cmd").textContent =
           `/conectar ${perfil.username}`;
 
-        // Telegram status
         const statusEl = document.getElementById("telegram-status");
         const textoEl = document.getElementById("telegram-texto");
         if (perfil.telegram_chat_id) {
@@ -360,23 +355,6 @@
         document.getElementById("s-atual").value = "";
         document.getElementById("s-nova").value = "";
         document.getElementById("s-confirma").value = "";
-      }
-
-      // Inclui telegram_chat_id no perfil
-      async function fetchAPI(endpoint, options = {}) {
-        const res = await fetch(endpoint, {
-          ...options,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getToken()}`,
-            ...(options.headers || {}),
-          },
-        });
-        if (res.status === 401) {
-          logout();
-          return null;
-        }
-        return res.json();
       }
 
       carregarPerfil();
