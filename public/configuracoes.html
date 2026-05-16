@@ -1230,8 +1230,10 @@
         const a = document.getElementById("orc-ano").value;
 
         [categoriasCache, orcamentosCache] = await Promise.all([
-          fetchAPI("/api/categorias").then((d) => d || []),
-          fetchAPI(`/api/orcamentos?mes=${m}&ano=${a}`).then((d) => d || []),
+          fetchAPI("/api/categorias").then((d) => (Array.isArray(d) ? d : [])),
+          fetchAPI(`/api/orcamentos?mes=${m}&ano=${a}`).then((d) =>
+            Array.isArray(d) ? d : [],
+          ),
         ]);
 
         // Orçamento geral
