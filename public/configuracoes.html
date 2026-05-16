@@ -1,0 +1,1126 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controlaí — Configurações</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/css/global.css" />
+    <style>
+      .abas {
+        display: flex;
+        gap: 4px;
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        padding: 4px;
+        margin-bottom: 20px;
+        width: fit-content;
+      }
+      .aba-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        border-radius: 9px;
+        padding: 8px 18px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .aba-btn.active {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+      .aba-conteudo {
+        display: none;
+      }
+      .aba-conteudo.active {
+        display: block;
+      }
+
+      /* ── Categorias ── */
+      .categorias-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+      .categoria-section h2 {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .categoria-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .categoria-item {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .categoria-cor {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .categoria-nome {
+        flex: 1;
+        font-size: 14px;
+      }
+      .categoria-acoes {
+        display: flex;
+        gap: 6px;
+      }
+      .icone-seletor {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 4px;
+      }
+      .icone-opcao {
+        width: 100%;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-primary);
+        border: 0.5px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        color: var(--text-secondary);
+        transition: all 0.15s;
+      }
+      .icone-opcao:hover {
+        border-color: var(--green);
+        color: var(--green);
+      }
+      .icone-opcao.selecionado {
+        border-color: var(--green);
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--green);
+      }
+      .icone-preview {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+      .icone-preview i {
+        font-size: 20px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-primary);
+        border: 0.5px solid var(--border);
+        border-radius: 8px;
+      }
+
+      /* ── Metas ── */
+      .metas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+      }
+      .meta-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+      }
+      .meta-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .meta-nome {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .meta-status {
+        font-size: 11px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-weight: 500;
+      }
+      .meta-status.ativa {
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--blue);
+      }
+      .meta-status.concluida {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--green);
+      }
+      .meta-status.cancelada {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--red);
+      }
+      .meta-valores {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+      }
+      .meta-valores span {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .progress-bar {
+        background: var(--bg-tertiary);
+        border-radius: 99px;
+        height: 8px;
+        margin-bottom: 12px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        border-radius: 99px;
+        transition: width 0.4s ease;
+      }
+      .meta-prazo {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 14px;
+      }
+      .meta-acoes {
+        display: flex;
+        gap: 8px;
+      }
+      .btn-progresso {
+        background: rgba(16, 185, 129, 0.1);
+        border: 0.5px solid var(--green);
+        color: var(--green);
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-progresso:hover {
+        background: var(--green);
+        color: #fff;
+      }
+
+      /* ── Perfil ── */
+      .perfil-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .perfil-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 24px;
+      }
+      .perfil-card h2 {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .perfil-card h2 i {
+        color: var(--green);
+      }
+      .avatar-wrap {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding: 16px;
+        background: var(--bg-tertiary);
+        border-radius: 12px;
+      }
+      .avatar-grande {
+        width: 64px;
+        height: 64px;
+        background: var(--green);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: 700;
+        color: #fff;
+        flex-shrink: 0;
+      }
+      .avatar-info h3 {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .avatar-info p {
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .stat-item {
+        background: var(--bg-tertiary);
+        border-radius: 10px;
+        padding: 14px;
+        text-align: center;
+      }
+      .stat-valor {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--green);
+        margin-bottom: 4px;
+      }
+      .stat-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .telegram-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+        font-size: 13px;
+      }
+      .telegram-status.conectado {
+        background: rgba(16, 185, 129, 0.1);
+        border: 0.5px solid var(--green);
+        color: var(--green);
+      }
+      .telegram-status.desconectado {
+        background: rgba(107, 114, 128, 0.1);
+        border: 0.5px solid var(--border);
+        color: var(--text-muted);
+      }
+
+      @media (max-width: 768px) {
+        .abas {
+          width: 100%;
+        }
+        .aba-btn {
+          flex: 1;
+          justify-content: center;
+          padding: 8px 6px;
+          font-size: 12px;
+        }
+        .categorias-grid {
+          grid-template-columns: 1fr;
+        }
+        .perfil-grid {
+          grid-template-columns: 1fr;
+        }
+        .metas-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar" id="sidebar"></div>
+    <div class="main">
+      <h1 class="page-title">Configurações</h1>
+
+      <div class="abas">
+        <button
+          class="aba-btn active"
+          id="aba-categorias-btn"
+          onclick="trocarAba('categorias')"
+        >
+          <i class="fa-solid fa-tag"></i> Categorias
+        </button>
+        <button class="aba-btn" id="aba-metas-btn" onclick="trocarAba('metas')">
+          <i class="fa-solid fa-bullseye"></i> Metas
+        </button>
+        <button
+          class="aba-btn"
+          id="aba-perfil-btn"
+          onclick="trocarAba('perfil')"
+        >
+          <i class="fa-solid fa-user"></i> Perfil
+        </button>
+      </div>
+
+      <!-- ══ ABA CATEGORIAS ══ -->
+      <div class="aba-conteudo active" id="aba-categorias">
+        <div
+          style="display: flex; justify-content: flex-end; margin-bottom: 16px"
+        >
+          <button class="btn" onclick="abrirModalCategoria()">
+            <i class="fa-solid fa-plus"></i> Nova categoria
+          </button>
+        </div>
+        <div class="categorias-grid">
+          <div class="categoria-section">
+            <h2>
+              <span style="color: var(--red)"
+                ><i class="fa-solid fa-arrow-down"></i
+              ></span>
+              Despesas
+            </h2>
+            <div class="categoria-lista" id="lista-despesas">
+              <p
+                style="
+                  color: var(--text-muted);
+                  font-size: 13px;
+                  padding: 16px;
+                  text-align: center;
+                "
+              >
+                Carregando...
+              </p>
+            </div>
+          </div>
+          <div class="categoria-section">
+            <h2>
+              <span style="color: var(--green)"
+                ><i class="fa-solid fa-arrow-up"></i
+              ></span>
+              Receitas
+            </h2>
+            <div class="categoria-lista" id="lista-receitas">
+              <p
+                style="
+                  color: var(--text-muted);
+                  font-size: 13px;
+                  padding: 16px;
+                  text-align: center;
+                "
+              >
+                Carregando...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ABA METAS ══ -->
+      <div class="aba-conteudo" id="aba-metas">
+        <div
+          style="display: flex; justify-content: flex-end; margin-bottom: 16px"
+        >
+          <button class="btn" onclick="abrirModalMeta()">
+            <i class="fa-solid fa-plus"></i> Nova meta
+          </button>
+        </div>
+        <div class="metas-grid" id="metas-grid"></div>
+      </div>
+
+      <!-- ══ ABA PERFIL ══ -->
+      <div class="aba-conteudo" id="aba-perfil">
+        <div class="perfil-grid">
+          <div>
+            <div class="perfil-card" style="margin-bottom: 20px">
+              <div class="avatar-wrap">
+                <div class="avatar-grande" id="avatar-iniciais">--</div>
+                <div class="avatar-info">
+                  <h3 id="perfil-nome">Carregando...</h3>
+                  <p id="perfil-username">@username</p>
+                  <p id="perfil-membro" style="margin-top: 2px"></p>
+                </div>
+              </div>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div class="stat-valor" id="stat-transacoes">—</div>
+                  <div class="stat-label">Transações</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-valor" id="stat-categorias">—</div>
+                  <div class="stat-label">Categorias</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-valor" id="stat-contas">—</div>
+                  <div class="stat-label">Contas</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-valor" id="stat-metas">—</div>
+                  <div class="stat-label">Metas</div>
+                </div>
+              </div>
+            </div>
+            <div class="perfil-card">
+              <h2><i class="fa-brands fa-telegram"></i> Telegram Bot</h2>
+              <div class="telegram-status" id="telegram-status">
+                <i class="fa-solid fa-circle"></i
+                ><span id="telegram-texto">Verificando...</span>
+              </div>
+              <p
+                style="
+                  font-size: 12px;
+                  color: var(--text-muted);
+                  line-height: 1.6;
+                "
+              >
+                Para lançar gastos pelo Telegram, conecte sua conta usando o
+                comando abaixo no bot <strong>@controlai_seu_nome_bot</strong>:
+              </p>
+              <div
+                style="
+                  background: var(--bg-tertiary);
+                  border-radius: 8px;
+                  padding: 10px 14px;
+                  margin-top: 10px;
+                  font-family: monospace;
+                  font-size: 13px;
+                  color: var(--green);
+                "
+                id="telegram-cmd"
+              >
+                /conectar seu_username
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="perfil-card" style="margin-bottom: 20px">
+              <h2><i class="fa-solid fa-pen"></i> Editar informações</h2>
+              <div class="form-group">
+                <label>Nome completo</label
+                ><input type="text" id="e-nome" placeholder="Seu nome" />
+              </div>
+              <div class="form-group">
+                <label>Email</label
+                ><input type="email" id="e-email" placeholder="seu@email.com" />
+              </div>
+              <div class="form-group">
+                <label>Username</label
+                ><input
+                  type="text"
+                  id="e-username"
+                  disabled
+                  style="opacity: 0.5; cursor: not-allowed"
+                />
+              </div>
+              <button
+                class="btn"
+                onclick="salvarPerfil()"
+                style="width: 100%; justify-content: center"
+              >
+                <i class="fa-solid fa-check"></i> Salvar alterações
+              </button>
+            </div>
+            <div class="perfil-card">
+              <h2><i class="fa-solid fa-lock"></i> Alterar senha</h2>
+              <div class="form-group">
+                <label>Senha atual</label
+                ><input type="password" id="s-atual" placeholder="••••••••" />
+              </div>
+              <div class="form-group">
+                <label>Nova senha</label
+                ><input type="password" id="s-nova" placeholder="••••••••" />
+              </div>
+              <div class="form-group">
+                <label>Confirmar nova senha</label
+                ><input
+                  type="password"
+                  id="s-confirma"
+                  placeholder="••••••••"
+                />
+              </div>
+              <button
+                class="btn"
+                onclick="alterarSenha()"
+                style="width: 100%; justify-content: center"
+              >
+                <i class="fa-solid fa-lock"></i> Alterar senha
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal categoria -->
+    <div class="modal-overlay" id="modal-categoria">
+      <div class="modal" style="max-width: 500px">
+        <h2 id="modal-cat-titulo">Nova categoria</h2>
+        <div class="form-group">
+          <label>Nome</label
+          ><input
+            type="text"
+            id="c-nome"
+            placeholder="Ex: Alimentação, Salário..."
+          />
+        </div>
+        <div class="form-group">
+          <label>Tipo</label
+          ><select id="c-tipo">
+            <option value="despesa">Despesa</option>
+            <option value="receita">Receita</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cor</label
+          ><input
+            type="color"
+            id="c-cor"
+            value="#ef4444"
+            style="height: 40px; cursor: pointer"
+            oninput="atualizarPreviewCat()"
+          />
+        </div>
+        <div class="form-group">
+          <label>Ícone</label>
+          <div class="icone-preview">
+            <i id="preview-icone" class="fa-solid fa-tag"></i
+            ><span>Ícone selecionado</span>
+          </div>
+          <div class="icone-seletor" id="icone-seletor"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharModalCategoria()">
+            Cancelar
+          </button>
+          <button class="btn" onclick="salvarCategoria()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal meta -->
+    <div class="modal-overlay" id="modal-meta">
+      <div class="modal">
+        <h2 id="modal-meta-titulo">Nova meta</h2>
+        <div class="form-group">
+          <label>Nome da meta</label
+          ><input
+            type="text"
+            id="m-nome"
+            placeholder="Ex: Viagem, Reserva de emergência..."
+          />
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="form-group">
+            <label>Valor alvo</label
+            ><input type="number" id="m-alvo" placeholder="0,00" step="0.01" />
+          </div>
+          <div class="form-group">
+            <label>Valor atual</label
+            ><input type="number" id="m-atual" placeholder="0,00" step="0.01" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Prazo</label><input type="date" id="m-prazo" />
+        </div>
+        <div class="form-group" id="grupo-status-meta" style="display: none">
+          <label>Status</label>
+          <select id="m-status">
+            <option value="ativa">Ativa</option>
+            <option value="concluida">Concluída</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharModalMeta()">
+            Cancelar
+          </button>
+          <button class="btn" onclick="salvarMeta()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal progresso -->
+    <div class="modal-overlay" id="modal-progresso">
+      <div class="modal">
+        <h2>Atualizar progresso</h2>
+        <div class="form-group">
+          <label>Valor atual</label
+          ><input type="number" id="p-atual" placeholder="0,00" step="0.01" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharModalProgresso()">
+            Cancelar
+          </button>
+          <button class="btn" onclick="salvarProgresso()">Atualizar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tabbar"></div>
+    <script src="/js/global.js"></script>
+    <script src="/js/ui.js"></script>
+    <script>
+      verificarAuth();
+      document.getElementById("sidebar").innerHTML =
+        renderSidebar("Configurações");
+      document.getElementById("tabbar").innerHTML =
+        renderTabBar("Configurações");
+
+      let abaAtiva = "categorias";
+
+      // ── Abas ──
+      function trocarAba(aba) {
+        abaAtiva = aba;
+        document
+          .querySelectorAll(".aba-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document
+          .querySelectorAll(".aba-conteudo")
+          .forEach((c) => c.classList.remove("active"));
+        document.getElementById(`aba-${aba}-btn`).classList.add("active");
+        document.getElementById(`aba-${aba}`).classList.add("active");
+        if (aba === "metas") carregarMetas();
+        if (aba === "perfil") carregarPerfil();
+      }
+
+      // ════════════════════════════════════════
+      // CATEGORIAS
+      // ════════════════════════════════════════
+      let editandoCatId = null,
+        iconeSelecionado = "fa-tag";
+      const icones = [
+        "fa-tag",
+        "fa-utensils",
+        "fa-car",
+        "fa-house",
+        "fa-heart",
+        "fa-shirt",
+        "fa-graduation-cap",
+        "fa-briefcase",
+        "fa-plane",
+        "fa-cart-shopping",
+        "fa-bolt",
+        "fa-wifi",
+        "fa-phone",
+        "fa-tv",
+        "fa-music",
+        "fa-gamepad",
+        "fa-dumbbell",
+        "fa-pills",
+        "fa-dog",
+        "fa-baby",
+        "fa-book",
+        "fa-tools",
+        "fa-gas-pump",
+        "fa-bus",
+        "fa-train",
+        "fa-bicycle",
+        "fa-piggy-bank",
+        "fa-money-bill",
+        "fa-credit-card",
+        "fa-wallet",
+        "fa-building",
+        "fa-store",
+        "fa-hospital",
+        "fa-school",
+        "fa-church",
+        "fa-tree",
+        "fa-gift",
+        "fa-star",
+        "fa-coffee",
+        "fa-pizza-slice",
+        "fa-burger",
+        "fa-apple-whole",
+        "fa-droplet",
+        "fa-fire",
+        "fa-leaf",
+        "fa-sun",
+        "fa-moon",
+        "fa-umbrella",
+        "fa-scissors",
+        "fa-paint-brush",
+        "fa-camera",
+        "fa-laptop",
+        "fa-mobile",
+        "fa-headphones",
+        "fa-ticket",
+        "fa-film",
+        "fa-newspaper",
+      ];
+
+      function renderIcones() {
+        document.getElementById("icone-seletor").innerHTML = icones
+          .map(
+            (ic) =>
+              `<div class="icone-opcao ${ic === iconeSelecionado ? "selecionado" : ""}" onclick="selecionarIcone('${ic}')"><i class="fa-solid ${ic}"></i></div>`,
+          )
+          .join("");
+      }
+
+      function selecionarIcone(ic) {
+        iconeSelecionado = ic;
+        document.getElementById("preview-icone").className = `fa-solid ${ic}`;
+        atualizarPreviewCat();
+        renderIcones();
+      }
+
+      function atualizarPreviewCat() {
+        const cor = document.getElementById("c-cor").value;
+        document.getElementById("preview-icone").style.color = cor;
+        document.getElementById("preview-icone").style.borderColor = cor;
+      }
+
+      async function carregarCategorias() {
+        const data = (await fetchAPI("/api/categorias")) || [];
+        renderListaCat(
+          "lista-despesas",
+          data.filter((c) => c.tipo === "despesa"),
+        );
+        renderListaCat(
+          "lista-receitas",
+          data.filter((c) => c.tipo === "receita"),
+        );
+      }
+
+      function renderListaCat(id, lista) {
+        const el = document.getElementById(id);
+        if (lista.length === 0) {
+          el.innerHTML = `<p style="color:var(--text-muted);font-size:13px;padding:16px;text-align:center;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px">Nenhuma categoria cadastrada.</p>`;
+          return;
+        }
+        el.innerHTML = lista
+          .map(
+            (c) =>
+              `<div class="categoria-item"><div class="categoria-cor" style="background:${c.cor || "#6b7280"}"></div><i class="fa-solid ${c.icone || "fa-tag"}" style="color:${c.cor || "#6b7280"};font-size:14px"></i><span class="categoria-nome">${c.nome}</span><div class="categoria-acoes"><button class="btn-edit" onclick="editarCategoria(${c.id},'${c.nome}','${c.tipo}','${c.icone || "fa-tag"}','${c.cor || "#6b7280"}')"><i class="fa-solid fa-pen"></i></button><button class="btn-danger" onclick="deletarCategoria(${c.id})"><i class="fa-solid fa-trash"></i></button></div></div>`,
+          )
+          .join("");
+      }
+
+      function abrirModalCategoria() {
+        editandoCatId = null;
+        iconeSelecionado = "fa-tag";
+        document.getElementById("modal-cat-titulo").textContent =
+          "Nova categoria";
+        document.getElementById("c-nome").value = "";
+        document.getElementById("c-tipo").value = "despesa";
+        document.getElementById("c-cor").value = "#ef4444";
+        document.getElementById("preview-icone").className = "fa-solid fa-tag";
+        document.getElementById("preview-icone").style.color = "#ef4444";
+        document.getElementById("preview-icone").style.borderColor = "#ef4444";
+        renderIcones();
+        document.getElementById("modal-categoria").classList.add("active");
+      }
+      function fecharModalCategoria() {
+        document.getElementById("modal-categoria").classList.remove("active");
+      }
+
+      function editarCategoria(id, nome, tipo, icone, cor) {
+        editandoCatId = id;
+        iconeSelecionado = icone;
+        document.getElementById("modal-cat-titulo").textContent =
+          "Editar categoria";
+        document.getElementById("c-nome").value = nome;
+        document.getElementById("c-tipo").value = tipo;
+        document.getElementById("c-cor").value = cor;
+        document.getElementById("preview-icone").className =
+          `fa-solid ${icone}`;
+        document.getElementById("preview-icone").style.color = cor;
+        document.getElementById("preview-icone").style.borderColor = cor;
+        renderIcones();
+        document.getElementById("modal-categoria").classList.add("active");
+      }
+
+      async function salvarCategoria() {
+        const body = {
+          nome: document.getElementById("c-nome").value,
+          tipo: document.getElementById("c-tipo").value,
+          icone: iconeSelecionado,
+          cor: document.getElementById("c-cor").value,
+        };
+        if (!body.nome) {
+          toast("Informe o nome da categoria.", "erro");
+          return;
+        }
+        if (editandoCatId) {
+          await fetchAPI(`/api/categorias/${editandoCatId}`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+          toast("Categoria atualizada!");
+        } else {
+          await fetchAPI("/api/categorias", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+          toast("Categoria criada!");
+        }
+        fecharModalCategoria();
+        carregarCategorias();
+      }
+
+      async function deletarCategoria(id) {
+        const ok = await confirmar("Deseja deletar esta categoria?");
+        if (!ok) return;
+        const res = await fetchAPI(`/api/categorias/${id}`, {
+          method: "DELETE",
+        });
+        if (res?.erro) {
+          toast(res.erro, "aviso");
+          return;
+        }
+        toast("Categoria deletada!", "info");
+        carregarCategorias();
+      }
+
+      // ════════════════════════════════════════
+      // METAS
+      // ════════════════════════════════════════
+      let editandoMetaId = null,
+        progressoId = null;
+
+      async function carregarMetas() {
+        document.getElementById("metas-grid").innerHTML = skeletonCards(3);
+        const metas = (await fetchAPI("/api/metas")) || [];
+        const grid = document.getElementById("metas-grid");
+        if (metas.length === 0) {
+          grid.innerHTML = emptyState(
+            "fa-bullseye",
+            "Nenhuma meta",
+            "Defina uma meta financeira e acompanhe seu progresso.",
+            "Nova meta",
+            "abrirModalMeta()",
+          );
+          return;
+        }
+        grid.innerHTML = metas
+          .map((m) => {
+            const alvo = parseFloat(m.valor_alvo) || 0;
+            const atual = parseFloat(m.valor_atual) || 0;
+            const pct = alvo > 0 ? Math.min((atual / alvo) * 100, 100) : 0;
+            const cor =
+              pct >= 100
+                ? "var(--green)"
+                : pct >= 50
+                  ? "var(--blue)"
+                  : "#f59e0b";
+            return `<div class="meta-card">
+            <div class="meta-header">
+              <div class="meta-nome">${m.nome}</div>
+              <span class="meta-status ${m.status}">${m.status}</span>
+            </div>
+            <div class="meta-valores"><div>Atual: <span>${formatarMoeda(atual)}</span></div><div>Meta: <span>${formatarMoeda(alvo)}</span></div></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${cor}"></div></div>
+            <div class="meta-prazo"><i class="fa-solid fa-calendar" style="margin-right:4px"></i>Prazo: ${formatarData(m.prazo)} &nbsp;·&nbsp; ${pct.toFixed(0)}% concluído</div>
+            <div class="meta-acoes">
+              <button class="btn-progresso" onclick="abrirProgresso(${m.id},${atual})"><i class="fa-solid fa-arrow-up"></i> Progresso</button>
+              <button class="btn-edit" onclick="editarMeta(${m.id},'${m.nome}',${alvo},${atual},'${m.prazo?.split("T")[0] || ""}','${m.status}')"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-danger" onclick="deletarMeta(${m.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>`;
+          })
+          .join("");
+      }
+
+      function abrirModalMeta() {
+        editandoMetaId = null;
+        document.getElementById("modal-meta-titulo").textContent = "Nova meta";
+        ["m-nome", "m-alvo", "m-prazo"].forEach(
+          (id) => (document.getElementById(id).value = ""),
+        );
+        document.getElementById("m-atual").value = "0";
+        document.getElementById("grupo-status-meta").style.display = "none";
+        document.getElementById("modal-meta").classList.add("active");
+      }
+      function fecharModalMeta() {
+        document.getElementById("modal-meta").classList.remove("active");
+      }
+
+      function editarMeta(id, nome, alvo, atual, prazo, status) {
+        editandoMetaId = id;
+        document.getElementById("modal-meta-titulo").textContent =
+          "Editar meta";
+        document.getElementById("m-nome").value = nome;
+        document.getElementById("m-alvo").value = alvo;
+        document.getElementById("m-atual").value = atual;
+        document.getElementById("m-prazo").value = prazo;
+        document.getElementById("m-status").value = status;
+        document.getElementById("grupo-status-meta").style.display = "block";
+        document.getElementById("modal-meta").classList.add("active");
+      }
+
+      async function salvarMeta() {
+        const body = {
+          nome: document.getElementById("m-nome").value,
+          valor_alvo: parseFloat(document.getElementById("m-alvo").value) || 0,
+          valor_atual:
+            parseFloat(document.getElementById("m-atual").value) || 0,
+          prazo: document.getElementById("m-prazo").value,
+          status: document.getElementById("m-status")?.value || "ativa",
+        };
+        if (!body.nome || !body.valor_alvo) {
+          toast("Informe o nome e o valor alvo.", "erro");
+          return;
+        }
+        if (editandoMetaId) {
+          await fetchAPI(`/api/metas/${editandoMetaId}`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+          toast("Meta atualizada!");
+        } else {
+          await fetchAPI("/api/metas", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+          toast("Meta criada!");
+        }
+        fecharModalMeta();
+        carregarMetas();
+      }
+
+      function abrirProgresso(id, atual) {
+        progressoId = id;
+        document.getElementById("p-atual").value = atual;
+        document.getElementById("modal-progresso").classList.add("active");
+      }
+      function fecharModalProgresso() {
+        document.getElementById("modal-progresso").classList.remove("active");
+      }
+
+      async function salvarProgresso() {
+        const valor_atual =
+          parseFloat(document.getElementById("p-atual").value) || 0;
+        await fetchAPI(`/api/metas/${progressoId}/progresso`, {
+          method: "PATCH",
+          body: JSON.stringify({ valor_atual }),
+        });
+        toast("Progresso atualizado!");
+        fecharModalProgresso();
+        carregarMetas();
+      }
+
+      async function deletarMeta(id) {
+        const ok = await confirmar("Deseja deletar esta meta?");
+        if (!ok) return;
+        await fetchAPI(`/api/metas/${id}`, { method: "DELETE" });
+        toast("Meta deletada!", "info");
+        carregarMetas();
+      }
+
+      // ════════════════════════════════════════
+      // PERFIL
+      // ════════════════════════════════════════
+      async function carregarPerfil() {
+        const perfil = await fetchAPI("/api/auth/perfil");
+        if (!perfil) return;
+        const iniciais = perfil.nome
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .substring(0, 2)
+          .toUpperCase();
+        document.getElementById("avatar-iniciais").textContent = iniciais;
+        document.getElementById("perfil-nome").textContent = perfil.nome;
+        document.getElementById("perfil-username").textContent =
+          `@${perfil.username}`;
+        const desde = new Date(perfil.created_at).toLocaleDateString("pt-BR", {
+          month: "long",
+          year: "numeric",
+        });
+        document.getElementById("perfil-membro").textContent =
+          `Membro desde ${desde}`;
+        document.getElementById("e-nome").value = perfil.nome;
+        document.getElementById("e-email").value = perfil.email;
+        document.getElementById("e-username").value = perfil.username;
+        document.getElementById("telegram-cmd").textContent =
+          `/conectar ${perfil.username}`;
+        const statusEl = document.getElementById("telegram-status");
+        const textoEl = document.getElementById("telegram-texto");
+        if (perfil.telegram_chat_id) {
+          statusEl.className = "telegram-status conectado";
+          textoEl.textContent = "Conta conectada ao Telegram";
+          statusEl.querySelector("i").className = "fa-solid fa-circle-check";
+        } else {
+          statusEl.className = "telegram-status desconectado";
+          textoEl.textContent = "Telegram não conectado";
+          statusEl.querySelector("i").className = "fa-solid fa-circle-xmark";
+        }
+        const [transacoes, categorias, contas, metas] = await Promise.all([
+          fetchAPI("/api/transacoes"),
+          fetchAPI("/api/categorias"),
+          fetchAPI("/api/contas"),
+          fetchAPI("/api/metas"),
+        ]);
+        document.getElementById("stat-transacoes").textContent =
+          transacoes?.length || 0;
+        document.getElementById("stat-categorias").textContent =
+          categorias?.length || 0;
+        document.getElementById("stat-contas").textContent =
+          contas?.length || 0;
+        document.getElementById("stat-metas").textContent = metas?.length || 0;
+      }
+
+      async function salvarPerfil() {
+        const body = {
+          nome: document.getElementById("e-nome").value,
+          email: document.getElementById("e-email").value,
+        };
+        if (!body.nome || !body.email) {
+          toast("Preencha nome e email.", "erro");
+          return;
+        }
+        const res = await fetchAPI("/api/auth/perfil", {
+          method: "PUT",
+          body: JSON.stringify(body),
+        });
+        if (res?.erro) {
+          toast(res.erro, "erro");
+          return;
+        }
+        localStorage.setItem("controlai_nome", body.nome);
+        toast("Perfil atualizado!");
+        carregarPerfil();
+      }
+
+      async function alterarSenha() {
+        const atual = document.getElementById("s-atual").value;
+        const nova = document.getElementById("s-nova").value;
+        const confirma = document.getElementById("s-confirma").value;
+        if (!atual || !nova || !confirma) {
+          toast("Preencha todos os campos.", "erro");
+          return;
+        }
+        if (nova !== confirma) {
+          toast("As senhas não coincidem.", "erro");
+          return;
+        }
+        if (nova.length < 6) {
+          toast("A nova senha deve ter pelo menos 6 caracteres.", "aviso");
+          return;
+        }
+        const res = await fetchAPI("/api/auth/perfil/senha", {
+          method: "PUT",
+          body: JSON.stringify({ senha_atual: atual, nova_senha: nova }),
+        });
+        if (res?.erro) {
+          toast(res.erro, "erro");
+          return;
+        }
+        toast("Senha alterada com sucesso!");
+        ["s-atual", "s-nova", "s-confirma"].forEach(
+          (id) => (document.getElementById(id).value = ""),
+        );
+      }
+
+      // ── Init ──
+      carregarCategorias();
+    </script>
+  </body>
+</html>

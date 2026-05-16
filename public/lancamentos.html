@@ -10,15 +10,259 @@
     />
     <link rel="stylesheet" href="/css/global.css" />
     <style>
+      .abas {
+        display: flex;
+        gap: 4px;
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        padding: 4px;
+        margin-bottom: 20px;
+        width: fit-content;
+      }
+      .aba-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        border-radius: 9px;
+        padding: 8px 18px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .aba-btn.active {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+      }
+      .aba-conteudo {
+        display: none;
+      }
+      .aba-conteudo.active {
+        display: block;
+      }
       .badge.transferencia {
         background: rgba(99, 102, 241, 0.15);
         color: #6366f1;
+      }
+
+      /* Recorrentes */
+      .rec-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+      }
+      .rec-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 18px 20px;
+        position: relative;
+        overflow: hidden;
+      }
+      .rec-card.pausada {
+        opacity: 0.6;
+      }
+      .rec-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--cor-tipo);
+      }
+      .rec-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        gap: 8px;
+      }
+      .rec-titulo {
+        font-size: 15px;
+        font-weight: 700;
+        flex: 1;
+        line-height: 1.3;
+      }
+      .rec-valor {
+        font-size: 18px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .rec-valor.receita {
+        color: var(--green);
+      }
+      .rec-valor.despesa {
+        color: var(--red);
+      }
+      .rec-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 12px;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 14px;
+      }
+      .rec-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .rec-meta-item i {
+        font-size: 11px;
+      }
+      .rec-proxima {
+        background: var(--bg-tertiary);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .rec-proxima-label {
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .rec-proxima-data {
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .rec-proxima-data.vencida {
+        color: var(--red);
+      }
+      .badge-freq {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-weight: 600;
+        background: rgba(59, 130, 246, 0.15);
+        color: var(--blue);
+        white-space: nowrap;
+      }
+      .badge-pausada {
+        background: rgba(107, 114, 128, 0.15);
+        color: var(--text-muted);
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-weight: 600;
+      }
+      .rec-acoes {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .btn-toggle {
+        background: transparent;
+        border: 0.5px solid var(--border);
+        color: var(--text-secondary);
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .btn-toggle:hover {
+        border-color: #f59e0b;
+        color: #f59e0b;
+      }
+      .btn-historico {
+        background: transparent;
+        border: 0.5px solid var(--border);
+        color: var(--text-secondary);
+        border-radius: 7px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .btn-historico:hover {
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+      .rec-resumo {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .filtro-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .filtro-btn {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        color: var(--text-secondary);
+        border-radius: 9px;
+        padding: 7px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .filtro-btn.active {
+        background: var(--green);
+        border-color: var(--green);
+        color: #fff;
+      }
+      .historico-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 0.5px solid var(--border);
+        font-size: 13px;
+      }
+      .historico-item:last-child {
+        border-bottom: none;
+      }
+
+      @media (max-width: 768px) {
+        .abas {
+          width: 100%;
+        }
+        .aba-btn {
+          flex: 1;
+          justify-content: center;
+          padding: 8px 10px;
+          font-size: 13px;
+        }
+        .rec-grid {
+          grid-template-columns: 1fr;
+        }
+        .rec-resumo {
+          gap: 8px;
+        }
+        .rec-resumo .card {
+          padding: 12px 10px;
+        }
+        .rec-resumo .card-value {
+          font-size: 15px;
+        }
+        .rec-resumo .card-label {
+          font-size: 10px;
+        }
       }
     </style>
   </head>
   <body>
     <div class="sidebar" id="sidebar"></div>
-
     <div class="main">
       <div
         style="
@@ -28,115 +272,166 @@
           margin-bottom: 16px;
         "
       >
-        <h1 class="page-title" style="margin: 0">Lançamentos</h1>
-        <button class="btn" onclick="abrirModal()">
-          <i class="fa-solid fa-plus"></i> Novo
+        <h1 class="page-title" id="page-title" style="margin: 0">
+          Lançamentos
+        </h1>
+        <button class="btn" onclick="abrirModalAtivo()">
+          <i class="fa-solid fa-plus"></i> <span id="btn-novo-label">Novo</span>
         </button>
       </div>
 
-      <div
-        class="filtros"
-        style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap"
-      >
-        <select
-          id="filtro-mes"
-          onchange="carregarTransacoes()"
-          style="
-            background: var(--bg-secondary);
-            border: 0.5px solid var(--border);
-            color: var(--text-primary);
-            border-radius: 9px;
-            padding: 8px 12px;
-            font-size: 14px;
-            outline: none;
-            flex: 1;
-          "
+      <div class="abas">
+        <button
+          class="aba-btn active"
+          id="aba-lancamentos-btn"
+          onclick="trocarAba('lancamentos')"
         >
-          <option value="1">Janeiro</option>
-          <option value="2">Fevereiro</option>
-          <option value="3">Março</option>
-          <option value="4">Abril</option>
-          <option value="5">Maio</option>
-          <option value="6">Junho</option>
-          <option value="7">Julho</option>
-          <option value="8">Agosto</option>
-          <option value="9">Setembro</option>
-          <option value="10">Outubro</option>
-          <option value="11">Novembro</option>
-          <option value="12">Dezembro</option>
-        </select>
-        <select
-          id="filtro-ano"
-          onchange="carregarTransacoes()"
-          style="
-            background: var(--bg-secondary);
-            border: 0.5px solid var(--border);
-            color: var(--text-primary);
-            border-radius: 9px;
-            padding: 8px 12px;
-            font-size: 14px;
-            outline: none;
-            flex: 1;
-          "
-        ></select>
-        <select
-          id="filtro-tipo"
-          onchange="carregarTransacoes()"
-          style="
-            background: var(--bg-secondary);
-            border: 0.5px solid var(--border);
-            color: var(--text-primary);
-            border-radius: 9px;
-            padding: 8px 12px;
-            font-size: 14px;
-            outline: none;
-            flex: 1;
-          "
+          <i class="fa-solid fa-right-left"></i> Lançamentos
+        </button>
+        <button
+          class="aba-btn"
+          id="aba-recorrentes-btn"
+          onclick="trocarAba('recorrentes')"
         >
-          <option value="">Todos</option>
-          <option value="receita">Receitas</option>
-          <option value="despesa">Despesas</option>
-          <option value="transferencia">Transferências</option>
-        </select>
+          <i class="fa-solid fa-rotate"></i> Recorrentes
+        </button>
       </div>
 
-      <!-- Desktop -->
-      <div class="table-wrap desktop-only">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Descrição</th>
-              <th>Categoria</th>
-              <th>Conta</th>
-              <th>Tipo</th>
-              <th>Valor</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tabela-transacoes-desktop"></tbody>
-        </table>
+      <!-- ABA LANÇAMENTOS -->
+      <div class="aba-conteudo active" id="aba-lancamentos">
+        <div
+          class="filtros"
+          style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap"
+        >
+          <select
+            id="filtro-mes"
+            onchange="carregarTransacoes()"
+            style="
+              background: var(--bg-secondary);
+              border: 0.5px solid var(--border);
+              color: var(--text-primary);
+              border-radius: 9px;
+              padding: 8px 12px;
+              font-size: 14px;
+              outline: none;
+              flex: 1;
+            "
+          >
+            <option value="1">Janeiro</option>
+            <option value="2">Fevereiro</option>
+            <option value="3">Março</option>
+            <option value="4">Abril</option>
+            <option value="5">Maio</option>
+            <option value="6">Junho</option>
+            <option value="7">Julho</option>
+            <option value="8">Agosto</option>
+            <option value="9">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+          <select
+            id="filtro-ano"
+            onchange="carregarTransacoes()"
+            style="
+              background: var(--bg-secondary);
+              border: 0.5px solid var(--border);
+              color: var(--text-primary);
+              border-radius: 9px;
+              padding: 8px 12px;
+              font-size: 14px;
+              outline: none;
+              flex: 1;
+            "
+          ></select>
+          <select
+            id="filtro-tipo"
+            onchange="carregarTransacoes()"
+            style="
+              background: var(--bg-secondary);
+              border: 0.5px solid var(--border);
+              color: var(--text-primary);
+              border-radius: 9px;
+              padding: 8px 12px;
+              font-size: 14px;
+              outline: none;
+              flex: 1;
+            "
+          >
+            <option value="">Todos</option>
+            <option value="receita">Receitas</option>
+            <option value="despesa">Despesas</option>
+            <option value="transferencia">Transferências</option>
+          </select>
+        </div>
+        <div class="table-wrap desktop-only">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Conta</th>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-transacoes-desktop"></tbody>
+          </table>
+        </div>
+        <div id="lista-mobile" class="mobile-only"></div>
       </div>
 
-      <!-- Mobile -->
-      <div id="lista-mobile" class="mobile-only"></div>
+      <!-- ABA RECORRENTES -->
+      <div class="aba-conteudo" id="aba-recorrentes">
+        <div class="rec-resumo">
+          <div class="card">
+            <div class="card-label">Receitas/mês</div>
+            <div class="card-value green" id="res-receitas">—</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Despesas/mês</div>
+            <div class="card-value red" id="res-despesas">—</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Saldo recorrente</div>
+            <div class="card-value blue" id="res-saldo">—</div>
+          </div>
+        </div>
+        <div class="filtro-bar">
+          <button class="filtro-btn active" onclick="filtrarRec('todos', this)">
+            Todas
+          </button>
+          <button class="filtro-btn" onclick="filtrarRec('despesa', this)">
+            Despesas
+          </button>
+          <button class="filtro-btn" onclick="filtrarRec('receita', this)">
+            Receitas
+          </button>
+          <button class="filtro-btn" onclick="filtrarRec('pausada', this)">
+            Pausadas
+          </button>
+        </div>
+        <div class="rec-grid" id="rec-grid"></div>
+      </div>
     </div>
 
     <!-- Modal lançamento -->
-    <div class="modal-overlay" id="modal">
+    <div class="modal-overlay" id="modal-lancamento">
       <div class="modal">
         <h2 id="modal-titulo">Novo lançamento</h2>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <div class="form-group">
-            <label>Tipo</label>
-            <select id="f-tipo" onchange="filtrarCategorias()">
+            <label>Tipo</label
+            ><select id="f-tipo" onchange="filtrarCategorias()">
               <option value="despesa">Despesa</option>
               <option value="receita">Receita</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Valor</label>
-            <input
+            <label>Valor</label
+            ><input
               type="number"
               id="f-valor"
               placeholder="0,00"
@@ -146,8 +441,8 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Descrição</label>
-          <input
+          <label>Descrição</label
+          ><input
             type="text"
             id="f-descricao"
             placeholder="Ex: Aluguel, Salário..."
@@ -155,31 +450,122 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <div class="form-group">
-            <label>Categoria</label>
-            <select id="f-categoria"></select>
+            <label>Categoria</label
+            ><select id="f-categoria"></select>
           </div>
           <div class="form-group">
-            <label>Conta</label>
-            <select id="f-conta"></select>
+            <label>Conta</label
+            ><select id="f-conta"></select>
           </div>
         </div>
         <div class="form-group">
-          <label>Data</label>
-          <input type="date" id="f-data" />
+          <label>Data</label><input type="date" id="f-data" />
         </div>
         <div class="form-group">
-          <label>Observação (opcional)</label>
-          <input type="text" id="f-obs" placeholder="Alguma observação..." />
+          <label>Observação (opcional)</label
+          ><input type="text" id="f-obs" placeholder="Alguma observação..." />
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-          <button class="btn" onclick="salvar()">Salvar</button>
+          <button class="btn-cancel" onclick="fecharModalLancamento()">
+            Cancelar
+          </button>
+          <button class="btn" onclick="salvarLancamento()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal recorrente -->
+    <div class="modal-overlay" id="modal-recorrente">
+      <div class="modal" style="max-width: 480px">
+        <h2 id="modal-rec-titulo">Nova recorrência</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="form-group">
+            <label>Tipo</label
+            ><select id="r-tipo" onchange="filtrarCategoriasRec()">
+              <option value="despesa">Despesa</option>
+              <option value="receita">Receita</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Valor (R$)</label
+            ><input
+              type="number"
+              id="r-valor"
+              placeholder="0,00"
+              step="0.01"
+              min="0"
+            />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Descrição</label
+          ><input
+            type="text"
+            id="r-descricao"
+            placeholder="Ex: Aluguel, Netflix, Salário..."
+          />
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="form-group">
+            <label>Categoria</label
+            ><select id="r-categoria"></select>
+          </div>
+          <div class="form-group">
+            <label>Conta</label
+            ><select id="r-conta"></select>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="form-group">
+            <label>Frequência</label>
+            <select id="r-frequencia" onchange="atualizarCampoDia()">
+              <option value="diaria">Diária</option>
+              <option value="semanal">Semanal</option>
+              <option value="quinzenal">Quinzenal</option>
+              <option value="mensal" selected>Mensal</option>
+              <option value="bimestral">Bimestral</option>
+              <option value="trimestral">Trimestral</option>
+              <option value="semestral">Semestral</option>
+              <option value="anual">Anual</option>
+            </select>
+          </div>
+          <div class="form-group" id="grupo-dia">
+            <label id="label-dia">Dia do mês</label
+            ><input type="number" id="r-dia" min="1" max="31" value="1" />
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
+          <div class="form-group">
+            <label>Início</label><input type="date" id="r-inicio" />
+          </div>
+          <div class="form-group">
+            <label>Fim (opcional)</label><input type="date" id="r-fim" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observação (opcional)</label><input type="text" id="r-obs" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharModalRec()">
+            Cancelar
+          </button>
+          <button class="btn" onclick="salvarRec()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal histórico -->
+    <div class="modal-overlay" id="modal-hist">
+      <div class="modal" style="max-width: 480px">
+        <h2 id="hist-titulo">Histórico</h2>
+        <div id="hist-lista" style="max-height: 360px; overflow-y: auto"></div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharHist()">Fechar</button>
         </div>
       </div>
     </div>
 
     <div id="tabbar"></div>
-
     <script src="/js/global.js"></script>
     <script src="/js/ui.js"></script>
     <script>
@@ -188,110 +574,125 @@
         renderSidebar("Lançamentos");
       document.getElementById("tabbar").innerHTML = renderTabBar("Lançamentos");
 
-      let editandoId = null;
-      let categorias = [];
-      let contas = [];
+      let abaAtiva = "lancamentos";
+      let editandoLancId = null,
+        editandoRecId = null;
+      let categorias = [],
+        contas = [],
+        todasRec = [],
+        filtroRecAtual = "todos";
       const { mes, ano } = getMesAno();
+      const FREQ_LABEL = {
+        diaria: "Diária",
+        semanal: "Semanal",
+        quinzenal: "Quinzenal",
+        mensal: "Mensal",
+        bimestral: "Bimestral",
+        trimestral: "Trimestral",
+        semestral: "Semestral",
+        anual: "Anual",
+      };
+      const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
       document.getElementById("filtro-mes").value = mes;
-      const selectAno = document.getElementById("filtro-ano");
-      for (let a = ano; a >= ano - 3; a--) {
-        selectAno.innerHTML += `<option value="${a}">${a}</option>`;
-      }
+      const selAno = document.getElementById("filtro-ano");
+      for (let a = ano; a >= ano - 3; a--)
+        selAno.innerHTML += `<option value="${a}">${a}</option>`;
       document.getElementById("f-data").value = new Date()
         .toISOString()
         .split("T")[0];
+      document.getElementById("r-inicio").value = new Date()
+        .toISOString()
+        .split("T")[0];
+
+      async function init() {
+        [categorias, contas] = await Promise.all([
+          fetchAPI("/api/categorias").then((d) => d || []),
+          fetchAPI("/api/contas").then((d) => d || []),
+        ]);
+        filtrarCategorias();
+        document.getElementById("f-conta").innerHTML = contas.length
+          ? contas
+              .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+              .join("")
+          : `<option value="">Sem contas</option>`;
+        ajustarLayout();
+        carregarTransacoes();
+      }
+
+      // ── Abas ──
+      function trocarAba(aba) {
+        abaAtiva = aba;
+        document
+          .querySelectorAll(".aba-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document
+          .querySelectorAll(".aba-conteudo")
+          .forEach((c) => c.classList.remove("active"));
+        document.getElementById(`aba-${aba}-btn`).classList.add("active");
+        document.getElementById(`aba-${aba}`).classList.add("active");
+        const labels = {
+          lancamentos: ["Lançamentos", "Novo lançamento"],
+          recorrentes: ["Recorrentes", "Nova recorrência"],
+        };
+        document.getElementById("page-title").textContent = labels[aba][0];
+        document.getElementById("btn-novo-label").textContent = labels[aba][1]
+          .replace("Nova ", "")
+          .replace("Novo ", "");
+        if (aba === "recorrentes" && todasRec.length === 0)
+          carregarRecorrentes();
+      }
+
+      function abrirModalAtivo() {
+        if (abaAtiva === "lancamentos") abrirModalLancamento();
+        else abrirModalRec();
+      }
 
       function isMobile() {
         return window.innerWidth <= 768;
       }
 
-      // ── Renderização ──
+      // ── Lançamentos ──
       async function carregarTransacoes() {
         const m = document.getElementById("filtro-mes").value;
         const a = document.getElementById("filtro-ano").value;
         const tipo = document.getElementById("filtro-tipo").value;
-
-        if (isMobile()) {
+        if (isMobile())
           document.getElementById("lista-mobile").innerHTML = skeletonLista(3);
-        } else {
+        else
           document.getElementById("tabela-transacoes-desktop").innerHTML =
             `<tr><td colspan="7" style="text-align:center;padding:24px">${skeletonLista(1)}</td></tr>`;
-        }
-
-        // Filtro de transferência é client-side (usa flag is_transferencia)
         let url = `/api/transacoes?mes=${m}&ano=${a}`;
         if (tipo === "receita" || tipo === "despesa") url += `&tipo=${tipo}`;
         let data = await fetchAPI(url);
         if (!data) return;
-
-        // Se filtrou transferências, mostra só as de transferência
-        if (tipo === "transferencia") {
+        if (tipo === "transferencia")
           data = data.filter((t) => t.is_transferencia);
-        } else if (tipo === "receita" || tipo === "despesa") {
-          // Exclui as de transferência dos filtros de receita/despesa puras
+        else if (tipo === "receita" || tipo === "despesa")
           data = data.filter((t) => !t.is_transferencia);
-        }
-        // "Todos" mostra tudo incluindo transferências
-
         if (isMobile()) renderMobile(data);
         else renderDesktop(data);
-      }
-
-      function tipoLabel(t) {
-        if (t.is_transferencia) return "transferencia";
-        return t.tipo;
-      }
-
-      function tipoTexto(t) {
-        if (t.is_transferencia) return "transferência";
-        return t.tipo;
       }
 
       function renderDesktop(data) {
         const tbody = document.getElementById("tabela-transacoes-desktop");
         if (data.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7" style="padding:0">
-            <div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transação", "Nenhuma transação encontrada neste período.", "Novo lançamento", "abrirModal()")}</div>
-          </td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="7" style="padding:0"><div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transação", "Nenhuma transação encontrada neste período.", "Novo lançamento", "abrirModalLancamento()")}</div></td></tr>`;
           return;
         }
         tbody.innerHTML = data
           .map((t) => {
-            const label = tipoLabel(t);
-            const isTransf = !!t.is_transferencia;
-            return `
-            <tr>
-              <td>${formatarData(t.data)}</td>
-              <td>
-                ${isTransf ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}
-                ${t.descricao}
-              </td>
-              <td>
-                ${
-                  isTransf
-                    ? `<span style="color:var(--text-muted);font-size:12px">—</span>`
-                    : `<span style="display:inline-flex;align-items:center;gap:5px">
-                      <span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
-                      ${t.categoria_nome || "—"}
-                    </span>`
-                }
-              </td>
-              <td>${t.conta_nome || "—"}</td>
-              <td><span class="badge ${label}">${tipoTexto(t)}</span></td>
-              <td><span class="badge ${label}">${formatarMoeda(t.valor)}</span></td>
-              <td>
-                ${
-                  isTransf
-                    ? `<button class="btn-danger" onclick="deletarTransferencia('${t.transferencia_id}')">
-                       <i class="fa-solid fa-trash"></i>
-                     </button>`
-                    : `<button class="btn-edit" onclick="editar(${t.id})"><i class="fa-solid fa-pen"></i></button>
-                     <button class="btn-danger" onclick="deletar(${t.id})"><i class="fa-solid fa-trash"></i></button>`
-                }
-              </td>
-            </tr>
-          `;
+            const isT = !!t.is_transferencia;
+            const label = isT ? "transferencia" : t.tipo;
+            return `<tr>
+            <td>${formatarData(t.data)}</td>
+            <td>${isT ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}${t.descricao}</td>
+            <td>${isT ? `<span style="color:var(--text-muted);font-size:12px">—</span>` : `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>${t.categoria_nome || "—"}</span>`}</td>
+            <td>${t.conta_nome || "—"}</td>
+            <td><span class="badge ${label}">${isT ? "transferência" : t.tipo}</span></td>
+            <td><span class="badge ${label}">${formatarMoeda(t.valor)}</span></td>
+            <td>${isT ? `<button class="btn-danger" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>` : `<button class="btn-edit" onclick="editarLancamento(${t.id})"><i class="fa-solid fa-pen"></i></button><button class="btn-danger" onclick="deletarLancamento(${t.id})"><i class="fa-solid fa-trash"></i></button>`}</td>
+          </tr>`;
           })
           .join("");
       }
@@ -304,98 +705,50 @@
             "Nenhuma transação",
             "Nenhuma transação encontrada neste período.",
             "Novo lançamento",
-            "abrirModal()",
+            "abrirModalLancamento()",
           );
           return;
         }
         lista.innerHTML = data
           .map((t) => {
-            const isTransf = !!t.is_transferencia;
-            const corBorda = isTransf
+            const isT = !!t.is_transferencia;
+            const cor = isT
               ? "#6366f1"
               : t.tipo === "receita"
                 ? "var(--green)"
                 : "var(--red)";
-            const corValor = isTransf
-              ? "#6366f1"
-              : t.tipo === "receita"
-                ? "var(--green)"
-                : "var(--red)";
-            const sinal = isTransf ? "" : t.tipo === "receita" ? "+" : "-";
-
-            return `
-            <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;border-left:3px solid ${corBorda}">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-                <div style="flex:1;margin-right:8px">
-                  <div style="font-size:15px;font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:6px">
-                    ${isTransf ? `<i class="fa-solid fa-right-left" style="color:#6366f1;font-size:11px"></i>` : ""}
-                    ${t.descricao}
-                  </div>
-                  <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                    <span>${formatarData(t.data)}</span>
-                    ${
-                      !isTransf && t.categoria_nome
-                        ? `
-                      <span>·</span>
-                      <span style="display:inline-flex;align-items:center;gap:4px">
-                        <span style="width:7px;height:7px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
-                        ${t.categoria_nome}
-                      </span>`
-                        : ""
-                    }
-                    ${t.conta_nome ? `<span>·</span><span>${t.conta_nome}</span>` : ""}
-                  </div>
-                </div>
-                <div style="text-align:right">
-                  <div style="font-size:16px;font-weight:700;color:${corValor}">${sinal}${formatarMoeda(t.valor)}</div>
+            const sinal = isT ? "" : t.tipo === "receita" ? "+" : "-";
+            return `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;border-left:3px solid ${cor}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+              <div style="flex:1;margin-right:8px">
+                <div style="font-size:15px;font-weight:600;margin-bottom:3px">${isT ? `<i class="fa-solid fa-right-left" style="color:#6366f1;font-size:11px;margin-right:6px"></i>` : ""}${t.descricao}</div>
+                <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <span>${formatarData(t.data)}</span>
+                  ${!isT && t.categoria_nome ? `<span>·</span><span style="display:inline-flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>${t.categoria_nome}</span>` : ""}
+                  ${t.conta_nome ? `<span>·</span><span>${t.conta_nome}</span>` : ""}
                 </div>
               </div>
-              <div style="display:flex;gap:8px;justify-content:flex-end">
-                ${
-                  isTransf
-                    ? `<button class="btn-danger" style="padding:6px 14px;font-size:12px" onclick="deletarTransferencia('${t.transferencia_id}')">
-                       <i class="fa-solid fa-trash"></i>
-                     </button>`
-                    : `<button class="btn-edit" onclick="editar(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-pen"></i> Editar</button>
-                     <button class="btn-danger" onclick="deletar(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-trash"></i></button>`
-                }
-              </div>
+              <div style="text-align:right"><div style="font-size:16px;font-weight:700;color:${cor}">${sinal}${formatarMoeda(t.valor)}</div></div>
             </div>
-          `;
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              ${isT ? `<button class="btn-danger" style="padding:6px 14px;font-size:12px" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>` : `<button class="btn-edit" onclick="editarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-pen"></i> Editar</button><button class="btn-danger" onclick="deletarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-trash"></i></button>`}
+            </div>
+          </div>`;
           })
           .join("");
       }
 
-      // ── Categorias / Contas ──
-      async function carregarCategorias() {
-        categorias = (await fetchAPI("/api/categorias")) || [];
-        filtrarCategorias();
-      }
-
       function filtrarCategorias() {
         const tipo = document.getElementById("f-tipo").value;
-        const select = document.getElementById("f-categoria");
-        const filtradas = categorias.filter((c) => c.tipo === tipo);
-        select.innerHTML = filtradas.length
-          ? filtradas
-              .map((c) => `<option value="${c.id}">${c.nome}</option>`)
-              .join("")
+        const sel = document.getElementById("f-categoria");
+        const f = categorias.filter((c) => c.tipo === tipo);
+        sel.innerHTML = f.length
+          ? f.map((c) => `<option value="${c.id}">${c.nome}</option>`).join("")
           : `<option value="">Sem categorias</option>`;
       }
 
-      async function carregarContas() {
-        contas = (await fetchAPI("/api/contas")) || [];
-        const select = document.getElementById("f-conta");
-        select.innerHTML = contas.length
-          ? contas
-              .map((c) => `<option value="${c.id}">${c.nome}</option>`)
-              .join("")
-          : `<option value="">Sem contas</option>`;
-      }
-
-      // ── Modal lançamento ──
-      function abrirModal() {
-        editandoId = null;
+      function abrirModalLancamento() {
+        editandoLancId = null;
         document.getElementById("modal-titulo").textContent = "Novo lançamento";
         document.getElementById("f-tipo").value = "despesa";
         document.getElementById("f-valor").value = "";
@@ -405,18 +758,17 @@
           .split("T")[0];
         document.getElementById("f-obs").value = "";
         filtrarCategorias();
-        document.getElementById("modal").classList.add("active");
+        document.getElementById("modal-lancamento").classList.add("active");
+      }
+      function fecharModalLancamento() {
+        document.getElementById("modal-lancamento").classList.remove("active");
       }
 
-      function fecharModal() {
-        document.getElementById("modal").classList.remove("active");
-      }
-
-      async function editar(id) {
+      async function editarLancamento(id) {
         const todos = (await fetchAPI("/api/transacoes")) || [];
         const item = todos.find((x) => x.id === id);
         if (!item) return;
-        editandoId = id;
+        editandoLancId = id;
         document.getElementById("modal-titulo").textContent =
           "Editar lançamento";
         document.getElementById("f-tipo").value = item.tipo;
@@ -428,10 +780,10 @@
         filtrarCategorias();
         document.getElementById("f-categoria").value = item.categoria_id;
         document.getElementById("f-conta").value = item.conta_id;
-        document.getElementById("modal").classList.add("active");
+        document.getElementById("modal-lancamento").classList.add("active");
       }
 
-      async function salvar() {
+      async function salvarLancamento() {
         const body = {
           tipo: document.getElementById("f-tipo").value,
           valor: parseFloat(document.getElementById("f-valor").value),
@@ -445,8 +797,8 @@
           toast("Preencha descrição, valor e data.", "erro");
           return;
         }
-        if (editandoId) {
-          await fetchAPI(`/api/transacoes/${editandoId}`, {
+        if (editandoLancId) {
+          await fetchAPI(`/api/transacoes/${editandoLancId}`, {
             method: "PUT",
             body: JSON.stringify(body),
           });
@@ -458,53 +810,323 @@
           });
           toast("Lançamento criado!");
         }
-        fecharModal();
+        fecharModalLancamento();
         carregarTransacoes();
       }
 
-      async function deletar(id) {
-        const ok = await confirmar(
-          "Deseja deletar este lançamento? Esta ação não pode ser desfeita.",
-        );
+      async function deletarLancamento(id) {
+        const ok = await confirmar("Deseja deletar este lançamento?");
         if (!ok) return;
         await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
         toast("Lançamento deletado!", "info");
         carregarTransacoes();
       }
 
-      async function deletarTransferencia(transferencia_id) {
+      async function deletarTransferencia(tid) {
         const ok = await confirmar(
-          "Deseja deletar esta transferência? As duas entradas (origem e destino) serão removidas.",
+          "Deseja deletar esta transferência? As duas entradas serão removidas.",
         );
         if (!ok) return;
-        await fetchAPI(`/api/transferencias/${transferencia_id}`, {
-          method: "DELETE",
-        });
+        await fetchAPI(`/api/transferencias/${tid}`, { method: "DELETE" });
         toast("Transferência deletada!", "info");
         carregarTransacoes();
       }
 
       function ajustarLayout() {
-        const desktopTable = document.querySelector(".desktop-only");
-        const mobileLista = document.getElementById("lista-mobile");
+        const desk = document.querySelector(".desktop-only");
+        const mob = document.getElementById("lista-mobile");
         if (isMobile()) {
-          desktopTable.style.display = "none";
-          mobileLista.style.display = "block";
+          desk.style.display = "none";
+          mob.style.display = "block";
         } else {
-          desktopTable.style.display = "block";
-          mobileLista.style.display = "none";
+          desk.style.display = "block";
+          mob.style.display = "none";
+        }
+      }
+      window.addEventListener("resize", () => {
+        ajustarLayout();
+        if (abaAtiva === "lancamentos") carregarTransacoes();
+      });
+
+      // ── Recorrentes ──
+      async function carregarRecorrentes() {
+        document.getElementById("rec-grid").innerHTML = skeletonCards(3);
+        todasRec = (await fetchAPI("/api/recorrentes")) || [];
+        calcularResumoRec();
+        renderRecGrid();
+      }
+
+      function calcularResumoRec() {
+        const MULT = {
+          diaria: 30,
+          semanal: 4.3,
+          quinzenal: 2,
+          mensal: 1,
+          bimestral: 0.5,
+          trimestral: 0.33,
+          semestral: 0.17,
+          anual: 0.083,
+        };
+        let rec = 0,
+          des = 0;
+        for (const r of todasRec.filter((r) => r.ativa)) {
+          const v = parseFloat(r.valor) * (MULT[r.frequencia] || 1);
+          if (r.tipo === "receita") rec += v;
+          else des += v;
+        }
+        document.getElementById("res-receitas").textContent =
+          formatarMoeda(rec);
+        document.getElementById("res-despesas").textContent =
+          formatarMoeda(des);
+        const s = rec - des;
+        const el = document.getElementById("res-saldo");
+        el.textContent = formatarMoeda(s);
+        el.className = "card-value " + (s >= 0 ? "green" : "red");
+      }
+
+      function filtrarRec(tipo, btn) {
+        filtroRecAtual = tipo;
+        document
+          .querySelectorAll(".filtro-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderRecGrid();
+      }
+
+      function renderRecGrid() {
+        const grid = document.getElementById("rec-grid");
+        let lista = todasRec;
+        if (filtroRecAtual === "despesa")
+          lista = lista.filter((r) => r.tipo === "despesa");
+        else if (filtroRecAtual === "receita")
+          lista = lista.filter((r) => r.tipo === "receita");
+        else if (filtroRecAtual === "pausada")
+          lista = lista.filter((r) => !r.ativa);
+        if (lista.length === 0) {
+          grid.innerHTML = emptyState(
+            "fa-rotate",
+            "Nenhuma recorrência",
+            "Adicione contas fixas como aluguel, salário, assinaturas...",
+            "Nova recorrência",
+            "abrirModalRec()",
+          );
+          return;
+        }
+        const hoje = new Date().toISOString().split("T")[0];
+        grid.innerHTML = lista
+          .map((r) => {
+            const proxima = r.proxima_geracao
+              ? r.proxima_geracao.split("T")[0]
+              : null;
+            const vencida = proxima && proxima < hoje;
+            const corTipo =
+              r.tipo === "receita" ? "var(--green)" : "var(--red)";
+            const sinal = r.tipo === "receita" ? "+" : "-";
+            const diaLabel =
+              r.frequencia === "semanal"
+                ? `Toda ${DIAS_SEMANA[r.dia_vencimento] || "—"}`
+                : r.frequencia === "diaria" || r.frequencia === "quinzenal"
+                  ? FREQ_LABEL[r.frequencia]
+                  : `Dia ${r.dia_vencimento} — ${FREQ_LABEL[r.frequencia]}`;
+            return `<div class="rec-card ${r.ativa ? "" : "pausada"}" style="--cor-tipo:${corTipo}">
+            <div class="rec-top">
+              <div>
+                <div class="rec-titulo">${r.descricao}</div>
+                <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+                  <span class="badge-freq">${FREQ_LABEL[r.frequencia] || r.frequencia}</span>
+                  ${!r.ativa ? `<span class="badge-pausada"><i class="fa-solid fa-pause" style="margin-right:3px"></i>Pausada</span>` : ""}
+                </div>
+              </div>
+              <div class="rec-valor ${r.tipo}">${sinal}${formatarMoeda(r.valor)}</div>
+            </div>
+            <div class="rec-meta">
+              <div class="rec-meta-item"><i class="fa-solid fa-rotate"></i><span>${diaLabel}</span></div>
+              ${r.categoria_nome ? `<div class="rec-meta-item"><i class="fa-solid fa-tag" style="color:${r.categoria_cor || "#6b7280"}"></i><span>${r.categoria_nome}</span></div>` : ""}
+              ${r.conta_nome ? `<div class="rec-meta-item"><i class="fa-solid fa-wallet"></i><span>${r.conta_nome}</span></div>` : ""}
+              ${r.data_fim ? `<div class="rec-meta-item"><i class="fa-solid fa-calendar-xmark"></i><span>Até ${formatarData(r.data_fim)}</span></div>` : ""}
+            </div>
+            <div class="rec-proxima">
+              <span class="rec-proxima-label"><i class="fa-solid fa-calendar-day"></i>Próxima geração</span>
+              <span class="rec-proxima-data ${vencida ? "vencida" : ""}">${proxima ? formatarData(proxima) : "—"}${vencida ? " ⚠️" : ""}</span>
+            </div>
+            <div class="rec-acoes">
+              <button class="btn-toggle" onclick="toggleRec(${r.id},${r.ativa})"><i class="fa-solid fa-${r.ativa ? "pause" : "play"}"></i>${r.ativa ? "Pausar" : "Ativar"}</button>
+              <button class="btn-historico" onclick="verHistorico(${r.id},'${r.descricao}')"><i class="fa-solid fa-clock-rotate-left"></i>Histórico</button>
+              <button class="btn-edit" onclick="editarRec(${r.id})"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-danger" onclick="deletarRec(${r.id})"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>`;
+          })
+          .join("");
+      }
+
+      function filtrarCategoriasRec() {
+        const tipo = document.getElementById("r-tipo").value;
+        document.getElementById("r-categoria").innerHTML =
+          `<option value="">Sem categoria</option>` +
+          categorias
+            .filter((c) => c.tipo === tipo)
+            .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+            .join("");
+        document.getElementById("r-conta").innerHTML =
+          `<option value="">Sem conta</option>` +
+          contas
+            .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+            .join("");
+      }
+
+      function atualizarCampoDia() {
+        const freq = document.getElementById("r-frequencia").value;
+        const grupo = document.getElementById("grupo-dia");
+        const label = document.getElementById("label-dia");
+        const input = document.getElementById("r-dia");
+        if (freq === "diaria" || freq === "quinzenal") {
+          grupo.style.display = "none";
+          return;
+        }
+        grupo.style.display = "block";
+        if (freq === "semanal") {
+          label.textContent = "Dia da semana";
+          input.min = "0";
+          input.max = "6";
+          input.placeholder = "0=Dom…6=Sáb";
+        } else {
+          label.textContent = "Dia do mês";
+          input.min = "1";
+          input.max = "31";
+          input.placeholder = "1-31";
         }
       }
 
-      window.addEventListener("resize", () => {
-        ajustarLayout();
-        carregarTransacoes();
-      });
+      function abrirModalRec() {
+        editandoRecId = null;
+        document.getElementById("modal-rec-titulo").textContent =
+          "Nova recorrência";
+        ["r-valor", "r-descricao", "r-fim", "r-obs"].forEach(
+          (id) => (document.getElementById(id).value = ""),
+        );
+        document.getElementById("r-tipo").value = "despesa";
+        document.getElementById("r-frequencia").value = "mensal";
+        document.getElementById("r-dia").value = "1";
+        document.getElementById("r-inicio").value = new Date()
+          .toISOString()
+          .split("T")[0];
+        filtrarCategoriasRec();
+        atualizarCampoDia();
+        document.getElementById("modal-recorrente").classList.add("active");
+      }
+      function fecharModalRec() {
+        document.getElementById("modal-recorrente").classList.remove("active");
+      }
 
-      carregarCategorias();
-      carregarContas();
-      ajustarLayout();
-      carregarTransacoes();
+      function editarRec(id) {
+        const rec = todasRec.find((r) => r.id === id);
+        if (!rec) return;
+        editandoRecId = id;
+        document.getElementById("modal-rec-titulo").textContent =
+          "Editar recorrência";
+        document.getElementById("r-tipo").value = rec.tipo;
+        document.getElementById("r-valor").value = rec.valor;
+        document.getElementById("r-descricao").value = rec.descricao;
+        document.getElementById("r-frequencia").value = rec.frequencia;
+        document.getElementById("r-dia").value = rec.dia_vencimento;
+        document.getElementById("r-inicio").value =
+          rec.data_inicio?.split("T")[0] || "";
+        document.getElementById("r-fim").value =
+          rec.data_fim?.split("T")[0] || "";
+        document.getElementById("r-obs").value = rec.observacao || "";
+        filtrarCategoriasRec();
+        document.getElementById("r-categoria").value = rec.categoria_id || "";
+        document.getElementById("r-conta").value = rec.conta_id || "";
+        atualizarCampoDia();
+        document.getElementById("modal-recorrente").classList.add("active");
+      }
+
+      async function salvarRec() {
+        const body = {
+          tipo: document.getElementById("r-tipo").value,
+          valor: parseFloat(document.getElementById("r-valor").value),
+          descricao: document.getElementById("r-descricao").value,
+          categoria_id: document.getElementById("r-categoria").value || null,
+          conta_id: document.getElementById("r-conta").value || null,
+          frequencia: document.getElementById("r-frequencia").value,
+          dia_vencimento: parseInt(document.getElementById("r-dia").value) || 1,
+          data_inicio: document.getElementById("r-inicio").value,
+          data_fim: document.getElementById("r-fim").value || null,
+          observacao: document.getElementById("r-obs").value || null,
+        };
+        if (
+          !body.descricao ||
+          !body.valor ||
+          isNaN(body.valor) ||
+          !body.data_inicio
+        ) {
+          toast("Preencha descrição, valor e início.", "erro");
+          return;
+        }
+        if (editandoRecId) {
+          await fetchAPI(`/api/recorrentes/${editandoRecId}`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+          toast("Recorrência atualizada!");
+        } else {
+          const res = await fetchAPI("/api/recorrentes", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+          toast(
+            res?.proxima_geracao
+              ? `Criada! Próxima: ${formatarData(res.proxima_geracao)}`
+              : "Recorrência criada!",
+          );
+        }
+        fecharModalRec();
+        carregarRecorrentes();
+      }
+
+      async function toggleRec(id, ativa) {
+        await fetchAPI(`/api/recorrentes/${id}/ativar`, {
+          method: "PATCH",
+          body: JSON.stringify({ ativa: !ativa }),
+        });
+        toast(!ativa ? "Recorrência ativada!" : "Recorrência pausada.", "info");
+        carregarRecorrentes();
+      }
+
+      async function deletarRec(id) {
+        const ok = await confirmar(
+          "Deseja deletar esta recorrência? As transações já geradas não serão afetadas.",
+        );
+        if (!ok) return;
+        await fetchAPI(`/api/recorrentes/${id}`, { method: "DELETE" });
+        toast("Recorrência deletada!", "info");
+        carregarRecorrentes();
+      }
+
+      async function verHistorico(id, nome) {
+        document.getElementById("hist-titulo").textContent =
+          `Histórico — ${nome}`;
+        document.getElementById("hist-lista").innerHTML = skeletonLista(3);
+        document.getElementById("modal-hist").classList.add("active");
+        const data = await fetchAPI(`/api/recorrentes/${id}/historico`);
+        const lista = document.getElementById("hist-lista");
+        if (!data || data.length === 0) {
+          lista.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px"><i class="fa-solid fa-clock-rotate-left" style="font-size:28px;margin-bottom:10px;display:block"></i>Nenhuma transação gerada ainda.</div>`;
+          return;
+        }
+        lista.innerHTML = data
+          .map(
+            (t) =>
+              `<div class="historico-item"><div><div style="font-weight:600;font-size:13px">${formatarData(t.data)}</div><div style="font-size:11px;color:var(--text-muted)">${t.descricao}</div></div><span class="badge ${t.tipo}">${formatarMoeda(t.valor)}</span></div>`,
+          )
+          .join("");
+      }
+      function fecharHist() {
+        document.getElementById("modal-hist").classList.remove("active");
+      }
+
+      init();
     </script>
   </body>
 </html>
