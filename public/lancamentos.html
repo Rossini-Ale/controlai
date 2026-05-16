@@ -1109,9 +1109,10 @@
           `Histórico — ${nome}`;
         document.getElementById("hist-lista").innerHTML = skeletonLista(3);
         document.getElementById("modal-hist").classList.add("active");
-        const data = await fetchAPI(`/api/recorrentes/${id}/historico`);
+        const res = await fetchAPI(`/api/recorrentes/${id}/historico`);
+        const data = Array.isArray(res) ? res : [];
         const lista = document.getElementById("hist-lista");
-        if (!data || data.length === 0) {
+        if (data.length === 0) {
           lista.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px"><i class="fa-solid fa-clock-rotate-left" style="font-size:28px;margin-bottom:10px;display:block"></i>Nenhuma transação gerada ainda.</div>`;
           return;
         }
