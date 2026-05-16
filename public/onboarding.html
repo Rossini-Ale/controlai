@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Controlaí — Bem-vindo!</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #0f1117;
+        color: #fff;
+        font-family: "Segoe UI", sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .container {
+        width: 100%;
+        max-width: 420px;
+        animation: fadeUp 0.4s ease;
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .logo {
+        text-align: center;
+        margin-bottom: 32px;
+      }
+      .logo-icon {
+        width: 64px;
+        height: 64px;
+        background: #10b981;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 14px;
+        font-size: 28px;
+        color: #fff;
+      }
+      .logo h1 {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .logo p {
+        font-size: 14px;
+        color: #6b7280;
+        line-height: 1.5;
+      }
+      .steps {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 28px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: #1a1f2e;
+        border: 0.5px solid #2d3748;
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .step.opcional {
+        opacity: 0.8;
+      }
+      .step-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+      .step-info {
+        flex: 1;
+      }
+      .step-titulo {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 2px;
+      }
+      .step-desc {
+        font-size: 12px;
+        color: #6b7280;
+      }
+      .step-badge {
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .badge-obrig {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+      }
+      .badge-opcio {
+        background: rgba(107, 114, 128, 0.15);
+        color: #6b7280;
+      }
+      .btn-comecar {
+        width: 100%;
+        background: #10b981;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        padding: 14px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          transform 0.1s;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      .btn-comecar:hover {
+        background: #059669;
+      }
+      .btn-comecar:active {
+        transform: scale(0.98);
+      }
+      .btn-pular {
+        width: 100%;
+        background: transparent;
+        border: none;
+        color: #6b7280;
+        font-size: 13px;
+        cursor: pointer;
+        padding: 8px;
+        transition: color 0.2s;
+      }
+      .btn-pular:hover {
+        color: #9ca3af;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">
+        <div class="logo-icon"><i class="fa-solid fa-chart-pie"></i></div>
+        <h1>Bem-vindo ao controlaí!</h1>
+        <p>
+          Seu controle financeiro pessoal.<br />Vamos configurar tudo em menos
+          de 2 minutos.
+        </p>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-icon" style="background: rgba(16, 185, 129, 0.15)">
+            <i class="fa-solid fa-wallet" style="color: #10b981"></i>
+          </div>
+          <div class="step-info">
+            <div class="step-titulo">Adicionar uma conta bancária</div>
+            <div class="step-desc">
+              Sicoob, Nubank, carteira... qualquer uma
+            </div>
+          </div>
+          <span class="step-badge badge-obrig">Essencial</span>
+        </div>
+
+        <div class="step">
+          <div class="step-icon" style="background: rgba(239, 68, 68, 0.15)">
+            <i class="fa-solid fa-right-left" style="color: #ef4444"></i>
+          </div>
+          <div class="step-info">
+            <div class="step-titulo">Lançar seu primeiro gasto</div>
+            <div class="step-desc">Mercado, almoço, conta de luz...</div>
+          </div>
+          <span class="step-badge badge-obrig">Essencial</span>
+        </div>
+
+        <div class="step opcional">
+          <div class="step-icon" style="background: rgba(99, 102, 241, 0.15)">
+            <i class="fa-solid fa-credit-card" style="color: #6366f1"></i>
+          </div>
+          <div class="step-info">
+            <div class="step-titulo">Cadastrar um cartão</div>
+            <div class="step-desc">Controle faturas e parcelamentos</div>
+          </div>
+          <span class="step-badge badge-opcio">Opcional</span>
+        </div>
+
+        <div class="step opcional">
+          <div class="step-icon" style="background: rgba(59, 130, 246, 0.15)">
+            <i class="fa-brands fa-telegram" style="color: #3b82f6"></i>
+          </div>
+          <div class="step-info">
+            <div class="step-titulo">Conectar o Telegram</div>
+            <div class="step-desc">Lance gastos direto pelo chat</div>
+          </div>
+          <span class="step-badge badge-opcio">Opcional</span>
+        </div>
+
+        <div class="step opcional">
+          <div class="step-icon" style="background: rgba(245, 158, 11, 0.15)">
+            <i class="fa-solid fa-bullseye" style="color: #f59e0b"></i>
+          </div>
+          <div class="step-info">
+            <div class="step-titulo">Criar uma meta financeira</div>
+            <div class="step-desc">Viagem, reserva de emergência...</div>
+          </div>
+          <span class="step-badge badge-opcio">Opcional</span>
+        </div>
+      </div>
+
+      <button class="btn-comecar" onclick="comecar()">
+        <i class="fa-solid fa-rocket"></i>
+        Começar agora
+      </button>
+      <button class="btn-pular" onclick="pular()">
+        Pular e ir direto para o app
+      </button>
+    </div>
+
+    <script>
+      const PREFIX = "controlai_";
+      function getToken() {
+        return localStorage.getItem(PREFIX + "token");
+      }
+      if (!getToken()) window.location.href = "/login.html";
+
+      async function marcarOnboarding() {
+        await fetch("/api/auth/onboarding", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+            "Content-Type": "application/json",
+          },
+        });
+      }
+
+      async function comecar() {
+        await marcarOnboarding();
+        window.location.href = "/contas.html";
+      }
+
+      async function pular() {
+        await marcarOnboarding();
+        window.location.href = "/dashboard.html";
+      }
+    </script>
+  </body>
+</html>

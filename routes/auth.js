@@ -108,7 +108,12 @@ router.post("/login", async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "7d" },
     );
-    res.json({ token, nome: usuario.nome, username: usuario.username });
+    res.json({
+      token,
+      nome: usuario.nome,
+      username: usuario.username,
+      onboarding_completo: usuario.onboarding_completo,
+    });
   } catch (err) {
     res.status(500).json({ erro: "Erro interno do servidor." });
   }
@@ -163,6 +168,37 @@ router.put("/perfil/senha", auth, async (req, res) => {
     res.json({ mensagem: "Senha alterada com sucesso!" });
   } catch (err) {
     res.status(500).json({ erro: "Erro ao alterar senha." });
+  }
+});
+
+// Status do onboarding
+router.get("/onboarding", auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT
+        u.onboarding_completo,
+        (SELECT COUNT(*) FROM Contas WHERE usuario_id = u.id) as tem_conta,
+        (SELECT COUNT(*) FROM Transacoes WHERE usuario_id = u.id) as tem_transacao,
+        (SELECT COUNT(*) FROM Cartoes WHERE usuario_id = u.id) as tem_cartao,
+        u.telegram_chat_id
+       FROM Usuarios u WHERE u.id = ?`,
+      [req.usuarioId],
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao buscar onboarding." });
+  }
+});
+
+// Marcar onboarding como completo
+router.post("/onboarding", auth, async (req, res) => {
+  try {
+    await db.query("UPDATE Usuarios SET onboarding_completo=1 WHERE id=?", [
+      req.usuarioId,
+    ]);
+    res.json({ mensagem: "Onboarding completo!" });
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao atualizar onboarding." });
   }
 });
 
