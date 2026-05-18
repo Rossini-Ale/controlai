@@ -110,5 +110,42 @@ router.delete("/:id", auth, async (req, res) => {
     res.status(500).json({ erro: "Erro ao deletar transação." });
   }
 });
+// Duplicar transação
+router.post("/:id/duplicar", auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM Transacoes WHERE id = ? AND usuario_id = ?",
+      [req.params.id, req.usuarioId],
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ erro: "Transação não encontrada." });
+    }
+    const orig = rows[0];
+    // Data padrão: hoje, mas pode ser sobrescrita pelo body
+    const data = req.body.data || new Date().toISOString().split("T")[0];
+    const valor = req.body.valor || orig.valor;
 
+    const [result] = await db.query(
+      `INSERT INTO Transacoes
+         (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        req.usuarioId,
+        orig.conta_id,
+        orig.categoria_id,
+        orig.tipo,
+        orig.descricao,
+        valor,
+        data,
+        orig.observacao || null,
+      ],
+    );
+    res
+      .status(201)
+      .json({ id: result.insertId, mensagem: "Transação duplicada!" });
+  } catch (err) {
+    console.error("[Transacoes /duplicar]", err.message);
+    res.status(500).json({ erro: "Erro ao duplicar transação." });
+  }
+});
 module.exports = router;

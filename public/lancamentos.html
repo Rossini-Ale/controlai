@@ -363,6 +363,22 @@
             <option value="despesa">Despesas</option>
             <option value="transferencia">Transferências</option>
           </select>
+          <select
+            id="filtro-categoria"
+            onchange="carregarTransacoes()"
+            style="
+              background: var(--bg-secondary);
+              border: 0.5px solid var(--border);
+              color: var(--text-primary);
+              border-radius: 9px;
+              padding: 8px 12px;
+              font-size: 14px;
+              outline: none;
+              flex: 1;
+            "
+          >
+            <option value="">Todas categorias</option>
+          </select>
         </div>
         <div class="table-wrap desktop-only">
           <table>
@@ -611,6 +627,7 @@
           fetchAPI("/api/contas").then((d) => d || []),
         ]);
         filtrarCategorias();
+        preencherFiltroCategorias();
         document.getElementById("f-conta").innerHTML = contas.length
           ? contas
               .map((c) => `<option value="${c.id}">${c.nome}</option>`)
@@ -657,21 +674,42 @@
         const m = document.getElementById("filtro-mes").value;
         const a = document.getElementById("filtro-ano").value;
         const tipo = document.getElementById("filtro-tipo").value;
+        const catId = document.getElementById("filtro-categoria").value;
+
         if (isMobile())
           document.getElementById("lista-mobile").innerHTML = skeletonLista(3);
         else
           document.getElementById("tabela-transacoes-desktop").innerHTML =
             `<tr><td colspan="7" style="text-align:center;padding:24px">${skeletonLista(1)}</td></tr>`;
+
         let url = `/api/transacoes?mes=${m}&ano=${a}`;
         if (tipo === "receita" || tipo === "despesa") url += `&tipo=${tipo}`;
+        if (catId) url += `&categoria_id=${catId}`;
+
         let data = await fetchAPI(url);
         if (!data) return;
+
         if (tipo === "transferencia")
           data = data.filter((t) => t.is_transferencia);
         else if (tipo === "receita" || tipo === "despesa")
           data = data.filter((t) => !t.is_transferencia);
+        // Filtro categoria client-side para garantir (API já filtra, mas reforça)
+        if (catId)
+          data = data.filter((t) => String(t.categoria_id) === String(catId));
+
         if (isMobile()) renderMobile(data);
         else renderDesktop(data);
+      }
+
+      function preencherFiltroCategorias() {
+        const sel = document.getElementById("filtro-categoria");
+        const atual = sel.value;
+        sel.innerHTML =
+          `<option value="">Todas categorias</option>` +
+          categorias
+            .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+            .join("");
+        if (atual) sel.value = atual;
       }
 
       function renderDesktop(data) {
@@ -691,7 +729,13 @@
             <td>${t.conta_nome || "—"}</td>
             <td><span class="badge ${label}">${isT ? "transferência" : t.tipo}</span></td>
             <td><span class="badge ${label}">${formatarMoeda(t.valor)}</span></td>
-            <td>${isT ? `<button class="btn-danger" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>` : `<button class="btn-edit" onclick="editarLancamento(${t.id})"><i class="fa-solid fa-pen"></i></button><button class="btn-danger" onclick="deletarLancamento(${t.id})"><i class="fa-solid fa-trash"></i></button>`}</td>
+            <td>${
+              isT
+                ? `<button class="btn-danger" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
+                : `<button class="btn-edit" onclick="editarLancamento(${t.id})"><i class="fa-solid fa-pen"></i></button>
+                 <button class="btn-edit" onclick="duplicarLancamento(${t.id})" title="Duplicar"><i class="fa-solid fa-copy"></i></button>
+                 <button class="btn-danger" onclick="deletarLancamento(${t.id})"><i class="fa-solid fa-trash"></i></button>`
+            }</td>
           </tr>`;
           })
           .join("");
@@ -731,7 +775,13 @@
               <div style="text-align:right"><div style="font-size:16px;font-weight:700;color:${cor}">${sinal}${formatarMoeda(t.valor)}</div></div>
             </div>
             <div style="display:flex;gap:8px;justify-content:flex-end">
-              ${isT ? `<button class="btn-danger" style="padding:6px 14px;font-size:12px" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>` : `<button class="btn-edit" onclick="editarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-pen"></i> Editar</button><button class="btn-danger" onclick="deletarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-trash"></i></button>`}
+              ${
+                isT
+                  ? `<button class="btn-danger" style="padding:6px 14px;font-size:12px" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
+                  : `<button class="btn-edit" onclick="editarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-pen"></i> Editar</button>
+                   <button class="btn-edit" onclick="duplicarLancamento(${t.id})" style="padding:6px 14px;font-size:12px" title="Duplicar"><i class="fa-solid fa-copy"></i></button>
+                   <button class="btn-danger" onclick="deletarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-trash"></i></button>`
+              }
             </div>
           </div>`;
           })
@@ -811,6 +861,21 @@
           toast("Lançamento criado!");
         }
         fecharModalLancamento();
+        carregarTransacoes();
+      }
+
+      async function duplicarLancamento(id) {
+        const res = await fetchAPI(`/api/transacoes/${id}/duplicar`, {
+          method: "POST",
+          body: JSON.stringify({
+            data: new Date().toISOString().split("T")[0],
+          }),
+        });
+        if (res?.erro) {
+          toast(res.erro, "erro");
+          return;
+        }
+        toast("Lançamento duplicado para hoje!");
         carregarTransacoes();
       }
 
