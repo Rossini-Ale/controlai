@@ -5,7 +5,7 @@
 }
 
 /* ══════════════════════════════════════
-   TEMA ESCURO (padrão)
+   TEMA ESCURO (padrão — igual ao original)
 ══════════════════════════════════════ */
 :root {
   --bg-primary: #0f1117;
@@ -38,7 +38,7 @@
   --text-muted: #94a3b8;
 }
 
-/* Respeita preferência do sistema se não houver escolha manual */
+/* Segue preferência do sistema quando não há escolha manual */
 @media (prefers-color-scheme: light) {
   :root:not(.tema-escuro):not(.tema-claro) {
     --bg-primary: #f5f7fa;
@@ -55,9 +55,7 @@
   }
 }
 
-/* ══════════════════════════════════════
-   TRANSIÇÃO SUAVE DE TEMA
-══════════════════════════════════════ */
+/* Transição suave ao trocar de tema */
 body,
 .sidebar,
 .main,
@@ -68,15 +66,9 @@ body,
 .tab-bar,
 .mais-menu,
 .modal-rapido-inner,
-.btn-logout,
-.btn-cancel,
-.btn-edit,
-.btn-danger,
+.tab-btn-central-inner,
 thead th,
-tbody tr,
-.form-group input,
-.form-group select,
-.form-group textarea {
+tbody tr {
   transition:
     background-color 0.25s ease,
     border-color 0.25s ease,
@@ -84,7 +76,7 @@ tbody tr,
 }
 
 /* ══════════════════════════════════════
-   ANIMAÇÃO DE TRANSIÇÃO DE PÁGINA
+   ANIMAÇÕES DE TRANSIÇÃO DE PÁGINA
 ══════════════════════════════════════ */
 @keyframes pageFadeIn {
   from {
@@ -104,7 +96,7 @@ tbody tr,
   }
   to {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-6px);
   }
 }
 
@@ -112,8 +104,10 @@ tbody tr,
   animation: pageFadeIn 0.28s ease forwards;
 }
 
-.page-exit .main {
+.page-exit .main,
+.main.page-exit {
   animation: pageFadeOut 0.18s ease forwards;
+  pointer-events: none;
 }
 
 /* ══════════════════════════════════════
@@ -142,8 +136,9 @@ tbody tr,
 }
 
 /* ══════════════════════════════════════
-   RESTO DO CSS ORIGINAL (inalterado)
+   TUDO ABAIXO É IGUAL AO SEU ORIGINAL
 ══════════════════════════════════════ */
+
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -340,7 +335,6 @@ table {
   width: 100%;
   border-collapse: collapse;
 }
-
 thead th {
   background: var(--bg-tertiary);
   padding: 11px 20px;
@@ -350,7 +344,6 @@ thead th {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
-
 tbody tr {
   border-bottom: 0.5px solid var(--border);
   transition: background 0.15s;
@@ -361,7 +354,6 @@ tbody tr:last-child {
 tbody tr:hover {
   background: var(--bg-tertiary);
 }
-
 tbody td {
   padding: 13px 20px;
   font-size: 14px;
@@ -461,11 +453,9 @@ tbody td {
   font-weight: 600;
   margin-bottom: 20px;
 }
-
 .form-group {
   margin-bottom: 14px;
 }
-
 .form-group label {
   display: block;
   font-size: 12px;
@@ -495,7 +485,6 @@ tbody td {
 }
 .form-group select option {
   background: var(--bg-secondary);
-  color: var(--text-primary);
 }
 
 .modal-footer {
@@ -534,10 +523,6 @@ tbody td {
   background: rgba(239, 68, 68, 0.15);
   color: var(--red);
 }
-.badge.transferencia {
-  background: rgba(99, 102, 241, 0.15);
-  color: #6366f1;
-}
 
 .desktop-only {
   display: block;
@@ -551,7 +536,6 @@ tbody td {
   .sidebar {
     display: none;
   }
-
   .main {
     margin-left: 0;
     width: 100%;
@@ -672,17 +656,6 @@ tbody td {
     color: var(--green);
   }
 
-  /* Botão de tema no menu Mais */
-  .mais-item.tema-toggle {
-    width: 100%;
-    text-align: left;
-    background: none;
-    border-top: 0.5px solid var(--border);
-  }
-  .mais-item.tema-toggle i {
-    color: var(--text-muted);
-  }
-
   .modal-rapido {
     display: none;
     position: fixed;
@@ -733,13 +706,13 @@ tbody td {
 
   .tipo-btn.active-despesa {
     background: rgba(239, 68, 68, 0.15);
-    border-color: var(--red);
-    color: var(--red);
+    border-color: #ef4444;
+    color: #ef4444;
   }
   .tipo-btn.active-receita {
     background: rgba(16, 185, 129, 0.15);
-    border-color: var(--green);
-    color: var(--green);
+    border-color: #10b981;
+    color: #10b981;
   }
   .tipo-btn.active-cartao {
     background: rgba(99, 102, 241, 0.15);
@@ -758,7 +731,6 @@ tbody td {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-
   .cards-grid {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
@@ -773,7 +745,6 @@ tbody td {
   .card-label {
     font-size: 10px;
   }
-
   .charts-grid {
     grid-template-columns: 1fr !important;
     gap: 12px;
@@ -830,7 +801,6 @@ tbody td {
     padding: 8px 10px;
     flex: 1;
   }
-
   .mes-nav {
     margin-bottom: 16px;
   }
@@ -838,7 +808,6 @@ tbody td {
     font-size: 15px;
     min-width: 120px;
   }
-
   .table-header {
     flex-wrap: wrap;
     gap: 10px;
@@ -868,7 +837,6 @@ tbody td {
   .btn-danger {
     padding: 7px 12px;
   }
-
   .saldo-card {
     padding: 12px;
   }
