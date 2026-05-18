@@ -4,6 +4,9 @@
   box-sizing: border-box;
 }
 
+/* ══════════════════════════════════════
+   TEMA ESCURO (padrão)
+══════════════════════════════════════ */
 :root {
   --bg-primary: #0f1117;
   --bg-secondary: #1a1f2e;
@@ -18,6 +21,129 @@
   --text-muted: #6b7280;
 }
 
+/* ══════════════════════════════════════
+   TEMA CLARO
+══════════════════════════════════════ */
+:root.tema-claro {
+  --bg-primary: #f5f7fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #eef1f6;
+  --border: #e2e8f0;
+  --green: #059669;
+  --green-dark: #047857;
+  --red: #dc2626;
+  --blue: #2563eb;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+}
+
+/* Respeita preferência do sistema se não houver escolha manual */
+@media (prefers-color-scheme: light) {
+  :root:not(.tema-escuro):not(.tema-claro) {
+    --bg-primary: #f5f7fa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #eef1f6;
+    --border: #e2e8f0;
+    --green: #059669;
+    --green-dark: #047857;
+    --red: #dc2626;
+    --blue: #2563eb;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+  }
+}
+
+/* ══════════════════════════════════════
+   TRANSIÇÃO SUAVE DE TEMA
+══════════════════════════════════════ */
+body,
+.sidebar,
+.main,
+.card,
+.table-wrap,
+.modal,
+.nav-item,
+.tab-bar,
+.mais-menu,
+.modal-rapido-inner,
+.btn-logout,
+.btn-cancel,
+.btn-edit,
+.btn-danger,
+thead th,
+tbody tr,
+.form-group input,
+.form-group select,
+.form-group textarea {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.15s ease;
+}
+
+/* ══════════════════════════════════════
+   ANIMAÇÃO DE TRANSIÇÃO DE PÁGINA
+══════════════════════════════════════ */
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pageFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.main {
+  animation: pageFadeIn 0.28s ease forwards;
+}
+
+.page-exit .main {
+  animation: pageFadeOut 0.18s ease forwards;
+}
+
+/* ══════════════════════════════════════
+   BOTÃO DE TEMA
+══════════════════════════════════════ */
+.btn-tema {
+  width: 100%;
+  background: transparent;
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  transition: all 0.2s;
+}
+
+.btn-tema:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* ══════════════════════════════════════
+   RESTO DO CSS ORIGINAL (inalterado)
+══════════════════════════════════════ */
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -214,6 +340,7 @@ table {
   width: 100%;
   border-collapse: collapse;
 }
+
 thead th {
   background: var(--bg-tertiary);
   padding: 11px 20px;
@@ -223,6 +350,7 @@ thead th {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
 tbody tr {
   border-bottom: 0.5px solid var(--border);
   transition: background 0.15s;
@@ -233,6 +361,7 @@ tbody tr:last-child {
 tbody tr:hover {
   background: var(--bg-tertiary);
 }
+
 tbody td {
   padding: 13px 20px;
   font-size: 14px;
@@ -332,9 +461,11 @@ tbody td {
   font-weight: 600;
   margin-bottom: 20px;
 }
+
 .form-group {
   margin-bottom: 14px;
 }
+
 .form-group label {
   display: block;
   font-size: 12px;
@@ -364,6 +495,7 @@ tbody td {
 }
 .form-group select option {
   background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .modal-footer {
@@ -402,6 +534,10 @@ tbody td {
   background: rgba(239, 68, 68, 0.15);
   color: var(--red);
 }
+.badge.transferencia {
+  background: rgba(99, 102, 241, 0.15);
+  color: #6366f1;
+}
 
 .desktop-only {
   display: block;
@@ -415,6 +551,7 @@ tbody td {
   .sidebar {
     display: none;
   }
+
   .main {
     margin-left: 0;
     width: 100%;
@@ -427,8 +564,8 @@ tbody td {
     bottom: 0;
     left: 0;
     right: 0;
-    background: #1a1f2e;
-    border-top: 0.5px solid #2d3748;
+    background: var(--bg-secondary);
+    border-top: 0.5px solid var(--border);
     z-index: 99;
     padding: 6px 0 env(safe-area-inset-bottom);
     align-items: center;
@@ -441,7 +578,7 @@ tbody td {
     align-items: center;
     gap: 3px;
     padding: 6px 0;
-    color: #6b7280;
+    color: var(--text-muted);
     text-decoration: none;
     font-size: 10px;
     transition: color 0.2s;
@@ -454,7 +591,7 @@ tbody td {
     font-size: 22px;
   }
   .tab-item.active {
-    color: #10b981;
+    color: var(--green);
   }
 
   .tab-btn-central {
@@ -467,13 +604,13 @@ tbody td {
   .tab-btn-central-inner {
     width: 50px;
     height: 50px;
-    background: #10b981;
+    background: var(--green);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-top: -20px;
-    border: 3px solid #0f1117;
+    border: 3px solid var(--bg-primary);
     cursor: pointer;
     transition:
       transform 0.2s,
@@ -482,7 +619,7 @@ tbody td {
 
   .tab-btn-central-inner:active {
     transform: scale(0.92);
-    background: #059669;
+    background: var(--green-dark);
   }
   .tab-btn-central-inner i {
     font-size: 24px;
@@ -504,12 +641,12 @@ tbody td {
     position: fixed;
     bottom: 75px;
     right: 12px;
-    background: #1a1f2e;
-    border: 0.5px solid #2d3748;
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border);
     border-radius: 14px;
     overflow: hidden;
     z-index: 99;
-    min-width: 180px;
+    min-width: 190px;
     animation: fadeUp 0.2s ease;
   }
 
@@ -518,21 +655,32 @@ tbody td {
     align-items: center;
     gap: 12px;
     padding: 14px 16px;
-    color: #9ca3af;
+    color: var(--text-secondary);
     text-decoration: none;
     font-size: 14px;
-    border-bottom: 0.5px solid #2d3748;
+    border-bottom: 0.5px solid var(--border);
     transition: background 0.15s;
   }
   .mais-item:last-child {
     border-bottom: none;
   }
   .mais-item:active {
-    background: #242938;
+    background: var(--bg-tertiary);
   }
   .mais-item i {
     font-size: 18px;
-    color: #10b981;
+    color: var(--green);
+  }
+
+  /* Botão de tema no menu Mais */
+  .mais-item.tema-toggle {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border-top: 0.5px solid var(--border);
+  }
+  .mais-item.tema-toggle i {
+    color: var(--text-muted);
   }
 
   .modal-rapido {
@@ -549,7 +697,7 @@ tbody td {
   }
 
   .modal-rapido-inner {
-    background: #1a1f2e;
+    background: var(--bg-secondary);
     border-radius: 24px 24px 0 0;
     padding: 24px 20px 40px;
     width: 100%;
@@ -560,7 +708,7 @@ tbody td {
     font-size: 16px;
     font-weight: 600;
     margin-bottom: 16px;
-    color: #fff;
+    color: var(--text-primary);
   }
 
   .tipo-toggle {
@@ -573,9 +721,9 @@ tbody td {
   .tipo-btn {
     padding: 10px;
     border-radius: 10px;
-    border: 0.5px solid #2d3748;
-    background: #0f1117;
-    color: #6b7280;
+    border: 0.5px solid var(--border);
+    background: var(--bg-primary);
+    color: var(--text-muted);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
@@ -585,13 +733,13 @@ tbody td {
 
   .tipo-btn.active-despesa {
     background: rgba(239, 68, 68, 0.15);
-    border-color: #ef4444;
-    color: #ef4444;
+    border-color: var(--red);
+    color: var(--red);
   }
   .tipo-btn.active-receita {
     background: rgba(16, 185, 129, 0.15);
-    border-color: #10b981;
-    color: #10b981;
+    border-color: var(--green);
+    color: var(--green);
   }
   .tipo-btn.active-cartao {
     background: rgba(99, 102, 241, 0.15);
@@ -610,6 +758,7 @@ tbody td {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
+
   .cards-grid {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
@@ -624,6 +773,7 @@ tbody td {
   .card-label {
     font-size: 10px;
   }
+
   .charts-grid {
     grid-template-columns: 1fr !important;
     gap: 12px;
@@ -680,6 +830,7 @@ tbody td {
     padding: 8px 10px;
     flex: 1;
   }
+
   .mes-nav {
     margin-bottom: 16px;
   }
@@ -687,11 +838,13 @@ tbody td {
     font-size: 15px;
     min-width: 120px;
   }
+
   .table-header {
     flex-wrap: wrap;
     gap: 10px;
     padding: 14px 16px;
   }
+
   .fatura-resumo {
     grid-template-columns: 1fr 1fr 1fr !important;
     gap: 8px;
@@ -706,6 +859,7 @@ tbody td {
   .fatura-resumo .card-label {
     font-size: 9px;
   }
+
   .btn {
     padding: 10px 16px;
     font-size: 14px;
@@ -714,6 +868,7 @@ tbody td {
   .btn-danger {
     padding: 7px 12px;
   }
+
   .saldo-card {
     padding: 12px;
   }

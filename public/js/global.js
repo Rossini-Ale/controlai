@@ -1,6 +1,73 @@
 const API = "";
 const PREFIX = "controlai_";
 
+// ── Tema claro/escuro ──
+function getTema() {
+  return localStorage.getItem(PREFIX + "tema") || "auto";
+}
+
+function aplicarTema(tema) {
+  document.documentElement.classList.remove("tema-claro", "tema-escuro");
+  if (tema === "claro") document.documentElement.classList.add("tema-claro");
+  if (tema === "escuro") document.documentElement.classList.add("tema-escuro");
+  localStorage.setItem(PREFIX + "tema", tema);
+  // Atualiza ícone em todos os botões de tema na página
+  document.querySelectorAll(".btn-tema-icon").forEach((el) => {
+    el.className = `fa-solid ${temaIcon(tema)} btn-tema-icon`;
+  });
+  document.querySelectorAll(".btn-tema-label").forEach((el) => {
+    el.textContent = temaLabel(tema);
+  });
+}
+
+function temaIcon(tema) {
+  if (tema === "claro") return "fa-sun";
+  if (tema === "escuro") return "fa-moon";
+  return "fa-circle-half-stroke";
+}
+
+function temaLabel(tema) {
+  if (tema === "claro") return "Tema claro";
+  if (tema === "escuro") return "Tema escuro";
+  return "Tema automático";
+}
+
+function toggleTema() {
+  const atual = getTema();
+  const proximo =
+    atual === "escuro" ? "claro" : atual === "claro" ? "auto" : "escuro";
+  aplicarTema(proximo);
+}
+
+// Aplica tema imediatamente ao carregar (evita flash)
+aplicarTema(getTema());
+
+// ── Animações de transição entre páginas ──
+function navegarPara(url) {
+  const main = document.querySelector(".main");
+  if (!main) {
+    window.location.href = url;
+    return;
+  }
+  main.classList.add("page-exit");
+  setTimeout(() => {
+    window.location.href = url;
+  }, 180);
+}
+
+// Intercepta links internos para animar
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("a[href]").forEach((link) => {
+    const href = link.getAttribute("href");
+    if (href && href.endsWith(".html") && !href.startsWith("http")) {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        navegarPara(href);
+      });
+    }
+  });
+});
+
 function getToken() {
   return localStorage.getItem(PREFIX + "token");
 }
@@ -110,6 +177,10 @@ function renderSidebar(paginaAtiva) {
         <div class="user-avatar">${iniciais}</div>
         <span class="user-name">${nome}</span>
       </div>
+      <button class="btn-tema" onclick="toggleTema()">
+        <i class="fa-solid ${temaIcon(getTema())} btn-tema-icon"></i>
+        <span class="btn-tema-label">${temaLabel(getTema())}</span>
+      </button>
       <button class="btn-logout" onclick="logout()">
         <i class="fa-solid fa-right-from-bracket"></i> Sair
       </button>
@@ -140,6 +211,10 @@ function renderTabBar(paginaAtiva) {
       <a href="/contas.html" class="mais-item"><i class="fa-solid fa-wallet"></i> Contas</a>
       <a href="/relatorios.html" class="mais-item"><i class="fa-solid fa-chart-bar"></i> Relatórios</a>
       <a href="/configuracoes.html" class="mais-item"><i class="fa-solid fa-gear"></i> Configurações</a>
+      <button class="mais-item tema-toggle" onclick="toggleTema();fecharMais()" style="width:100%;text-align:left;background:none;border:none;cursor:pointer;border-top:0.5px solid var(--border)">
+        <i class="fa-solid ${temaIcon(getTema())} btn-tema-icon" style="color:var(--text-muted)"></i>
+        <span class="btn-tema-label">${temaLabel(getTema())}</span>
+      </button>
     </div>
     <div class="modal-rapido" id="modal-rapido">
       <div class="modal-rapido-inner">
@@ -150,25 +225,25 @@ function renderTabBar(paginaAtiva) {
           <div class="tipo-btn" id="tipo-cartao" onclick="selecionarTipo('cartao')"><i class="fa-solid fa-credit-card" style="margin-right:4px"></i> Cartão</div>
         </div>
         <div style="margin-bottom:14px">
-          <label style="display:block;font-size:12px;color:#9ca3af;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Valor (R$)</label>
-          <input type="number" id="r-valor" placeholder="0,00" step="0.01" style="width:100%;background:#0f1117;border:0.5px solid #2d3748;border-radius:9px;padding:12px 13px;color:#fff;font-size:18px;outline:none" />
+          <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Valor (R$)</label>
+          <input type="number" id="r-valor" placeholder="0,00" step="0.01" style="width:100%;background:var(--bg-primary);border:0.5px solid var(--border);border-radius:9px;padding:12px 13px;color:#fff;font-size:18px;outline:none" />
         </div>
         <div style="margin-bottom:14px">
-          <label style="display:block;font-size:12px;color:#9ca3af;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Descrição</label>
-          <input type="text" id="r-descricao" placeholder="Ex: Almoço, Mercado..." style="width:100%;background:#0f1117;border:0.5px solid #2d3748;border-radius:9px;padding:10px 13px;color:#fff;font-size:14px;outline:none" />
+          <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Descrição</label>
+          <input type="text" id="r-descricao" placeholder="Ex: Almoço, Mercado..." style="width:100%;background:var(--bg-primary);border:0.5px solid var(--border);border-radius:9px;padding:10px 13px;color:#fff;font-size:14px;outline:none" />
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
           <div>
-            <label style="display:block;font-size:12px;color:#9ca3af;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Categoria</label>
-            <select id="r-categoria" style="width:100%;background:#0f1117;border:0.5px solid #2d3748;border-radius:9px;padding:10px 13px;color:#fff;font-size:14px;outline:none"></select>
+            <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Categoria</label>
+            <select id="r-categoria" style="width:100%;background:var(--bg-primary);border:0.5px solid var(--border);border-radius:9px;padding:10px 13px;color:#fff;font-size:14px;outline:none"></select>
           </div>
           <div>
-            <label style="display:block;font-size:12px;color:#9ca3af;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Conta</label>
-            <select id="r-conta" style="width:100%;background:#0f1117;border:0.5px solid #2d3748;border-radius:9px;padding:10px 13px;color:#fff;font-size:14px;outline:none"></select>
+            <label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px">Conta</label>
+            <select id="r-conta" style="width:100%;background:var(--bg-primary);border:0.5px solid var(--border);border-radius:9px;padding:10px 13px;color:#fff;font-size:14px;outline:none"></select>
           </div>
         </div>
         <div style="display:flex;gap:10px">
-          <button onclick="fecharModalRapido()" style="flex:1;background:transparent;border:0.5px solid #2d3748;color:#9ca3af;border-radius:9px;padding:12px;font-size:14px;cursor:pointer">Cancelar</button>
+          <button onclick="fecharModalRapido()" style="flex:1;background:transparent;border:0.5px solid var(--border);color:var(--text-secondary);border-radius:9px;padding:12px;font-size:14px;cursor:pointer">Cancelar</button>
           <button onclick="salvarRapido()" style="flex:2;background:#10b981;border:none;color:#fff;border-radius:9px;padding:12px;font-size:14px;font-weight:600;cursor:pointer">Salvar</button>
         </div>
       </div>
