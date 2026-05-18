@@ -116,4 +116,52 @@ router.delete("/:id", auth, async (req, res) => {
   }
 });
 
+// ── POST /copiar — Copiar orçamento de outro mês ──
+router.post("/copiar", auth, async (req, res) => {
+  const { mes_origem, ano_origem, mes_destino, ano_destino } = req.body;
+  if (!mes_origem || !ano_origem || !mes_destino || !ano_destino) {
+    return res
+      .status(400)
+      .json({ erro: "Informe mes/ano de origem e destino." });
+  }
+  try {
+    // Busca orçamentos do mês origem
+    const [origem] = await db.query(
+      "SELECT categoria_id, limite FROM Orcamentos WHERE usuario_id = ? AND mes = ? AND ano = ?",
+      [req.usuarioId, mes_origem, ano_origem],
+    );
+    if (origem.length === 0) {
+      return res
+        .status(404)
+        .json({ erro: "Nenhum orçamento encontrado no mês de origem." });
+    }
+    // Faz upsert de cada um no mês destino
+    let copiados = 0;
+    for (const orc of origem) {
+      await db.query(
+        `INSERT INTO Orcamentos (usuario_id, categoria_id, mes, ano, limite)
+         VALUES (?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE limite = VALUES(limite), alerta_80_enviado = 0, alerta_100_enviado = 0`,
+        [
+          req.usuarioId,
+          orc.categoria_id || null,
+          mes_destino,
+          ano_destino,
+          orc.limite,
+        ],
+      );
+      copiados++;
+    }
+    res.json({
+      mensagem: `${copiados} orçamento(s) copiado(s) com sucesso!`,
+      copiados,
+    });
+  } catch (err) {
+    console.error("[Orcamentos COPIAR]", err.message);
+    res
+      .status(500)
+      .json({ erro: "Erro ao copiar orçamentos.", detalhe: err.message });
+  }
+});
+
 module.exports = router;

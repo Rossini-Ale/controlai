@@ -126,6 +126,7 @@ const AJUDA = `
 /saldo — Ver saldo do mês
 /orcamento — Orçamento e limites do mês
 /recorrentes — Suas transações recorrentes
+/resumosemanal — Resumo dos últimos 7 dias
 /categorias — Listar categorias
 /contas — Listar contas
 
@@ -338,6 +339,80 @@ bot.onText(/\/recorrentes/, async (msg) => {
   } catch (err) {
     console.error("[Telegram /recorrentes]", err.message);
     bot.sendMessage(chatId, "❌ Erro ao buscar recorrências.");
+  }
+});
+
+// ── NOVO: /resumosemanal ──
+bot.onText(/\/resumosemanal/, async (msg) => {
+  const chatId = msg.chat.id;
+  const usuario = await getUsuario(chatId);
+  if (!usuario) {
+    bot.sendMessage(
+      chatId,
+      "❌ Conta não conectada. Use /conectar SEU_USERNAME",
+    );
+    return;
+  }
+
+  const agora = new Date();
+  const mes = agora.getMonth() + 1;
+  const ano = agora.getFullYear();
+  const seteDiasAtras = new Date(agora.getTime() - 7 * 86400000);
+  const dataInicio = seteDiasAtras.toISOString().split("T")[0];
+  const dataFim = agora.toISOString().split("T")[0];
+
+  try {
+    const [categorias] = await db.query(
+      `SELECT c.nome, SUM(t.valor) AS total
+       FROM Transacoes t
+       LEFT JOIN Categorias c ON t.categoria_id = c.id
+       WHERE t.usuario_id = ? AND t.tipo = 'despesa'
+         AND IFNULL(t.is_transferencia, 0) = 0
+         AND t.data BETWEEN ? AND ?
+       GROUP BY t.categoria_id, c.nome
+       ORDER BY total DESC LIMIT 5`,
+      [usuario.id, dataInicio, dataFim],
+    );
+
+    const [[totais]] = await db.query(
+      `SELECT
+         COALESCE(SUM(CASE WHEN tipo='receita' AND IFNULL(is_transferencia,0)=0 THEN valor ELSE 0 END), 0) AS receitas,
+         COALESCE(SUM(CASE WHEN tipo='despesa' AND IFNULL(is_transferencia,0)=0 THEN valor ELSE 0 END), 0) AS despesas
+       FROM Transacoes
+       WHERE usuario_id = ? AND data BETWEEN ? AND ?`,
+      [usuario.id, dataInicio, dataFim],
+    );
+
+    const [[mesTotais]] = await db.query(
+      `SELECT COALESCE(SUM(CASE WHEN tipo='despesa' AND IFNULL(is_transferencia,0)=0 THEN valor ELSE 0 END), 0) AS despesas_mes
+       FROM Transacoes WHERE usuario_id = ? AND MONTH(data) = ? AND YEAR(data) = ?`,
+      [usuario.id, mes, ano],
+    );
+
+    const receitas = parseFloat(totais.receitas) || 0;
+    const despesas = parseFloat(totais.despesas) || 0;
+    const despesasMes = parseFloat(mesTotais.despesas_mes) || 0;
+
+    let mensagem = `📊 *Resumo dos últimos 7 dias*\n`;
+    mensagem += `_${seteDiasAtras.toLocaleDateString("pt-BR")} a ${agora.toLocaleDateString("pt-BR")}_\n\n`;
+    mensagem += `✅ Receitas: *${fmt(receitas)}*\n`;
+    mensagem += `❌ Despesas: *${fmt(despesas)}*\n`;
+    mensagem += `💰 Saldo: *${fmt(receitas - despesas)}*\n\n`;
+
+    if (categorias.length > 0) {
+      mensagem += `📂 *Top gastos por categoria:*\n`;
+      for (const c of categorias) {
+        mensagem += `• ${c.nome || "Sem categoria"}: *${fmt(c.total)}*\n`;
+      }
+      mensagem += `\n`;
+    }
+
+    mensagem += `📅 Total gasto em ${MESES[mes - 1]}: *${fmt(despesasMes)}*`;
+
+    bot.sendMessage(chatId, mensagem, { parse_mode: "Markdown" });
+  } catch (err) {
+    console.error("[Telegram /resumosemanal]", err.message);
+    bot.sendMessage(chatId, "❌ Erro ao gerar resumo.");
   }
 });
 

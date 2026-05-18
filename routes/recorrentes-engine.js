@@ -300,6 +300,94 @@ async function verificarFaturas() {
 }
 
 // ─────────────────────────────────────────
+// RESUMO SEMANAL (toda domingo)
+// ─────────────────────────────────────────
+async function enviarResumosSemanal() {
+  const agora = new Date();
+  // Só roda aos domingos
+  if (agora.getDay() !== 0) return;
+
+  const mes = agora.getMonth() + 1;
+  const ano = agora.getFullYear();
+
+  // Data de 7 dias atrás
+  const seteDiasAtras = new Date(agora.getTime() - 7 * 86400000);
+  const dataInicio = toDateStr(seteDiasAtras);
+  const dataFim = toDateStr(agora);
+
+  try {
+    // Busca todos os usuários com Telegram conectado
+    const [usuarios] = await db.query(
+      "SELECT id, nome, telegram_chat_id FROM Usuarios WHERE telegram_chat_id IS NOT NULL",
+    );
+
+    for (const u of usuarios) {
+      // Gastos da semana por categoria
+      const [categorias] = await db.query(
+        `SELECT c.nome, c.icone, SUM(t.valor) AS total
+         FROM Transacoes t
+         LEFT JOIN Categorias c ON t.categoria_id = c.id
+         WHERE t.usuario_id = ? AND t.tipo = 'despesa'
+           AND IFNULL(t.is_transferencia, 0) = 0
+           AND t.data BETWEEN ? AND ?
+         GROUP BY t.categoria_id, c.nome, c.icone
+         ORDER BY total DESC
+         LIMIT 5`,
+        [u.id, dataInicio, dataFim],
+      );
+
+      // Total receitas e despesas da semana
+      const [[totais]] = await db.query(
+        `SELECT
+           COALESCE(SUM(CASE WHEN tipo='receita' AND IFNULL(is_transferencia,0)=0 THEN valor ELSE 0 END), 0) AS receitas,
+           COALESCE(SUM(CASE WHEN tipo='despesa' AND IFNULL(is_transferencia,0)=0 THEN valor ELSE 0 END), 0) AS despesas
+         FROM Transacoes
+         WHERE usuario_id = ? AND data BETWEEN ? AND ?`,
+        [u.id, dataInicio, dataFim],
+      );
+
+      // Total do mês até hoje
+      const [[mes_totais]] = await db.query(
+        `SELECT
+           COALESCE(SUM(CASE WHEN tipo='despesa' AND IFNULL(is_transferencia,0)=0 THEN valor ELSE 0 END), 0) AS despesas_mes
+         FROM Transacoes
+         WHERE usuario_id = ? AND MONTH(data) = ? AND YEAR(data) = ?`,
+        [u.id, mes, ano],
+      );
+
+      const receitas = parseFloat(totais.receitas) || 0;
+      const despesas = parseFloat(totais.despesas) || 0;
+      const despesasMes = parseFloat(mes_totais.despesas_mes) || 0;
+      const saldo = receitas - despesas;
+
+      const dataInicioFmt = seteDiasAtras.toLocaleDateString("pt-BR");
+      const dataFimFmt = agora.toLocaleDateString("pt-BR");
+
+      let msg = `📊 *Resumo semanal*\n`;
+      msg += `_${dataInicioFmt} a ${dataFimFmt}_\n\n`;
+      msg += `✅ Receitas: *${fmt(receitas)}*\n`;
+      msg += `❌ Despesas: *${fmt(despesas)}*\n`;
+      msg += `💰 Saldo da semana: *${fmt(saldo)}*\n\n`;
+
+      if (categorias.length > 0) {
+        msg += `📂 *Top gastos por categoria:*\n`;
+        for (const c of categorias) {
+          msg += `• ${c.nome || "Sem categoria"}: *${fmt(c.total)}*\n`;
+        }
+        msg += `\n`;
+      }
+
+      msg += `📅 Total gasto em ${MESES[mes - 1]}: *${fmt(despesasMes)}*`;
+
+      await enviarTelegram(u.telegram_chat_id, msg);
+      console.log(`[ResumoSemanal] ✅ Enviado para ${u.nome}`);
+    }
+  } catch (err) {
+    console.error("[ResumoSemanal] Erro:", err.message);
+  }
+}
+
+// ─────────────────────────────────────────
 // RUNNER PRINCIPAL
 // ─────────────────────────────────────────
 async function rodarTudo() {
@@ -307,6 +395,7 @@ async function rodarTudo() {
   await processarRecorrentes();
   await verificarOrcamentos();
   await verificarFaturas();
+  await enviarResumosSemanal();
   console.log(`[Cron] Concluído.`);
 }
 
@@ -315,6 +404,7 @@ module.exports = {
   processarRecorrentes,
   verificarOrcamentos,
   verificarFaturas,
+  enviarResumosSemanal,
   calcularProximaData,
   calcularPrimeiraData,
   toDateStr,

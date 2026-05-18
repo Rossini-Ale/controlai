@@ -561,6 +561,13 @@
           <button class="btn" onclick="carregarOrcamento()">
             <i class="fa-solid fa-rotate"></i> Atualizar
           </button>
+          <button
+            class="btn"
+            style="background: #6366f1"
+            onclick="copiarMesAnterior()"
+          >
+            <i class="fa-solid fa-copy"></i> Copiar mês anterior
+          </button>
         </div>
 
         <!-- Orçamento geral -->
@@ -1349,6 +1356,55 @@
         carregarOrcamento();
       }
 
+      async function copiarMesAnterior() {
+        const m = parseInt(document.getElementById("orc-mes").value);
+        const a = parseInt(document.getElementById("orc-ano").value);
+
+        // Calcula mês anterior
+        let mOrigem = m - 1;
+        let aOrigem = a;
+        if (mOrigem < 1) {
+          mOrigem = 12;
+          aOrigem--;
+        }
+
+        const nomes = [
+          "Janeiro",
+          "Fevereiro",
+          "Março",
+          "Abril",
+          "Maio",
+          "Junho",
+          "Julho",
+          "Agosto",
+          "Setembro",
+          "Outubro",
+          "Novembro",
+          "Dezembro",
+        ];
+        const ok = await confirmar(
+          `Copiar todos os limites de *${nomes[mOrigem - 1]} ${aOrigem}* para *${nomes[m - 1]} ${a}*?\n\nOs limites existentes neste mês serão substituídos.`,
+        );
+        if (!ok) return;
+
+        const res = await fetchAPI("/api/orcamentos/copiar", {
+          method: "POST",
+          body: JSON.stringify({
+            mes_origem: mOrigem,
+            ano_origem: aOrigem,
+            mes_destino: m,
+            ano_destino: a,
+          }),
+        });
+
+        if (res?.erro) {
+          toast(res.erro, "erro");
+          return;
+        }
+        toast(`${res.copiados} limite(s) copiado(s) de ${nomes[mOrigem - 1]}!`);
+        carregarOrcamento();
+      }
+
       async function removerOrc(id) {
         const ok = await confirmar("Deseja remover este limite?");
         if (!ok) return;
@@ -1456,7 +1512,16 @@
       }
 
       // ── Init ──
-      carregarCategorias();
+      // Abre aba correta se vier ?aba= na URL
+      const abaParam = new URLSearchParams(window.location.search).get("aba");
+      if (
+        abaParam &&
+        ["categorias", "metas", "orcamento", "perfil"].includes(abaParam)
+      ) {
+        trocarAba(abaParam);
+      } else {
+        carregarCategorias();
+      }
     </script>
   </body>
 </html>
