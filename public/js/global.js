@@ -281,3 +281,13 @@ async function salvarRapido() {
   if (typeof carregarTransacoes === "function") carregarTransacoes();
   if (typeof carregarCartoes === "function") carregarCartoes();
 }
+
+// ── PWA: Registra Service Worker ──
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/service-worker.js")
+      .then((reg) => console.log("[SW] Registrado:", reg.scope))
+      .catch((err) => console.warn("[SW] Falha ao registrar:", err));
+  });
+}

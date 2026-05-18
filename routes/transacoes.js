@@ -2,43 +2,73 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 const auth = require("../middleware/auth");
-
-// Listar transações (com filtros opcionais)
 router.get("/", auth, async (req, res) => {
-  const { mes, ano, tipo, categoria_id, conta_id } = req.query;
+  const { mes, ano, tipo, categoria_id, conta_id, page, limit } = req.query;
+
+  // Paginação — padrão 30 por página, máximo 100
+  const paginaAtual = Math.max(1, parseInt(page) || 1);
+  const porPagina = Math.min(100, parseInt(limit) || 30);
+  const offset = (paginaAtual - 1) * porPagina;
+
   try {
-    let query = `
-      SELECT t.*, c.nome as categoria_nome, c.cor as categoria_cor,
-             c.icone as categoria_icone, ct.nome as conta_nome
-      FROM Transacoes t
-      LEFT JOIN Categorias c ON t.categoria_id = c.id
-      LEFT JOIN Contas ct ON t.conta_id = ct.id
-      WHERE t.usuario_id = ?
-    `;
+    // Base da query
+    let where = "WHERE t.usuario_id = ?";
     const params = [req.usuarioId];
 
     if (mes && ano) {
-      query += " AND MONTH(t.data) = ? AND YEAR(t.data) = ?";
+      where += " AND MONTH(t.data) = ? AND YEAR(t.data) = ?";
       params.push(mes, ano);
     }
     if (tipo) {
-      query += " AND t.tipo = ?";
+      where += " AND t.tipo = ?";
       params.push(tipo);
     }
     if (categoria_id) {
-      query += " AND t.categoria_id = ?";
+      where += " AND t.categoria_id = ?";
       params.push(categoria_id);
     }
     if (conta_id) {
-      query += " AND t.conta_id = ?";
+      where += " AND t.conta_id = ?";
       params.push(conta_id);
     }
 
-    query += " ORDER BY t.data DESC, t.created_at DESC";
+    // Total de registros (para calcular páginas)
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) AS total
+       FROM Transacoes t
+       ${where}`,
+      params,
+    );
 
-    const [rows] = await db.query(query, params);
-    res.json(rows);
+    // Registros da página atual
+    const [rows] = await db.query(
+      `SELECT t.*,
+              c.nome  AS categoria_nome,
+              c.cor   AS categoria_cor,
+              c.icone AS categoria_icone,
+              ct.nome AS conta_nome
+       FROM Transacoes t
+       LEFT JOIN Categorias c  ON t.categoria_id = c.id
+       LEFT JOIN Contas     ct ON t.conta_id     = ct.id
+       ${where}
+       ORDER BY t.data DESC, t.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [...params, porPagina, offset],
+    );
+
+    res.json({
+      data: rows,
+      paginacao: {
+        total,
+        pagina: paginaAtual,
+        por_pagina: porPagina,
+        total_paginas: Math.ceil(total / porPagina),
+        tem_proxima: paginaAtual < Math.ceil(total / porPagina),
+        tem_anterior: paginaAtual > 1,
+      },
+    });
   } catch (err) {
+    console.error("[Transacoes GET]", err.message);
     res.status(500).json({ erro: "Erro ao buscar transações." });
   }
 });

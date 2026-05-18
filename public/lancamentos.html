@@ -3,6 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#10b981" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Controlaí" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon-192.svg" />
     <title>Controlaí — Lançamentos</title>
     <link
       rel="stylesheet"
@@ -597,6 +608,8 @@
         contas = [],
         todasRec = [],
         filtroRecAtual = "todos";
+      let paginaAtual = 1;
+      const POR_PAGINA = 30;
       const { mes, ano } = getMesAno();
       const FREQ_LABEL = {
         diaria: "Diária",
@@ -670,7 +683,8 @@
       }
 
       // ── Lançamentos ──
-      async function carregarTransacoes() {
+      async function carregarTransacoes(resetPagina = true) {
+        if (resetPagina) paginaAtual = 1;
         const m = document.getElementById("filtro-mes").value;
         const a = document.getElementById("filtro-ano").value;
         const tipo = document.getElementById("filtro-tipo").value;
@@ -682,23 +696,66 @@
           document.getElementById("tabela-transacoes-desktop").innerHTML =
             `<tr><td colspan="7" style="text-align:center;padding:24px">${skeletonLista(1)}</td></tr>`;
 
-        let url = `/api/transacoes?mes=${m}&ano=${a}`;
+        let url = `/api/transacoes?mes=${m}&ano=${a}&page=${paginaAtual}&limit=${POR_PAGINA}`;
         if (tipo === "receita" || tipo === "despesa") url += `&tipo=${tipo}`;
         if (catId) url += `&categoria_id=${catId}`;
 
-        let data = await fetchAPI(url);
-        if (!data) return;
+        const res = await fetchAPI(url);
+        if (!res) return;
+
+        // Suporte ao formato antigo (array) e novo (objeto com paginação)
+        let data = Array.isArray(res) ? res : res.data || [];
+        const paginacao = res.paginacao || null;
 
         if (tipo === "transferencia")
           data = data.filter((t) => t.is_transferencia);
         else if (tipo === "receita" || tipo === "despesa")
           data = data.filter((t) => !t.is_transferencia);
-        // Filtro categoria client-side para garantir (API já filtra, mas reforça)
-        if (catId)
+        if (catId && Array.isArray(res))
           data = data.filter((t) => String(t.categoria_id) === String(catId));
 
         if (isMobile()) renderMobile(data);
         else renderDesktop(data);
+        renderPaginacao(paginacao);
+      }
+
+      function renderPaginacao(paginacao) {
+        // Remove paginação anterior
+        const old = document.getElementById("paginacao-wrap");
+        if (old) old.remove();
+        if (!paginacao || paginacao.total_paginas <= 1) return;
+
+        const wrap = document.createElement("div");
+        wrap.id = "paginacao-wrap";
+        wrap.style.cssText =
+          "display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:0.5px solid var(--border);background:var(--bg-secondary);border-radius:0 0 14px 14px;";
+        wrap.innerHTML = `
+          <button onclick="irPagina(${paginacao.pagina - 1})"
+            style="background:${paginacao.tem_anterior ? "var(--bg-tertiary)" : "transparent"};border:0.5px solid var(--border);color:${paginacao.tem_anterior ? "var(--text-primary)" : "var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_anterior ? "pointer" : "default"};"
+            ${!paginacao.tem_anterior ? "disabled" : ""}>
+            <i class="fa-solid fa-chevron-left"></i> Anterior
+          </button>
+          <span style="font-size:13px;color:var(--text-muted)">
+            Página <strong style="color:var(--text-primary)">${paginacao.pagina}</strong> de <strong style="color:var(--text-primary)">${paginacao.total_paginas}</strong>
+            &nbsp;·&nbsp; ${paginacao.total} lançamento(s)
+          </span>
+          <button onclick="irPagina(${paginacao.pagina + 1})"
+            style="background:${paginacao.tem_proxima ? "var(--bg-tertiary)" : "transparent"};border:0.5px solid var(--border);color:${paginacao.tem_proxima ? "var(--text-primary)" : "var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_proxima ? "pointer" : "default"};"
+            ${!paginacao.tem_proxima ? "disabled" : ""}>
+            Próxima <i class="fa-solid fa-chevron-right"></i>
+          </button>`;
+
+        // Insere após a tabela
+        const tableWrap =
+          document.querySelector(".table-wrap.desktop-only") ||
+          document.getElementById("lista-mobile");
+        if (tableWrap) tableWrap.after(wrap);
+      }
+
+      function irPagina(pagina) {
+        paginaAtual = pagina;
+        carregarTransacoes(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
       function preencherFiltroCategorias() {
