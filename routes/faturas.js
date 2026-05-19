@@ -3,6 +3,32 @@ const router = express.Router();
 const db = require("../config/db");
 const auth = require("../middleware/auth");
 
+// ─────────────────────────────────────────────
+// Calcula em qual mês/ano uma compra cai,
+// considerando o dia de fechamento do cartão.
+//
+// Regra: se dataCompra.dia > dia_fechamento,
+//        a compra vai para a fatura do MÊS SEGUINTE.
+//        Caso contrário, cai no mês atual.
+//
+// Ex: fechamento dia 25
+//   compra em 20/05 → fatura de Maio
+//   compra em 26/05 → fatura de Junho
+// ─────────────────────────────────────────────
+function calcularMesFatura(dataCompra, diaFechamento, offsetParcela = 0) {
+  const d = new Date(dataCompra + "T00:00:00");
+
+  // Se passou do fechamento, avança 1 mês base
+  if (d.getDate() > diaFechamento) {
+    d.setMonth(d.getMonth() + 1);
+  }
+
+  // Soma offset de parcelas (0 para primeira, 1 para segunda, etc.)
+  d.setMonth(d.getMonth() + offsetParcela);
+
+  return { mes: d.getMonth() + 1, ano: d.getFullYear() };
+}
+
 // Buscar ou criar fatura do mês
 async function getOuCriarFatura(cartao_id, usuario_id, mes, ano) {
   const [rows] = await db.query(
@@ -24,6 +50,15 @@ async function getOuCriarFatura(cartao_id, usuario_id, mes, ano) {
     valor_total: 0,
     status: "aberta",
   };
+}
+
+// Buscar dia de fechamento do cartão
+async function getDiaFechamento(cartao_id, usuario_id) {
+  const [rows] = await db.query(
+    "SELECT dia_fechamento FROM Cartoes WHERE id = ? AND usuario_id = ?",
+    [cartao_id, usuario_id],
+  );
+  return rows.length > 0 ? rows[0].dia_fechamento : 1;
 }
 
 // Listar faturas de um cartão
@@ -62,7 +97,7 @@ router.get("/:cartao_id/:mes/:ano/transacoes", auth, async (req, res) => {
   }
 });
 
-// Lançar despesa no cartão (com suporte a parcelamento)
+// Lançar despesa no cartão (com suporte a parcelamento + lógica de fechamento)
 router.post("/:cartao_id/lancar", auth, async (req, res) => {
   const { cartao_id } = req.params;
   const { categoria_id, descricao, valor, data, observacao, parcelas } =
@@ -74,18 +109,18 @@ router.post("/:cartao_id/lancar", auth, async (req, res) => {
 
   const totalParcelas = parseInt(parcelas) || 1;
   const valorParcela = parseFloat((valor / totalParcelas).toFixed(2));
-  const dataBase = new Date(data + "T00:00:00");
   const parcela_ref = crypto.randomUUID
     ? crypto.randomUUID()
     : Date.now().toString();
 
   try {
+    // Busca o dia de fechamento real do cartão
+    const diaFechamento = await getDiaFechamento(cartao_id, req.usuarioId);
+
     const ids = [];
     for (let i = 0; i < totalParcelas; i++) {
-      const d = new Date(dataBase);
-      d.setMonth(d.getMonth() + i);
-      const mes = d.getMonth() + 1;
-      const ano = d.getFullYear();
+      // Calcula o mês correto considerando fechamento + offset de parcela
+      const { mes, ano } = calcularMesFatura(data, diaFechamento, i);
 
       const fatura = await getOuCriarFatura(cartao_id, req.usuarioId, mes, ano);
 
@@ -94,10 +129,13 @@ router.post("/:cartao_id/lancar", auth, async (req, res) => {
           ? `${descricao} (${i + 1}/${totalParcelas})`
           : descricao;
 
-      const dataFormatada = `${ano}-${String(mes).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      // Data do lançamento: usa a data original para a 1ª parcela,
+      // primeiro dia do mês correspondente para as demais
+      const dataFormatada =
+        i === 0 ? data : `${ano}-${String(mes).padStart(2, "0")}-01`;
 
       const [result] = await db.query(
-        `INSERT INTO Transacoes 
+        `INSERT INTO Transacoes
          (usuario_id, cartao_id, fatura_id, categoria_id, tipo, descricao, valor, data, observacao, parcelas, parcela_atual, parcela_ref)
          VALUES (?, ?, ?, ?, 'despesa', ?, ?, ?, ?, ?, ?, ?)`,
         [
@@ -145,7 +183,7 @@ router.post("/:cartao_id/:mes/:ano/pagar", auth, async (req, res) => {
 
     // Lança saída na conta bancária
     await db.query(
-      `INSERT INTO Transacoes 
+      `INSERT INTO Transacoes
        (usuario_id, conta_id, tipo, descricao, valor, data)
        VALUES (?, ?, 'despesa', ?, ?, ?)`,
       [

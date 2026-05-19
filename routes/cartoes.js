@@ -65,16 +65,54 @@ router.put("/:id", auth, async (req, res) => {
   }
 });
 
-// Deletar cartão
+// Deletar cartão — apaga transações e faturas vinculadas antes
 router.delete("/:id", auth, async (req, res) => {
+  const cartaoId = req.params.id;
+  const conn = await db.getConnection();
   try {
-    await db.query("DELETE FROM Cartoes WHERE id=? AND usuario_id=?", [
-      req.params.id,
+    await conn.beginTransaction();
+
+    // 1. Buscar IDs das faturas deste cartão
+    const [faturas] = await conn.query(
+      "SELECT id FROM FaturasCartao WHERE cartao_id = ? AND usuario_id = ?",
+      [cartaoId, req.usuarioId],
+    );
+    const faturaIds = faturas.map((f) => f.id);
+
+    // 2. Deletar transações vinculadas às faturas
+    if (faturaIds.length > 0) {
+      await conn.query(
+        `DELETE FROM Transacoes WHERE fatura_id IN (${faturaIds.map(() => "?").join(",")})`,
+        faturaIds,
+      );
+    }
+
+    // 3. Deletar transações vinculadas diretamente ao cartão (sem fatura)
+    await conn.query(
+      "DELETE FROM Transacoes WHERE cartao_id = ? AND usuario_id = ?",
+      [cartaoId, req.usuarioId],
+    );
+
+    // 4. Deletar faturas
+    await conn.query(
+      "DELETE FROM FaturasCartao WHERE cartao_id = ? AND usuario_id = ?",
+      [cartaoId, req.usuarioId],
+    );
+
+    // 5. Deletar o cartão
+    await conn.query("DELETE FROM Cartoes WHERE id = ? AND usuario_id = ?", [
+      cartaoId,
       req.usuarioId,
     ]);
+
+    await conn.commit();
     res.json({ mensagem: "Cartão deletado!" });
   } catch (err) {
+    await conn.rollback();
+    console.error(err);
     res.status(500).json({ erro: "Erro ao deletar cartão." });
+  } finally {
+    conn.release();
   }
 });
 
