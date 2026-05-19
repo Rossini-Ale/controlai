@@ -1,7 +1,7 @@
 const API = "";
 const PREFIX = "controlai_";
 
-// ── Tema claro/escuro ──
+// ── Tema ──
 function getTema() {
   return localStorage.getItem(PREFIX + "tema") || "auto";
 }
@@ -19,29 +19,27 @@ function aplicarTema(tema) {
   });
 }
 
-function temaIcon(tema) {
-  if (tema === "claro") return "fa-sun";
-  if (tema === "escuro") return "fa-moon";
+function temaIcon(t) {
+  if (t === "claro") return "fa-sun";
+  if (t === "escuro") return "fa-moon";
   return "fa-circle-half-stroke";
 }
-
-function temaLabel(tema) {
-  if (tema === "claro") return "Tema claro";
-  if (tema === "escuro") return "Tema escuro";
+function temaLabel(t) {
+  if (t === "claro") return "Tema claro";
+  if (t === "escuro") return "Tema escuro";
   return "Tema automático";
 }
-
 function toggleTema() {
   const atual = getTema();
-  const proximo =
-    atual === "escuro" ? "claro" : atual === "claro" ? "auto" : "escuro";
-  aplicarTema(proximo);
+  aplicarTema(
+    atual === "escuro" ? "claro" : atual === "claro" ? "auto" : "escuro",
+  );
 }
 
-// Aplica tema imediatamente ao carregar (evita flash)
+// Aplica tema antes do render (evita flash)
 aplicarTema(getTema());
 
-// ── Animações de transição entre páginas ──
+// ── Animações de transição ──
 function navegarPara(url) {
   const main = document.querySelector(".main");
   if (!main) {
@@ -53,7 +51,6 @@ function navegarPara(url) {
     window.location.href = url;
   }, 180);
 }
-
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("a[href]").forEach((link) => {
     const href = link.getAttribute("href");
@@ -66,6 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// ── Auth ──
 function getToken() {
   return localStorage.getItem(PREFIX + "token");
 }
@@ -82,30 +80,27 @@ function logout() {
   localStorage.removeItem(PREFIX + "username");
   window.location.href = "/login.html";
 }
-
 function verificarAuth() {
   if (!getToken()) window.location.href = "/login.html";
 }
 
+// ── Helpers ──
 function formatarMoeda(valor) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
   }).format(valor || 0);
 }
-
 function formatarData(data) {
   if (!data) return "—";
   const d = new Date(data);
   if (isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
-
 function getMesAno() {
-  const agora = new Date();
-  return { mes: agora.getMonth() + 1, ano: agora.getFullYear() };
+  const a = new Date();
+  return { mes: a.getMonth() + 1, ano: a.getFullYear() };
 }
-
 function nomeMes(mes) {
   return [
     "Janeiro",
@@ -122,7 +117,6 @@ function nomeMes(mes) {
     "Dezembro",
   ][mes - 1];
 }
-
 async function fetchAPI(endpoint, options = {}) {
   const res = await fetch(`${API}${endpoint}`, {
     ...options,
@@ -140,7 +134,7 @@ async function fetchAPI(endpoint, options = {}) {
 }
 
 // ════════════════════════════════════════
-// SIDEBAR — desktop
+// SIDEBAR — desktop (4 itens)
 // ════════════════════════════════════════
 function renderSidebar(paginaAtiva) {
   const nome = getNome();
@@ -153,10 +147,8 @@ function renderSidebar(paginaAtiva) {
   const navItems = [
     { href: "/dashboard.html", icon: "fa-house", label: "Dashboard" },
     { href: "/lancamentos.html", icon: "fa-right-left", label: "Lançamentos" },
-    { href: "/cartoes.html", icon: "fa-credit-card", label: "Cartões" },
     { href: "/contas.html", icon: "fa-wallet", label: "Contas" },
     { href: "/relatorios.html", icon: "fa-chart-bar", label: "Relatórios" },
-    { href: "/configuracoes.html", icon: "fa-gear", label: "Configurações" },
   ];
   return `
     <div class="sidebar-logo">
@@ -174,11 +166,24 @@ function renderSidebar(paginaAtiva) {
         .join("")}
     </nav>
     <div class="sidebar-bottom">
-      <div class="user-info">
+      <div class="user-info" style="cursor:pointer" onclick="togglePerfilDesktop()" title="Perfil">
         <div class="user-avatar">${iniciais}</div>
-        <span class="user-name">${nome}</span>
+        <div style="flex:1">
+          <div class="user-name">${nome}</div>
+          <div style="font-size:11px;color:var(--green)">Ver perfil</div>
+        </div>
+        <i class="fa-solid fa-chevron-up" id="chevron-perfil" style="color:var(--text-muted);font-size:12px;transition:transform 0.2s"></i>
       </div>
-      <button class="btn-tema" onclick="toggleTema()">
+      <!-- Dropdown perfil desktop -->
+      <div id="perfil-desktop-menu" style="display:none;margin-top:8px;background:var(--bg-tertiary);border-radius:10px;overflow:hidden;border:0.5px solid var(--border)">
+        <a href="/configuracoes.html?aba=perfil" class="nav-item" style="padding:10px 14px;font-size:13px">
+          <i class="fa-solid fa-pen"></i> Editar perfil
+        </a>
+        <a href="/configuracoes.html?aba=perfil" class="nav-item" style="padding:10px 14px;font-size:13px">
+          <i class="fa-brands fa-telegram"></i> Telegram
+        </a>
+      </div>
+      <button class="btn-tema" onclick="toggleTema()" style="margin-top:8px">
         <i class="fa-solid ${temaIcon(getTema())} btn-tema-icon"></i>
         <span class="btn-tema-label">${temaLabel(getTema())}</span>
       </button>
@@ -186,6 +191,15 @@ function renderSidebar(paginaAtiva) {
         <i class="fa-solid fa-right-from-bracket"></i> Sair
       </button>
     </div>`;
+}
+
+function togglePerfilDesktop() {
+  const menu = document.getElementById("perfil-desktop-menu");
+  const chevron = document.getElementById("chevron-perfil");
+  if (!menu) return;
+  const aberto = menu.style.display !== "none";
+  menu.style.display = aberto ? "none" : "block";
+  if (chevron) chevron.style.transform = aberto ? "" : "rotate(180deg)";
 }
 
 // ════════════════════════════════════════
@@ -215,24 +229,28 @@ function renderMobileHeader(paginaAtiva) {
       </div>
     </header>
 
-    <!-- Overlay + dropdown de perfil -->
     <div class="perfil-overlay" id="perfil-overlay" onclick="fecharPerfilMenu()"></div>
     <div class="perfil-menu" id="perfil-menu">
-      <!-- Toggle de tema -->
+      <!-- Toggle tema -->
       <button class="perfil-menu-item" onclick="toggleTema()">
-        <i class="fa-solid ${temaIcon(getTema())} btn-tema-icon" style="font-size:16px"></i>
+        <i class="fa-solid ${temaIcon(getTema())} btn-tema-icon"></i>
         <span class="btn-tema-label">${temaLabel(getTema())}</span>
       </button>
       <div class="perfil-menu-divider"></div>
-      <!-- Info do usuário -->
+      <!-- Usuário -->
       <div class="perfil-menu-user">
         <div class="perfil-menu-avatar">${iniciais}</div>
         <div>
           <div class="perfil-menu-nome">${nome}</div>
-          <a href="/configuracoes.html?aba=perfil" class="perfil-menu-link"
-             onclick="fecharPerfilMenu()">Editar perfil</a>
+          <a href="/configuracoes.html?aba=perfil" class="perfil-menu-link" onclick="fecharPerfilMenu()">Editar perfil</a>
         </div>
       </div>
+      <div class="perfil-menu-divider"></div>
+      <!-- Telegram -->
+      <a href="/configuracoes.html?aba=perfil" class="perfil-menu-item" onclick="fecharPerfilMenu()" style="text-decoration:none">
+        <i class="fa-brands fa-telegram" style="color:#229ED9"></i>
+        <span>Conectar Telegram</span>
+      </a>
       <div class="perfil-menu-divider"></div>
       <!-- Sair -->
       <button class="perfil-menu-item perfil-sair" onclick="logout()">
@@ -250,7 +268,6 @@ function togglePerfilMenu() {
   menu.classList.toggle("active", !aberto);
   overlay.classList.toggle("active", !aberto);
 }
-
 function fecharPerfilMenu() {
   document.getElementById("perfil-menu")?.classList.remove("active");
   document.getElementById("perfil-overlay")?.classList.remove("active");
@@ -258,6 +275,7 @@ function fecharPerfilMenu() {
 
 // ════════════════════════════════════════
 // TAB BAR — bottom mobile
+// Início | Lançar | + | Contas | Relatórios
 // ════════════════════════════════════════
 function renderTabBar(paginaAtiva) {
   const tabs = [
@@ -269,16 +287,16 @@ function renderTabBar(paginaAtiva) {
     },
     {
       href: "/lancamentos.html",
-      icon: "fa-list",
+      icon: "fa-right-left",
       label: "Lançar",
       page: "Lançamentos",
     },
     { central: true },
     {
-      href: "/cartoes.html",
-      icon: "fa-credit-card",
-      label: "Cartões",
-      page: "Cartões",
+      href: "/contas.html",
+      icon: "fa-wallet",
+      label: "Contas",
+      page: "Contas",
     },
     {
       href: "/relatorios.html",
@@ -305,13 +323,12 @@ function renderTabBar(paginaAtiva) {
   return `
     <nav class="tab-bar">${tabsHtml}</nav>
 
-    <!-- Modal rápido de lançamento -->
     <div class="modal-rapido" id="modal-rapido">
       <div class="modal-rapido-inner">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
           <h2 style="margin:0">Novo lançamento</h2>
           <button onclick="fecharModalRapido()"
-            style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:4px">
+            style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
@@ -336,26 +353,18 @@ function renderTabBar(paginaAtiva) {
           <input type="text" id="r-descricao" placeholder="Ex: Almoço, Mercado..." />
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div class="form-group">
-            <label>Categoria</label>
-            <select id="r-categoria"></select>
-          </div>
-          <div class="form-group">
-            <label>Conta</label>
-            <select id="r-conta"></select>
-          </div>
+          <div class="form-group"><label>Categoria</label><select id="r-categoria"></select></div>
+          <div class="form-group"><label>Conta</label><select id="r-conta"></select></div>
         </div>
         <div style="display:flex;gap:10px;margin-top:8px">
-          <button onclick="fecharModalRapido()"
-            class="btn-cancel" style="flex:1;padding:12px">Cancelar</button>
-          <button onclick="salvarRapido()"
-            class="btn" style="flex:2;justify-content:center;padding:12px">Salvar</button>
+          <button onclick="fecharModalRapido()" class="btn-cancel" style="flex:1;padding:12px">Cancelar</button>
+          <button onclick="salvarRapido()" class="btn" style="flex:2;justify-content:center;padding:12px">Salvar</button>
         </div>
       </div>
     </div>`;
 }
 
-// Mantidos por compatibilidade (tab bar não usa mais "Mais")
+// Mantidos por compatibilidade
 function toggleMais() {}
 function fecharMais() {}
 
@@ -373,11 +382,9 @@ async function abrirModalRapido() {
   document.getElementById("modal-rapido").classList.add("active");
   setTimeout(() => document.getElementById("r-valor").focus(), 100);
 }
-
 function fecharModalRapido() {
   document.getElementById("modal-rapido").classList.remove("active");
 }
-
 function selecionarTipo(tipo) {
   tipoRapido = tipo;
   ["despesa", "receita", "cartao"].forEach((t) => {
@@ -401,7 +408,6 @@ function selecionarTipo(tipo) {
           .join("")
       : `<option value="">Sem contas</option>`;
 }
-
 async function salvarRapido() {
   const valor = parseFloat(document.getElementById("r-valor").value);
   const descricao = document.getElementById("r-descricao").value;
@@ -444,15 +450,15 @@ async function salvarRapido() {
   fecharModalRapido();
   if (typeof carregarDados === "function") carregarDados();
   if (typeof carregarTransacoes === "function") carregarTransacoes();
-  if (typeof carregarCartoes === "function") carregarCartoes();
+  if (typeof carregarContas === "function") carregarContas();
 }
 
-// ── PWA: Registra Service Worker ──
+// ── PWA ──
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("/service-worker.js")
       .then((reg) => console.log("[SW] Registrado:", reg.scope))
-      .catch((err) => console.warn("[SW] Falha ao registrar:", err));
+      .catch((err) => console.warn("[SW] Falha:", err));
   });
 }

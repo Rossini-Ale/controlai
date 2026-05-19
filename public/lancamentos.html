@@ -3,7 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#10b981" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -44,6 +43,7 @@
         display: flex;
         align-items: center;
         gap: 7px;
+        white-space: nowrap;
       }
       .aba-btn.active {
         background: var(--bg-tertiary);
@@ -244,6 +244,89 @@
         border-bottom: none;
       }
 
+      /* Categorias */
+      .categorias-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+      .categoria-section h2 {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .categoria-lista {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .categoria-item {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .categoria-nome {
+        flex: 1;
+        font-size: 14px;
+      }
+      .icone-seletor {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        padding: 4px;
+      }
+      .icone-opcao {
+        width: 100%;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-primary);
+        border: 0.5px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        color: var(--text-secondary);
+        transition: all 0.15s;
+      }
+      .icone-opcao:hover,
+      .icone-opcao.selecionado {
+        border-color: var(--green);
+        color: var(--green);
+      }
+      .icone-opcao.selecionado {
+        background: rgba(16, 185, 129, 0.15);
+      }
+      .icone-preview {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+      .icone-preview i {
+        font-size: 20px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-primary);
+        border: 0.5px solid var(--border);
+        border-radius: 8px;
+      }
+
       @media (max-width: 768px) {
         .abas {
           width: 100%;
@@ -251,8 +334,9 @@
         .aba-btn {
           flex: 1;
           justify-content: center;
-          padding: 8px 10px;
-          font-size: 13px;
+          padding: 8px 6px;
+          font-size: 11px;
+          gap: 4px;
         }
         .rec-grid {
           grid-template-columns: 1fr;
@@ -268,6 +352,9 @@
         }
         .rec-resumo .card-label {
           font-size: 10px;
+        }
+        .categorias-grid {
+          grid-template-columns: 1fr;
         }
       }
     </style>
@@ -306,6 +393,13 @@
           onclick="trocarAba('recorrentes')"
         >
           <i class="fa-solid fa-rotate"></i> Recorrentes
+        </button>
+        <button
+          class="aba-btn"
+          id="aba-categorias-btn"
+          onclick="trocarAba('categorias')"
+        >
+          <i class="fa-solid fa-tag"></i> Categorias
         </button>
       </div>
 
@@ -443,6 +537,45 @@
         </div>
         <div class="rec-grid" id="rec-grid"></div>
       </div>
+
+      <!-- ABA CATEGORIAS -->
+      <div class="aba-conteudo" id="aba-categorias">
+        <div
+          style="display: flex; justify-content: flex-end; margin-bottom: 16px"
+        >
+          <button class="btn" onclick="abrirModalCategoria()">
+            <i class="fa-solid fa-plus"></i> Nova categoria
+          </button>
+        </div>
+        <div class="categorias-grid">
+          <div>
+            <h2>
+              <span style="color: var(--red)"
+                ><i class="fa-solid fa-arrow-down"></i
+              ></span>
+              Despesas
+            </h2>
+            <div class="categoria-lista" id="lista-despesas">
+              <p style="color: var(--text-muted); font-size: 13px">
+                Carregando...
+              </p>
+            </div>
+          </div>
+          <div>
+            <h2>
+              <span style="color: var(--green)"
+                ><i class="fa-solid fa-arrow-up"></i
+              ></span>
+              Receitas
+            </h2>
+            <div class="categoria-lista" id="lista-receitas">
+              <p style="color: var(--text-muted); font-size: 13px">
+                Carregando...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Modal lançamento -->
@@ -490,8 +623,7 @@
           <label>Data</label><input type="date" id="f-data" />
         </div>
         <div class="form-group">
-          <label>Observação (opcional)</label
-          ><input type="text" id="f-obs" placeholder="Alguma observação..." />
+          <label>Observação (opcional)</label><input type="text" id="f-obs" />
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" onclick="fecharModalLancamento()">
@@ -518,7 +650,7 @@
             <label>Valor (R$)</label
             ><input
               type="number"
-              id="r-valor"
+              id="r-valor-rec"
               placeholder="0,00"
               step="0.01"
               min="0"
@@ -530,17 +662,17 @@
           ><input
             type="text"
             id="r-descricao"
-            placeholder="Ex: Aluguel, Netflix, Salário..."
+            placeholder="Ex: Aluguel, Netflix..."
           />
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <div class="form-group">
             <label>Categoria</label
-            ><select id="r-categoria"></select>
+            ><select id="r-categoria-rec"></select>
           </div>
           <div class="form-group">
             <label>Conta</label
-            ><select id="r-conta"></select>
+            ><select id="r-conta-rec"></select>
           </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
@@ -558,8 +690,8 @@
             </select>
           </div>
           <div class="form-group" id="grupo-dia">
-            <label id="label-dia">Dia do mês</label
-            ><input type="number" id="r-dia" min="1" max="31" value="1" />
+            <label id="label-dia">Dia do mês</label>
+            <input type="number" id="r-dia" min="1" max="31" value="1" />
           </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
@@ -589,6 +721,52 @@
         <div id="hist-lista" style="max-height: 360px; overflow-y: auto"></div>
         <div class="modal-footer">
           <button class="btn-cancel" onclick="fecharHist()">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal categoria -->
+    <div class="modal-overlay" id="modal-categoria">
+      <div class="modal" style="max-width: 500px">
+        <h2 id="modal-cat-titulo">Nova categoria</h2>
+        <div class="form-group">
+          <label>Nome</label
+          ><input
+            type="text"
+            id="c-nome"
+            placeholder="Ex: Alimentação, Salário..."
+          />
+        </div>
+        <div class="form-group">
+          <label>Tipo</label
+          ><select id="c-tipo">
+            <option value="despesa">Despesa</option>
+            <option value="receita">Receita</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cor</label
+          ><input
+            type="color"
+            id="c-cor"
+            value="#ef4444"
+            style="height: 40px; cursor: pointer"
+            oninput="atualizarPreviewCat()"
+          />
+        </div>
+        <div class="form-group">
+          <label>Ícone</label>
+          <div class="icone-preview">
+            <i id="preview-icone" class="fa-solid fa-tag"></i
+            ><span>Ícone selecionado</span>
+          </div>
+          <div class="icone-seletor" id="icone-seletor"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" onclick="fecharModalCategoria()">
+            Cancelar
+          </button>
+          <button class="btn" onclick="salvarCategoria()">Salvar</button>
         </div>
       </div>
     </div>
@@ -651,6 +829,13 @@
           : `<option value="">Sem contas</option>`;
         ajustarLayout();
         carregarTransacoes();
+        // Abre aba por URL param
+        const abaParam = new URLSearchParams(window.location.search).get("aba");
+        if (
+          abaParam &&
+          ["lancamentos", "recorrentes", "categorias"].includes(abaParam)
+        )
+          trocarAba(abaParam);
       }
 
       // ── Abas ──
@@ -665,98 +850,83 @@
         document.getElementById(`aba-${aba}-btn`).classList.add("active");
         document.getElementById(`aba-${aba}`).classList.add("active");
         const labels = {
-          lancamentos: ["Lançamentos", "Novo lançamento"],
+          lancamentos: ["Lançamentos", "Novo"],
           recorrentes: ["Recorrentes", "Nova recorrência"],
+          categorias: ["Categorias", "Nova categoria"],
         };
         document.getElementById("page-title").textContent = labels[aba][0];
-        document.getElementById("btn-novo-label").textContent = labels[aba][1]
-          .replace("Nova ", "")
-          .replace("Novo ", "");
+        document.getElementById("btn-novo-label").textContent = labels[aba][1];
         if (aba === "recorrentes" && todasRec.length === 0)
           carregarRecorrentes();
+        if (aba === "categorias") carregarCategorias();
       }
 
       function abrirModalAtivo() {
         if (abaAtiva === "lancamentos") abrirModalLancamento();
-        else abrirModalRec();
+        else if (abaAtiva === "recorrentes") abrirModalRec();
+        else abrirModalCategoria();
       }
 
       function isMobile() {
         return window.innerWidth <= 768;
       }
 
-      // ── Lançamentos ──
+      // ══════════════════════════════════════
+      // LANÇAMENTOS
+      // ══════════════════════════════════════
       async function carregarTransacoes(resetPagina = true) {
         if (resetPagina) paginaAtual = 1;
         const m = document.getElementById("filtro-mes").value;
         const a = document.getElementById("filtro-ano").value;
         const tipo = document.getElementById("filtro-tipo").value;
         const catId = document.getElementById("filtro-categoria").value;
-
         if (isMobile())
           document.getElementById("lista-mobile").innerHTML = skeletonLista(3);
         else
           document.getElementById("tabela-transacoes-desktop").innerHTML =
             `<tr><td colspan="7" style="text-align:center;padding:24px">${skeletonLista(1)}</td></tr>`;
-
         let url = `/api/transacoes?mes=${m}&ano=${a}&page=${paginaAtual}&limit=${POR_PAGINA}`;
         if (tipo === "receita" || tipo === "despesa") url += `&tipo=${tipo}`;
         if (catId) url += `&categoria_id=${catId}`;
-
         const res = await fetchAPI(url);
         if (!res) return;
-
-        // Suporte ao formato antigo (array) e novo (objeto com paginação)
         let data = Array.isArray(res) ? res : res.data || [];
         const paginacao = res.paginacao || null;
-
         if (tipo === "transferencia")
           data = data.filter((t) => t.is_transferencia);
         else if (tipo === "receita" || tipo === "despesa")
           data = data.filter((t) => !t.is_transferencia);
         if (catId && Array.isArray(res))
           data = data.filter((t) => String(t.categoria_id) === String(catId));
-
         if (isMobile()) renderMobile(data);
         else renderDesktop(data);
         renderPaginacao(paginacao);
       }
 
       function renderPaginacao(paginacao) {
-        // Remove paginação anterior
         const old = document.getElementById("paginacao-wrap");
         if (old) old.remove();
         if (!paginacao || paginacao.total_paginas <= 1) return;
-
         const wrap = document.createElement("div");
         wrap.id = "paginacao-wrap";
         wrap.style.cssText =
           "display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:0.5px solid var(--border);background:var(--bg-secondary);border-radius:0 0 14px 14px;";
         wrap.innerHTML = `
-          <button onclick="irPagina(${paginacao.pagina - 1})"
-            style="background:${paginacao.tem_anterior ? "var(--bg-tertiary)" : "transparent"};border:0.5px solid var(--border);color:${paginacao.tem_anterior ? "var(--text-primary)" : "var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_anterior ? "pointer" : "default"};"
-            ${!paginacao.tem_anterior ? "disabled" : ""}>
+          <button onclick="irPagina(${paginacao.pagina - 1})" style="background:${paginacao.tem_anterior ? "var(--bg-tertiary)" : "transparent"};border:0.5px solid var(--border);color:${paginacao.tem_anterior ? "var(--text-primary)" : "var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_anterior ? "pointer" : "default"}" ${!paginacao.tem_anterior ? "disabled" : ""}>
             <i class="fa-solid fa-chevron-left"></i> Anterior
           </button>
-          <span style="font-size:13px;color:var(--text-muted)">
-            Página <strong style="color:var(--text-primary)">${paginacao.pagina}</strong> de <strong style="color:var(--text-primary)">${paginacao.total_paginas}</strong>
-            &nbsp;·&nbsp; ${paginacao.total} lançamento(s)
-          </span>
-          <button onclick="irPagina(${paginacao.pagina + 1})"
-            style="background:${paginacao.tem_proxima ? "var(--bg-tertiary)" : "transparent"};border:0.5px solid var(--border);color:${paginacao.tem_proxima ? "var(--text-primary)" : "var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_proxima ? "pointer" : "default"};"
-            ${!paginacao.tem_proxima ? "disabled" : ""}>
+          <span style="font-size:13px;color:var(--text-muted)">Página <strong style="color:var(--text-primary)">${paginacao.pagina}</strong> de <strong style="color:var(--text-primary)">${paginacao.total_paginas}</strong> · ${paginacao.total} lançamento(s)</span>
+          <button onclick="irPagina(${paginacao.pagina + 1})" style="background:${paginacao.tem_proxima ? "var(--bg-tertiary)" : "transparent"};border:0.5px solid var(--border);color:${paginacao.tem_proxima ? "var(--text-primary)" : "var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_proxima ? "pointer" : "default"}" ${!paginacao.tem_proxima ? "disabled" : ""}>
             Próxima <i class="fa-solid fa-chevron-right"></i>
           </button>`;
-
-        // Insere após a tabela
-        const tableWrap =
+        const tw =
           document.querySelector(".table-wrap.desktop-only") ||
           document.getElementById("lista-mobile");
-        if (tableWrap) tableWrap.after(wrap);
+        if (tw) tw.after(wrap);
       }
 
-      function irPagina(pagina) {
-        paginaAtual = pagina;
+      function irPagina(p) {
+        paginaAtual = p;
         carregarTransacoes(false);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
@@ -793,8 +963,8 @@
               isT
                 ? `<button class="btn-danger" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
                 : `<button class="btn-edit" onclick="editarLancamento(${t.id})"><i class="fa-solid fa-pen"></i></button>
-                 <button class="btn-edit" onclick="duplicarLancamento(${t.id})" title="Duplicar"><i class="fa-solid fa-copy"></i></button>
-                 <button class="btn-danger" onclick="deletarLancamento(${t.id})"><i class="fa-solid fa-trash"></i></button>`
+               <button class="btn-edit" onclick="duplicarLancamento(${t.id})" title="Duplicar"><i class="fa-solid fa-copy"></i></button>
+               <button class="btn-danger" onclick="deletarLancamento(${t.id})"><i class="fa-solid fa-trash"></i></button>`
             }</td>
           </tr>`;
           })
@@ -839,8 +1009,8 @@
                 isT
                   ? `<button class="btn-danger" style="padding:6px 14px;font-size:12px" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
                   : `<button class="btn-edit" onclick="editarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-pen"></i> Editar</button>
-                   <button class="btn-edit" onclick="duplicarLancamento(${t.id})" style="padding:6px 14px;font-size:12px" title="Duplicar"><i class="fa-solid fa-copy"></i></button>
-                   <button class="btn-danger" onclick="deletarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-trash"></i></button>`
+                 <button class="btn-edit" onclick="duplicarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-copy"></i></button>
+                 <button class="btn-danger" onclick="deletarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-trash"></i></button>`
               }
             </div>
           </div>`;
@@ -973,7 +1143,9 @@
         if (abaAtiva === "lancamentos") carregarTransacoes();
       });
 
-      // ── Recorrentes ──
+      // ══════════════════════════════════════
+      // RECORRENTES
+      // ══════════════════════════════════════
       async function carregarRecorrentes() {
         document.getElementById("rec-grid").innerHTML = skeletonCards(3);
         todasRec = (await fetchAPI("/api/recorrentes")) || [];
@@ -1003,8 +1175,8 @@
           formatarMoeda(rec);
         document.getElementById("res-despesas").textContent =
           formatarMoeda(des);
-        const s = rec - des;
-        const el = document.getElementById("res-saldo");
+        const s = rec - des,
+          el = document.getElementById("res-saldo");
         el.textContent = formatarMoeda(s);
         el.className = "card-value " + (s >= 0 ? "green" : "red");
       }
@@ -1087,13 +1259,13 @@
 
       function filtrarCategoriasRec() {
         const tipo = document.getElementById("r-tipo").value;
-        document.getElementById("r-categoria").innerHTML =
+        document.getElementById("r-categoria-rec").innerHTML =
           `<option value="">Sem categoria</option>` +
           categorias
             .filter((c) => c.tipo === tipo)
             .map((c) => `<option value="${c.id}">${c.nome}</option>`)
             .join("");
-        document.getElementById("r-conta").innerHTML =
+        document.getElementById("r-conta-rec").innerHTML =
           `<option value="">Sem conta</option>` +
           contas
             .map((c) => `<option value="${c.id}">${c.nome}</option>`)
@@ -1101,10 +1273,10 @@
       }
 
       function atualizarCampoDia() {
-        const freq = document.getElementById("r-frequencia").value;
-        const grupo = document.getElementById("grupo-dia");
-        const label = document.getElementById("label-dia");
-        const input = document.getElementById("r-dia");
+        const freq = document.getElementById("r-frequencia").value,
+          grupo = document.getElementById("grupo-dia"),
+          label = document.getElementById("label-dia"),
+          input = document.getElementById("r-dia");
         if (freq === "diaria" || freq === "quinzenal") {
           grupo.style.display = "none";
           return;
@@ -1127,7 +1299,7 @@
         editandoRecId = null;
         document.getElementById("modal-rec-titulo").textContent =
           "Nova recorrência";
-        ["r-valor", "r-descricao", "r-fim", "r-obs"].forEach(
+        ["r-valor-rec", "r-descricao", "r-fim", "r-obs"].forEach(
           (id) => (document.getElementById(id).value = ""),
         );
         document.getElementById("r-tipo").value = "despesa";
@@ -1151,7 +1323,7 @@
         document.getElementById("modal-rec-titulo").textContent =
           "Editar recorrência";
         document.getElementById("r-tipo").value = rec.tipo;
-        document.getElementById("r-valor").value = rec.valor;
+        document.getElementById("r-valor-rec").value = rec.valor;
         document.getElementById("r-descricao").value = rec.descricao;
         document.getElementById("r-frequencia").value = rec.frequencia;
         document.getElementById("r-dia").value = rec.dia_vencimento;
@@ -1161,8 +1333,9 @@
           rec.data_fim?.split("T")[0] || "";
         document.getElementById("r-obs").value = rec.observacao || "";
         filtrarCategoriasRec();
-        document.getElementById("r-categoria").value = rec.categoria_id || "";
-        document.getElementById("r-conta").value = rec.conta_id || "";
+        document.getElementById("r-categoria-rec").value =
+          rec.categoria_id || "";
+        document.getElementById("r-conta-rec").value = rec.conta_id || "";
         atualizarCampoDia();
         document.getElementById("modal-recorrente").classList.add("active");
       }
@@ -1170,10 +1343,11 @@
       async function salvarRec() {
         const body = {
           tipo: document.getElementById("r-tipo").value,
-          valor: parseFloat(document.getElementById("r-valor").value),
+          valor: parseFloat(document.getElementById("r-valor-rec").value),
           descricao: document.getElementById("r-descricao").value,
-          categoria_id: document.getElementById("r-categoria").value || null,
-          conta_id: document.getElementById("r-conta").value || null,
+          categoria_id:
+            document.getElementById("r-categoria-rec").value || null,
+          conta_id: document.getElementById("r-conta-rec").value || null,
           frequencia: document.getElementById("r-frequencia").value,
           dia_vencimento: parseInt(document.getElementById("r-dia").value) || 1,
           data_inicio: document.getElementById("r-inicio").value,
@@ -1218,7 +1392,6 @@
         toast(!ativa ? "Recorrência ativada!" : "Recorrência pausada.", "info");
         carregarRecorrentes();
       }
-
       async function deletarRec(id) {
         const ok = await confirmar(
           "Deseja deletar esta recorrência? As transações já geradas não serão afetadas.",
@@ -1250,6 +1423,193 @@
       }
       function fecharHist() {
         document.getElementById("modal-hist").classList.remove("active");
+      }
+
+      // ══════════════════════════════════════
+      // CATEGORIAS
+      // ══════════════════════════════════════
+      let editandoCatId = null,
+        iconeSelecionado = "fa-tag";
+      const icones = [
+        "fa-tag",
+        "fa-utensils",
+        "fa-car",
+        "fa-house",
+        "fa-heart",
+        "fa-shirt",
+        "fa-graduation-cap",
+        "fa-briefcase",
+        "fa-plane",
+        "fa-cart-shopping",
+        "fa-bolt",
+        "fa-wifi",
+        "fa-phone",
+        "fa-tv",
+        "fa-music",
+        "fa-gamepad",
+        "fa-dumbbell",
+        "fa-pills",
+        "fa-dog",
+        "fa-baby",
+        "fa-book",
+        "fa-tools",
+        "fa-gas-pump",
+        "fa-bus",
+        "fa-train",
+        "fa-bicycle",
+        "fa-piggy-bank",
+        "fa-money-bill",
+        "fa-credit-card",
+        "fa-wallet",
+        "fa-building",
+        "fa-store",
+        "fa-hospital",
+        "fa-school",
+        "fa-church",
+        "fa-tree",
+        "fa-gift",
+        "fa-star",
+        "fa-coffee",
+        "fa-pizza-slice",
+        "fa-burger",
+        "fa-apple-whole",
+        "fa-droplet",
+        "fa-fire",
+        "fa-leaf",
+        "fa-sun",
+        "fa-moon",
+        "fa-umbrella",
+        "fa-scissors",
+        "fa-paint-brush",
+        "fa-camera",
+        "fa-laptop",
+        "fa-mobile",
+        "fa-headphones",
+        "fa-ticket",
+        "fa-film",
+        "fa-newspaper",
+      ];
+
+      function renderIcones() {
+        document.getElementById("icone-seletor").innerHTML = icones
+          .map(
+            (ic) =>
+              `<div class="icone-opcao ${ic === iconeSelecionado ? "selecionado" : ""}" onclick="selecionarIcone('${ic}')"><i class="fa-solid ${ic}"></i></div>`,
+          )
+          .join("");
+      }
+      function selecionarIcone(ic) {
+        iconeSelecionado = ic;
+        document.getElementById("preview-icone").className = `fa-solid ${ic}`;
+        atualizarPreviewCat();
+        renderIcones();
+      }
+      function atualizarPreviewCat() {
+        const cor = document.getElementById("c-cor").value;
+        document.getElementById("preview-icone").style.color = cor;
+        document.getElementById("preview-icone").style.borderColor = cor;
+      }
+
+      async function carregarCategorias() {
+        const data = (await fetchAPI("/api/categorias")) || [];
+        renderListaCat(
+          "lista-despesas",
+          data.filter((c) => c.tipo === "despesa"),
+        );
+        renderListaCat(
+          "lista-receitas",
+          data.filter((c) => c.tipo === "receita"),
+        );
+        categorias = data;
+        preencherFiltroCategorias();
+      }
+
+      function renderListaCat(id, lista) {
+        const el = document.getElementById(id);
+        if (lista.length === 0) {
+          el.innerHTML = `<p style="color:var(--text-muted);font-size:13px;padding:16px;text-align:center;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px">Nenhuma categoria.</p>`;
+          return;
+        }
+        el.innerHTML = lista
+          .map(
+            (c) =>
+              `<div class="categoria-item"><div style="width:12px;height:12px;border-radius:50%;background:${c.cor || "#6b7280"};flex-shrink:0"></div><i class="fa-solid ${c.icone || "fa-tag"}" style="color:${c.cor || "#6b7280"};font-size:14px"></i><span class="categoria-nome">${c.nome}</span><div style="display:flex;gap:6px"><button class="btn-edit" onclick="editarCategoria(${c.id},'${c.nome}','${c.tipo}','${c.icone || "fa-tag"}','${c.cor || "#6b7280"}')"><i class="fa-solid fa-pen"></i></button><button class="btn-danger" onclick="deletarCategoria(${c.id})"><i class="fa-solid fa-trash"></i></button></div></div>`,
+          )
+          .join("");
+      }
+
+      function abrirModalCategoria() {
+        editandoCatId = null;
+        iconeSelecionado = "fa-tag";
+        document.getElementById("modal-cat-titulo").textContent =
+          "Nova categoria";
+        document.getElementById("c-nome").value = "";
+        document.getElementById("c-tipo").value = "despesa";
+        document.getElementById("c-cor").value = "#ef4444";
+        document.getElementById("preview-icone").className = "fa-solid fa-tag";
+        document.getElementById("preview-icone").style.color = "#ef4444";
+        renderIcones();
+        document.getElementById("modal-categoria").classList.add("active");
+      }
+      function fecharModalCategoria() {
+        document.getElementById("modal-categoria").classList.remove("active");
+      }
+
+      function editarCategoria(id, nome, tipo, icone, cor) {
+        editandoCatId = id;
+        iconeSelecionado = icone;
+        document.getElementById("modal-cat-titulo").textContent =
+          "Editar categoria";
+        document.getElementById("c-nome").value = nome;
+        document.getElementById("c-tipo").value = tipo;
+        document.getElementById("c-cor").value = cor;
+        document.getElementById("preview-icone").className =
+          `fa-solid ${icone}`;
+        document.getElementById("preview-icone").style.color = cor;
+        renderIcones();
+        document.getElementById("modal-categoria").classList.add("active");
+      }
+
+      async function salvarCategoria() {
+        const body = {
+          nome: document.getElementById("c-nome").value,
+          tipo: document.getElementById("c-tipo").value,
+          icone: iconeSelecionado,
+          cor: document.getElementById("c-cor").value,
+        };
+        if (!body.nome) {
+          toast("Informe o nome.", "erro");
+          return;
+        }
+        if (editandoCatId) {
+          await fetchAPI(`/api/categorias/${editandoCatId}`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+          toast("Categoria atualizada!");
+        } else {
+          await fetchAPI("/api/categorias", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+          toast("Categoria criada!");
+        }
+        fecharModalCategoria();
+        carregarCategorias();
+      }
+
+      async function deletarCategoria(id) {
+        const ok = await confirmar("Deseja deletar esta categoria?");
+        if (!ok) return;
+        const res = await fetchAPI(`/api/categorias/${id}`, {
+          method: "DELETE",
+        });
+        if (res?.erro) {
+          toast(res.erro, "aviso");
+          return;
+        }
+        toast("Categoria deletada!", "info");
+        carregarCategorias();
       }
 
       init();
