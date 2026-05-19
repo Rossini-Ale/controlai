@@ -273,6 +273,7 @@
     </style>
   </head>
   <body>
+    <div id="mobileheader"></div>
     <div class="sidebar" id="sidebar"></div>
     <div class="main">
       <div
@@ -599,6 +600,8 @@
       verificarAuth();
       document.getElementById("sidebar").innerHTML =
         renderSidebar("Lançamentos");
+      document.getElementById("mobileheader").innerHTML =
+        renderMobileHeader("Lançamentos");
       document.getElementById("tabbar").innerHTML = renderTabBar("Lançamentos");
 
       let abaAtiva = "lancamentos";

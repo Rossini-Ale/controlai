@@ -447,6 +447,7 @@
     </style>
   </head>
   <body>
+    <div id="mobileheader"></div>
     <div class="sidebar" id="sidebar"></div>
     <div class="main">
       <h1 class="page-title">Configurações</h1>
@@ -886,6 +887,8 @@
       verificarAuth();
       document.getElementById("sidebar").innerHTML =
         renderSidebar("Configurações");
+      document.getElementById("mobileheader").innerHTML =
+        renderMobileHeader("Configurações");
       document.getElementById("tabbar").innerHTML =
         renderTabBar("Configurações");
 

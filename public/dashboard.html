@@ -166,6 +166,7 @@
     </style>
   </head>
   <body>
+    <div id="mobileheader"></div>
     <div class="sidebar" id="sidebar"></div>
     <div class="main">
       <!-- Navegação de mês -->
@@ -229,6 +230,8 @@
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML = renderSidebar("Dashboard");
+      document.getElementById("mobileheader").innerHTML =
+        renderMobileHeader("Dashboard");
       document.getElementById("tabbar").innerHTML = renderTabBar("Início");
 
       let { mes, ano } = getMesAno();

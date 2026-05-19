@@ -213,6 +213,7 @@
     </style>
   </head>
   <body>
+    <div id="mobileheader"></div>
     <div class="sidebar" id="sidebar"></div>
     <div class="main">
       <h1 class="page-title">Relatórios</h1>
@@ -294,6 +295,8 @@
       verificarAuth();
       document.getElementById("sidebar").innerHTML =
         renderSidebar("Relatórios");
+      document.getElementById("mobileheader").innerHTML =
+        renderMobileHeader("Relatórios");
       document.getElementById("tabbar").innerHTML = renderTabBar("Relatórios");
 
       let chartEvolucao = null,

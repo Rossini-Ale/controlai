@@ -249,6 +249,7 @@
     </style>
   </head>
   <body>
+    <div id="mobileheader"></div>
     <div class="sidebar" id="sidebar"></div>
 
     <div class="main">
@@ -517,6 +518,8 @@
     <script>
       verificarAuth();
       document.getElementById("sidebar").innerHTML = renderSidebar("Cartões");
+      document.getElementById("mobileheader").innerHTML =
+        renderMobileHeader("Cartões");
       document.getElementById("tabbar").innerHTML = renderTabBar("Cartões");
 
       let editandoId = null,
