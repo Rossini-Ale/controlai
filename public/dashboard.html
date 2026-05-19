@@ -47,8 +47,6 @@
         min-width: 140px;
         text-align: center;
       }
-
-      /* Orçamento geral no dashboard */
       .orc-card {
         background: var(--bg-secondary);
         border: 0.5px solid var(--border);
@@ -97,8 +95,6 @@
         color: var(--text-muted);
         text-align: right;
       }
-
-      /* Checklist */
       .checklist-item {
         display: flex;
         align-items: center;
@@ -125,8 +121,6 @@
         flex-shrink: 0;
         font-size: 11px;
       }
-
-      /* Últimas transações mobile */
       .tx-mobile {
         background: var(--bg-secondary);
         border: 0.5px solid var(--border);
@@ -169,7 +163,6 @@
     <div id="mobileheader"></div>
     <div class="sidebar" id="sidebar"></div>
     <div class="main">
-      <!-- Navegação de mês -->
       <div class="mes-nav">
         <button onclick="mudarMes(-1)">
           <i class="fa-solid fa-chevron-left"></i>
@@ -180,19 +173,11 @@
         </button>
       </div>
 
-      <!-- Checklist onboarding -->
       <div id="checklist-wrap"></div>
-
-      <!-- Cards resumo -->
       <div class="cards-grid" id="cards-resumo"></div>
-
-      <!-- Orçamento geral -->
       <div id="orc-wrap"></div>
-
-      <!-- Recorrentes vencendo -->
       <div id="rec-vencendo-wrap"></div>
 
-      <!-- Últimas transações -->
       <div style="margin-top: 20px">
         <div class="table-wrap">
           <div class="table-header">
@@ -201,7 +186,6 @@
               ><i class="fa-solid fa-plus"></i> Nova</a
             >
           </div>
-          <!-- Desktop -->
           <div id="lista-desktop" class="desktop-only">
             <table>
               <thead>
@@ -215,7 +199,6 @@
               <tbody id="tbody-transacoes"></tbody>
             </table>
           </div>
-          <!-- Mobile -->
           <div
             id="lista-mobile"
             class="mobile-only"
@@ -224,6 +207,7 @@
         </div>
       </div>
     </div>
+
     <div id="tabbar"></div>
     <script src="/js/global.js"></script>
     <script src="/js/ui.js"></script>
@@ -232,7 +216,7 @@
       document.getElementById("sidebar").innerHTML = renderSidebar("Dashboard");
       document.getElementById("mobileheader").innerHTML =
         renderMobileHeader("Dashboard");
-      document.getElementById("tabbar").innerHTML = renderTabBar("Início");
+      document.getElementById("tabbar").innerHTML = renderTabBar("Dashboard"); // ← corrigido
 
       let { mes, ano } = getMesAno();
 
@@ -274,8 +258,7 @@
           <div class="card"><div class="card-label">Receitas</div><div class="card-value green">${formatarMoeda(data.total_receitas)}</div></div>
           <div class="card"><div class="card-label">Despesas</div><div class="card-value red">${formatarMoeda(data.total_despesas)}</div></div>
           <div class="card"><div class="card-label">Saldo do mês</div><div class="card-value ${parseFloat(data.saldo) >= 0 ? "green" : "red"}">${formatarMoeda(data.saldo)}</div></div>
-          <div class="card"><div class="card-label">Transações</div><div class="card-value" id="total-tx">—</div></div>
-        `;
+          <div class="card"><div class="card-label">Transações</div><div class="card-value" id="total-tx">—</div></div>`;
       }
 
       async function carregarTransacoes() {
@@ -284,10 +267,12 @@
         );
         const data = Array.isArray(res) ? res : res?.data || [];
         if (!data) return;
+
         const el = document.getElementById("total-tx");
         if (el) el.textContent = data.length;
 
         const recentes = data.slice(0, 8);
+
         // Desktop
         const tbody = document.getElementById("tbody-transacoes");
         if (tbody) {
@@ -310,6 +295,7 @@
               .join("");
           }
         }
+
         // Mobile
         const mob = document.getElementById("lista-mobile");
         if (mob) {
@@ -380,7 +366,7 @@
                 <i class="fa-solid fa-rotate" style="color:#f59e0b"></i>
                 <span style="font-size:14px;font-weight:600">Recorrentes nos próximos 7 dias</span>
               </div>
-              <a href="/lancamentos.html" onclick="localStorage.setItem('controlai_aba','recorrentes')"
+              <a href="/lancamentos.html?aba=recorrentes"
                 style="font-size:12px;color:var(--green);text-decoration:none;font-weight:600">Ver todas →</a>
             </div>
             ${lista
@@ -389,31 +375,30 @@
                   ? r.proxima_geracao.split("T")[0]
                   : null;
                 const vencida = proxima && proxima < hoje;
-                const hoje2 = proxima === hoje;
+                const ehHoje = proxima === hoje;
                 const cor = vencida
                   ? "var(--red)"
-                  : hoje2
+                  : ehHoje
                     ? "#f59e0b"
                     : "var(--text-muted)";
                 const label = vencida
                   ? "Vencida"
-                  : hoje2
+                  : ehHoje
                     ? "Hoje"
                     : formatarData(proxima);
                 const sinal = r.tipo === "receita" ? "+" : "-";
                 const corValor =
                   r.tipo === "receita" ? "var(--green)" : "var(--red)";
-                return `
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border)">
-                  <div style="flex:1">
-                    <div style="font-size:14px;font-weight:600;margin-bottom:2px">${r.descricao}</div>
-                    <div style="font-size:11px;color:var(--text-muted)">${FREQ[r.frequencia] || r.frequencia}${r.categoria_nome ? ` · ${r.categoria_nome}` : ""}</div>
-                  </div>
-                  <div style="text-align:right">
-                    <div style="font-size:14px;font-weight:700;color:${corValor}">${sinal}${formatarMoeda(r.valor)}</div>
-                    <div style="font-size:11px;font-weight:600;color:${cor}">${label}</div>
-                  </div>
-                </div>`;
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border)">
+                <div style="flex:1">
+                  <div style="font-size:14px;font-weight:600;margin-bottom:2px">${r.descricao}</div>
+                  <div style="font-size:11px;color:var(--text-muted)">${FREQ[r.frequencia] || r.frequencia}${r.categoria_nome ? ` · ${r.categoria_nome}` : ""}</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:14px;font-weight:700;color:${corValor}">${sinal}${formatarMoeda(r.valor)}</div>
+                  <div style="font-size:11px;font-weight:600;color:${cor}">${label}</div>
+                </div>
+              </div>`;
               })
               .join("")}
           </div>`;
@@ -437,7 +422,8 @@
           <div class="orc-card">
             <div class="orc-card-header">
               <h3><i class="fa-solid fa-bullseye" style="color:var(--green)"></i> Orçamento do mês</h3>
-              <a href="/relatorios.html" style="font-size:12px;color:var(--green);text-decoration:none;font-weight:600">Ver detalhes →</a>
+              <a href="/relatorios.html?aba=orcamento"
+                style="font-size:12px;color:var(--green);text-decoration:none;font-weight:600">Ver detalhes →</a>
             </div>
             <div class="orc-valores">
               <span>Gasto: <strong>${formatarMoeda(gasto)}</strong></span>
@@ -475,13 +461,13 @@
             feito: data.tem_cartao > 0,
             icon: "fa-credit-card",
             label: "Cadastrar um cartão",
-            link: "/cartoes.html",
-          },
+            link: "/contas.html?aba=cartoes",
+          }, // ← corrigido
           {
             feito: !!data.telegram_chat_id,
             icon: "fa-telegram",
             label: "Conectar o Telegram",
-            link: "/configuracoes.html?aba=perfil",
+            link: "/configuracoes.html",
           },
         ];
         const total = itens.length;

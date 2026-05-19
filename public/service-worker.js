@@ -1,5 +1,5 @@
 // service-worker.js
-const CACHE_NAME = "controlai-v1";
+const CACHE_NAME = "controlai-v1.1";
 
 // Arquivos estáticos que ficam em cache
 const STATIC_ASSETS = [
