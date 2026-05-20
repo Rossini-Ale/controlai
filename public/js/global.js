@@ -98,14 +98,6 @@ function verificarAuth() {
 
 // ── Helpers ──
 
-// Saudação dinâmica por horário
-function saudacao() {
-  const h = new Date().getHours();
-  if (h >= 5 && h < 12) return "Bom dia ☕";
-  if (h >= 12 && h < 18) return "Boa tarde ☀️";
-  return "Boa noite 🌙";
-}
-
 // Formata moeda com centavos em contraste menor
 // Retorna span com classe valor-privado para o modo privacidade
 function formatarMoeda(valor) {
@@ -157,9 +149,13 @@ function aplicarMascaraEmTodos(...ids) {
     if (el) aplicarMascaraMoeda(el);
   });
 }
-if (input.dataset.valor) return parseFloat(input.dataset.valor);
-const raw = input.value.replace(/\./g, "").replace(",", ".");
-return parseFloat(raw) || 0;
+
+// Lê o valor real de um input com máscara
+function lerValorMoeda(input) {
+  if (input.dataset.valor) return parseFloat(input.dataset.valor);
+  const raw = input.value.replace(/\./g, "").replace(",", ".");
+  return parseFloat(raw) || 0;
+}
 
 // Cor dinâmica no input de valor conforme tipo
 function aplicarCorTipo(inputValor, tipo) {
