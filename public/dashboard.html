@@ -244,10 +244,18 @@
         );
         if (!data) return;
         document.getElementById("cards-resumo").innerHTML = `
-          <div class="card"><div class="card-label">Receitas</div><div class="card-value green">${formatarMoeda(data.total_receitas)}</div></div>
-          <div class="card"><div class="card-label">Despesas</div><div class="card-value red">${formatarMoeda(data.total_despesas)}</div></div>
-          <div class="card"><div class="card-label">Saldo do mês</div><div class="card-value ${parseFloat(data.saldo) >= 0 ? "green" : "red"}">${formatarMoeda(data.saldo)}</div></div>
-          <div class="card"><div class="card-label">Transações</div><div class="card-value" id="total-tx">—</div></div>`;
+          <div class="card"><div class="card-label">Receitas</div><div class="card-value green valor-privado">${formatarMoeda(data.total_receitas)}</div></div>
+          <div class="card"><div class="card-label">Despesas</div><div class="card-value red valor-privado">${formatarMoeda(data.total_despesas)}</div></div>
+          <div class="card"><div class="card-label">Saldo do mês</div><div class="card-value ${parseFloat(data.saldo) >= 0 ? "green" : "red"} valor-privado">${formatarMoeda(data.saldo)}</div></div>
+          <div class="card" style="cursor:pointer;user-select:none" onclick="togglePrivacidade()" title="Mostrar/ocultar valores">
+            <div class="card-label" style="display:flex;align-items:center;justify-content:space-between">
+              Privacidade <i class="fa-solid fa-eye priv-icon" style="font-size:13px;color:var(--text-muted)"></i>
+            </div>
+            <div class="card-value" id="priv-label" style="font-size:13px;color:var(--text-muted);margin-top:4px">
+              ${getPrivacidade() ? "Ocultos" : "Visíveis"}
+            </div>
+          </div>`;
+        aplicarPrivacidade();
       }
 
       async function carregarTransacoes() {

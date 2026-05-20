@@ -91,6 +91,77 @@ function formatarMoeda(valor) {
     currency: "BRL",
   }).format(valor || 0);
 }
+
+// Máscara de moeda em tempo real
+function aplicarMascaraMoeda(input) {
+  input.addEventListener("input", (e) => {
+    let raw = e.target.value.replace(/\D/g, "");
+    if (!raw) {
+      e.target.value = "";
+      return;
+    }
+    const numero = parseInt(raw, 10) / 100;
+    // Guarda valor numérico como data attribute para leitura posterior
+    e.target.dataset.valor = numero;
+    e.target.value = numero.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  });
+  // Ao focar, seleciona tudo para facilitar edição
+  input.addEventListener("focus", () => setTimeout(() => input.select(), 10));
+}
+
+// Lê o valor real de um input com máscara
+function lerValorMoeda(input) {
+  if (input.dataset.valor) return parseFloat(input.dataset.valor);
+  const raw = input.value.replace(/\./g, "").replace(",", ".");
+  return parseFloat(raw) || 0;
+}
+
+// Cor dinâmica no input de valor conforme tipo
+function aplicarCorTipo(inputValor, tipo) {
+  const cores = {
+    despesa: { border: "#ef4444", bg: "rgba(239,68,68,0.06)" },
+    receita: { border: "#10b981", bg: "rgba(16,185,129,0.06)" },
+    cartao: { border: "#6366f1", bg: "rgba(99,102,241,0.06)" },
+  };
+  const c = cores[tipo] || cores.despesa;
+  inputValor.style.borderColor = c.border;
+  inputValor.style.background = c.bg;
+  inputValor.style.transition = "border-color 0.2s, background 0.2s";
+}
+
+// ── Modo privacidade ──
+const PRIV_KEY = "controlai_privacidade";
+
+function getPrivacidade() {
+  return localStorage.getItem(PRIV_KEY) === "1";
+}
+
+function aplicarPrivacidade() {
+  const oculto = getPrivacidade();
+  document.querySelectorAll(".valor-privado").forEach((el) => {
+    el.style.filter = oculto ? "blur(7px)" : "none";
+    el.style.userSelect = oculto ? "none" : "auto";
+    el.style.transition = "filter 0.25s ease";
+  });
+  document.querySelectorAll(".priv-icon").forEach((el) => {
+    el.className = `fa-solid ${oculto ? "fa-eye-slash" : "fa-eye"} priv-icon`;
+  });
+}
+
+function togglePrivacidade() {
+  localStorage.setItem(PRIV_KEY, getPrivacidade() ? "0" : "1");
+  aplicarPrivacidade();
+  // Atualiza label do card se existir
+  const label = document.getElementById("priv-label");
+  if (label) label.textContent = getPrivacidade() ? "Ocultos" : "Visíveis";
+}
+
+// Aplica ao carregar a página
+document.addEventListener("DOMContentLoaded", aplicarPrivacidade);
+
 function formatarData(data) {
   if (!data) return "—";
   const d = new Date(data);
@@ -345,8 +416,8 @@ function renderTabBar(paginaAtiva) {
         </div>
         <div class="form-group">
           <label>Valor (R$)</label>
-          <input type="number" id="r-valor" placeholder="0,00" step="0.01"
-            style="font-size:20px;font-weight:600;padding:14px 13px" />
+          <input type="text" inputmode="decimal" id="r-valor" placeholder="0,00"
+            style="font-size:20px;font-weight:600;padding:14px 13px;transition:border-color 0.2s,background 0.2s" />
         </div>
         <div class="form-group">
           <label>Descrição</label>
@@ -377,10 +448,14 @@ async function abrirModalRapido() {
   categoriasRapido = (await fetchAPI("/api/categorias")) || [];
   contasRapido = (await fetchAPI("/api/contas")) || [];
   selecionarTipo("despesa");
-  document.getElementById("r-valor").value = "";
+  const inputValor = document.getElementById("r-valor");
+  inputValor.value = "";
+  delete inputValor.dataset.valor;
   document.getElementById("r-descricao").value = "";
+  // Aplica máscara de moeda
+  aplicarMascaraMoeda(inputValor);
   document.getElementById("modal-rapido").classList.add("active");
-  setTimeout(() => document.getElementById("r-valor").focus(), 100);
+  setTimeout(() => inputValor.focus(), 100);
 }
 function fecharModalRapido() {
   document.getElementById("modal-rapido").classList.remove("active");
@@ -391,6 +466,10 @@ function selecionarTipo(tipo) {
     const btn = document.getElementById(`tipo-${t}`);
     if (btn) btn.className = `tipo-btn${tipo === t ? ` active-${t}` : ""}`;
   });
+  // Cor dinâmica no input de valor
+  const inputValor = document.getElementById("r-valor");
+  if (inputValor) aplicarCorTipo(inputValor, tipo);
+
   const tc = tipo === "receita" ? "receita" : "despesa";
   const filtradas = categoriasRapido.filter((c) => c.tipo === tc);
   const selCat = document.getElementById("r-categoria");
@@ -409,13 +488,14 @@ function selecionarTipo(tipo) {
       : `<option value="">Sem contas</option>`;
 }
 async function salvarRapido() {
-  const valor = parseFloat(document.getElementById("r-valor").value);
+  const inputValor = document.getElementById("r-valor");
+  const valor = lerValorMoeda(inputValor);
   const descricao = document.getElementById("r-descricao").value;
   const categoria = document.getElementById("r-categoria").value;
   const conta = document.getElementById("r-conta").value;
   const hoje = new Date().toISOString().split("T")[0];
   if (!valor || !descricao) {
-    alert("Preencha valor e descrição.");
+    toast("Preencha valor e descrição.", "erro");
     return;
   }
   if (tipoRapido === "cartao") {

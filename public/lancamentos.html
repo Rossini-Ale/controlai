@@ -583,11 +583,10 @@
           <div class="form-group">
             <label>Valor</label
             ><input
-              type="number"
+              type="text"
+              inputmode="decimal"
               id="f-valor"
               placeholder="0,00"
-              step="0.01"
-              min="0"
             />
           </div>
         </div>
@@ -1015,13 +1014,20 @@
         sel.innerHTML = f.length
           ? f.map((c) => `<option value="${c.id}">${c.nome}</option>`).join("")
           : `<option value="">Sem categorias</option>`;
+        // Cor dinâmica no input de valor
+        const inputValor = document.getElementById("f-valor");
+        if (inputValor) aplicarCorTipo(inputValor, tipo);
       }
 
       function abrirModalLancamento() {
         editandoLancId = null;
         document.getElementById("modal-titulo").textContent = "Novo lançamento";
         document.getElementById("f-tipo").value = "despesa";
-        document.getElementById("f-valor").value = "";
+        const inputValor = document.getElementById("f-valor");
+        inputValor.value = "";
+        delete inputValor.dataset.valor;
+        aplicarMascaraMoeda(inputValor);
+        aplicarCorTipo(inputValor, "despesa");
         document.getElementById("f-descricao").value = "";
         document.getElementById("f-data").value = new Date()
           .toISOString()
@@ -1029,6 +1035,7 @@
         document.getElementById("f-obs").value = "";
         filtrarCategorias();
         document.getElementById("modal-lancamento").classList.add("active");
+        setTimeout(() => inputValor.focus(), 100);
       }
       function fecharModalLancamento() {
         document.getElementById("modal-lancamento").classList.remove("active");
@@ -1056,7 +1063,7 @@
       async function salvarLancamento() {
         const body = {
           tipo: document.getElementById("f-tipo").value,
-          valor: parseFloat(document.getElementById("f-valor").value),
+          valor: lerValorMoeda(document.getElementById("f-valor")),
           descricao: document.getElementById("f-descricao").value,
           categoria_id: document.getElementById("f-categoria").value,
           conta_id: document.getElementById("f-conta").value,
