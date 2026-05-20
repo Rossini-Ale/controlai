@@ -1293,7 +1293,7 @@
         if (!data) return;
         const { fatura, transacoes } = data;
         const total = transacoes.reduce((s, t) => s + parseFloat(t.valor), 0);
-        document.getElementById("fatura-total").textContent =
+        document.getElementById("fatura-total").innerHTML =
           formatarMoeda(total);
         document.getElementById("fatura-qtd").textContent = transacoes.length;
         const statusEl = document.getElementById("fatura-status");
@@ -1375,7 +1375,7 @@
           preview = document.getElementById("parcela-preview");
         if (valor > 0 && parcelas > 1) {
           document.getElementById("parcela-texto").textContent =
-            `${parcelas}x de ${formatarMoeda(valor / parcelas)} — Total: ${formatarMoeda(valor)}`;
+            `${parcelas}x de ${formatarMoedaRaw(valor / parcelas)} — Total: ${formatarMoedaRaw(valor)}`;
           preview.style.display = "block";
         } else {
           preview.style.display = "none";

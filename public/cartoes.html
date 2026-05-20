@@ -3,17 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#10b981" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-    <meta name="apple-mobile-web-app-title" content="Controlaí" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
-    <link rel="icon" type="image/svg+xml" href="/icons/icon-192.svg" />
     <title>Controlaí — Cartões</title>
     <link
       rel="stylesheet"
@@ -626,7 +615,7 @@
         if (!data) return;
         const { fatura, transacoes } = data;
         const total = transacoes.reduce((s, t) => s + parseFloat(t.valor), 0);
-        document.getElementById("fatura-total").textContent =
+        document.getElementById("fatura-total").innerHTML =
           formatarMoeda(total);
         document.getElementById("fatura-qtd").textContent = transacoes.length;
         const statusEl = document.getElementById("fatura-status");
@@ -781,7 +770,7 @@
         const preview = document.getElementById("parcela-preview");
         if (valor > 0 && parcelas > 1) {
           document.getElementById("parcela-texto").textContent =
-            `${parcelas}x de ${formatarMoeda(valor / parcelas)} — Total: ${formatarMoeda(valor)}`;
+            `${parcelas}x de ${formatarMoedaRaw(valor / parcelas)} — Total: ${formatarMoedaRaw(valor)}`;
           preview.style.display = "block";
         } else {
           preview.style.display = "none";

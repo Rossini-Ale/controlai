@@ -659,6 +659,7 @@
             inputmode="decimal"
             id="f-valor"
             placeholder="0,00"
+            tabindex="1"
             style="
               font-size: 20px;
               font-weight: 600;
@@ -675,29 +676,32 @@
             type="text"
             id="f-descricao"
             placeholder="Ex: Aluguel, Salário..."
+            tabindex="2"
           />
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <div class="form-group">
             <label>Categoria</label
-            ><select id="f-categoria"></select>
+            ><select id="f-categoria" tabindex="3"></select>
           </div>
           <div class="form-group">
             <label>Conta</label
-            ><select id="f-conta"></select>
+            ><select id="f-conta" tabindex="4"></select>
           </div>
         </div>
         <div class="form-group">
-          <label>Data</label><input type="date" id="f-data" />
+          <label>Data</label><input type="date" id="f-data" tabindex="5" />
         </div>
         <div class="form-group">
-          <label>Observação (opcional)</label><input type="text" id="f-obs" />
+          <label>Observação (opcional)</label
+          ><input type="text" id="f-obs" tabindex="6" />
         </div>
         <div style="display: flex; gap: 10px; margin-top: 8px">
           <button
             onclick="fecharModalLancamento()"
             class="btn-cancel"
             style="flex: 1; padding: 12px"
+            tabindex="8"
           >
             Cancelar
           </button>
@@ -713,6 +717,7 @@
               color: var(--text-primary);
               border: 0.5px solid var(--border);
             "
+            tabindex="9"
           >
             + Outro
           </button>
@@ -721,6 +726,7 @@
             id="btn-salvar"
             class="btn"
             style="flex: 2; justify-content: center; padding: 12px"
+            tabindex="7"
           >
             Salvar
           </button>
@@ -1254,6 +1260,9 @@
         if (inputValor) aplicarCorTipo(inputValor, tipo);
       }
 
+      // ── Último lançamento salvo (para detecção de duplicação) ──
+      let ultimoLancamento = null;
+
       function abrirModalLancamento() {
         editandoLancId = null;
         document.getElementById("modal-titulo").textContent = "Novo lançamento";
@@ -1262,10 +1271,17 @@
         delete inputValor.dataset.valor;
         aplicarMascaraMoeda(inputValor);
         document.getElementById("f-descricao").value = "";
-        document.getElementById("f-data").value = new Date()
-          .toISOString()
-          .split("T")[0];
+        // Limite de datas: não permite anos absurdos
+        const hoje = new Date().toISOString().split("T")[0];
+        const minData = `${new Date().getFullYear() - 5}-01-01`;
+        const maxData = `${new Date().getFullYear() + 1}-12-31`;
+        const inputData = document.getElementById("f-data");
+        inputData.value = hoje;
+        inputData.min = minData;
+        inputData.max = maxData;
         document.getElementById("f-obs").value = "";
+        // Remove aviso de duplicação se existir
+        document.getElementById("aviso-duplicado")?.remove();
         selecionarTipoModal("despesa");
         document.getElementById("btn-salvar-continuar").style.display = "flex";
         document.getElementById("modal-lancamento").classList.add("active");
@@ -1273,6 +1289,7 @@
       }
       function fecharModalLancamento() {
         document.getElementById("modal-lancamento").classList.remove("active");
+        document.getElementById("aviso-duplicado")?.remove();
       }
 
       async function editarLancamento(id) {
@@ -1283,15 +1300,16 @@
         document.getElementById("modal-titulo").textContent =
           "Editar lançamento";
         const inputValor = document.getElementById("f-valor");
-        // Para edição mostra o valor formatado
         inputValor.value = parseFloat(item.valor).toLocaleString("pt-BR", {
           minimumFractionDigits: 2,
         });
         inputValor.dataset.valor = item.valor;
         aplicarMascaraMoeda(inputValor);
         document.getElementById("f-descricao").value = item.descricao;
-        document.getElementById("f-data").value =
-          item.data?.split("T")[0] || "";
+        const inputData = document.getElementById("f-data");
+        inputData.value = item.data?.split("T")[0] || "";
+        inputData.min = `${new Date().getFullYear() - 5}-01-01`;
+        inputData.max = `${new Date().getFullYear() + 1}-12-31`;
         document.getElementById("f-obs").value = item.observacao || "";
         selecionarTipoModal(item.tipo);
         document.getElementById("f-categoria").value = item.categoria_id;
@@ -1304,7 +1322,7 @@
         const body = {
           tipo: document.getElementById("f-tipo").value,
           valor: lerValorMoeda(document.getElementById("f-valor")),
-          descricao: document.getElementById("f-descricao").value,
+          descricao: document.getElementById("f-descricao").value.trim(),
           categoria_id: document.getElementById("f-categoria").value,
           conta_id: document.getElementById("f-conta").value,
           data: document.getElementById("f-data").value,
@@ -1315,14 +1333,61 @@
           return;
         }
 
-        // Loading state
+        // Detecção de duplicação — compara com último lançamento (2 min)
+        if (!editandoLancId && ultimoLancamento) {
+          const diff = (Date.now() - ultimoLancamento.ts) / 1000;
+          if (
+            diff < 120 &&
+            ultimoLancamento.descricao === body.descricao &&
+            ultimoLancamento.valor === body.valor &&
+            ultimoLancamento.data === body.data
+          ) {
+            // Mostra aviso de duplicação se ainda não existe
+            if (!document.getElementById("aviso-duplicado")) {
+              const aviso = document.createElement("div");
+              aviso.id = "aviso-duplicado";
+              aviso.style.cssText = `
+                background:rgba(245,158,11,0.12);border:0.5px solid #f59e0b;
+                border-radius:8px;padding:10px 14px;font-size:12px;color:#f59e0b;
+                margin-bottom:10px;display:flex;align-items:center;gap:8px;
+              `;
+              aviso.innerHTML = `
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Você já fez um lançamento idêntico agora há pouco. Deseja salvar mesmo assim?</span>
+                <button onclick="confirmarDuplicado(${fecharApos})" style="background:#f59e0b;border:none;color:#fff;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;margin-left:auto">Sim, salvar</button>`;
+              const footer = document.querySelector(
+                "#modal-lancamento .modal > div:last-child",
+              );
+              footer?.parentNode?.insertBefore(aviso, footer);
+            }
+            return;
+          }
+        }
+
+        await _executarSalvarLancamento(body, fecharApos);
+      }
+
+      async function confirmarDuplicado(fecharApos) {
+        document.getElementById("aviso-duplicado")?.remove();
+        const body = {
+          tipo: document.getElementById("f-tipo").value,
+          valor: lerValorMoeda(document.getElementById("f-valor")),
+          descricao: document.getElementById("f-descricao").value.trim(),
+          categoria_id: document.getElementById("f-categoria").value,
+          conta_id: document.getElementById("f-conta").value,
+          data: document.getElementById("f-data").value,
+          observacao: document.getElementById("f-obs").value,
+        };
+        await _executarSalvarLancamento(body, fecharApos);
+      }
+
+      async function _executarSalvarLancamento(body, fecharApos) {
         const btn = document.getElementById(
           fecharApos ? "btn-salvar" : "btn-salvar-continuar",
         );
         const labelOriginal = btn.innerHTML;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
         btn.disabled = true;
-
         try {
           if (editandoLancId) {
             await fetchAPI(`/api/transacoes/${editandoLancId}`, {
@@ -1336,16 +1401,23 @@
               method: "POST",
               body: JSON.stringify(body),
             });
+            // Registra para detecção de duplicação
+            ultimoLancamento = {
+              descricao: body.descricao,
+              valor: body.valor,
+              data: body.data,
+              ts: Date.now(),
+            };
             if (fecharApos) {
               toast("Lançamento criado!");
               fecharModalLancamento();
             } else {
               toast("Salvo! Adicione outro.");
-              // Mantém modal aberto — limpa só valor e descrição
               const inputValor = document.getElementById("f-valor");
               inputValor.value = "";
               delete inputValor.dataset.valor;
               document.getElementById("f-descricao").value = "";
+              document.getElementById("aviso-duplicado")?.remove();
               setTimeout(() => inputValor.focus(), 50);
             }
           }
@@ -1433,13 +1505,11 @@
           if (r.tipo === "receita") rec += v;
           else des += v;
         }
-        document.getElementById("res-receitas").textContent =
-          formatarMoeda(rec);
-        document.getElementById("res-despesas").textContent =
-          formatarMoeda(des);
+        document.getElementById("res-receitas").innerHTML = formatarMoeda(rec);
+        document.getElementById("res-despesas").innerHTML = formatarMoeda(des);
         const s = rec - des,
           el = document.getElementById("res-saldo");
-        el.textContent = formatarMoeda(s);
+        el.innerHTML = formatarMoeda(s);
         el.className = "card-value " + (s >= 0 ? "green" : "red");
       }
 

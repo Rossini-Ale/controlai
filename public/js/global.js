@@ -74,6 +74,18 @@ function getUsername() {
   return localStorage.getItem(PREFIX + "username") || "";
 }
 
+// ── Saudação dinâmica por horário ──
+function getSaudacao() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return "Bom dia ☕";
+  if (h >= 12 && h < 18) return "Boa tarde ☀️";
+  return "Boa noite 🌙";
+}
+
+function getPrimeiroNome() {
+  return getNome().split(" ")[0];
+}
+
 function logout() {
   localStorage.removeItem(PREFIX + "token");
   localStorage.removeItem(PREFIX + "nome");
@@ -85,13 +97,29 @@ function verificarAuth() {
 }
 
 // ── Helpers ──
-// Formata moeda — retorna span com classe valor-privado para o modo privacidade
+
+// Saudação dinâmica por horário
+function saudacao() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return "Bom dia ☕";
+  if (h >= 12 && h < 18) return "Boa tarde ☀️";
+  return "Boa noite 🌙";
+}
+
+// Formata moeda com centavos em contraste menor
+// Retorna span com classe valor-privado para o modo privacidade
 function formatarMoeda(valor) {
+  const num = parseFloat(valor) || 0;
   const formatado = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(valor || 0);
-  return `<span class="valor-privado">${formatado}</span>`;
+  }).format(num);
+  // Separa centavos para aplicar contraste menor
+  const match = formatado.match(/^(.*),(\d{2})$/);
+  if (match) {
+    return `<span class="valor-privado" style="font-variant-numeric:tabular-nums">${match[1]},<span style="opacity:0.55;font-size:0.8em">${match[2]}</span></span>`;
+  }
+  return `<span class="valor-privado" style="font-variant-numeric:tabular-nums">${formatado}</span>`;
 }
 
 // Versão sem wrapper — usar quando o valor vai dentro de atributos HTML ou JS puro
@@ -99,7 +127,7 @@ function formatarMoedaRaw(valor) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(valor || 0);
+  }).format(parseFloat(valor) || 0);
 }
 
 // Máscara de moeda em tempo real
@@ -244,6 +272,14 @@ function renderSidebar(paginaAtiva) {
       <div class="icon"><i class="fa-solid fa-chart-pie"></i></div>
       <span>controlaí</span>
     </div>
+    ${
+      paginaAtiva === "Dashboard"
+        ? `
+    <div style="padding:12px 20px 4px;font-size:13px;color:var(--text-secondary)">
+      ${getSaudacao()}, <strong style="color:var(--text-primary)">${getPrimeiroNome()}</strong>
+    </div>`
+        : ""
+    }
     <nav>
       ${navItems
         .map(
@@ -302,12 +338,16 @@ function renderMobileHeader(paginaAtiva) {
     .join("")
     .substring(0, 2)
     .toUpperCase();
+  const titulo =
+    paginaAtiva === "Dashboard"
+      ? `<span style="font-size:13px">${getSaudacao()}, <strong>${getPrimeiroNome()}</strong></span>`
+      : `<span class="mobile-header-title">${paginaAtiva}</span>`;
   return `
     <header class="mobile-header">
       <button class="mobile-avatar-btn" onclick="togglePerfilMenu()" aria-label="Perfil">
         ${iniciais}
       </button>
-      <span class="mobile-header-title">${paginaAtiva}</span>
+      ${titulo}
       <div class="mobile-header-actions">
         <button class="mobile-icon-btn" onclick="toggleTema()" aria-label="Alternar tema">
           <i class="fa-solid ${temaIcon(getTema())} btn-tema-icon"></i>
@@ -550,3 +590,60 @@ async function salvarRapido() {
   if (typeof carregarTransacoes === "function") carregarTransacoes();
   if (typeof carregarContas === "function") carregarContas();
 }
+
+// ════════════════════════════════════════
+// ATALHOS DE TECLADO GLOBAIS
+// ════════════════════════════════════════
+document.addEventListener("keydown", (e) => {
+  // Ignora se o foco estiver em input, select, textarea ou contenteditable
+  const tag = document.activeElement?.tagName?.toLowerCase();
+  const editavel =
+    ["input", "select", "textarea"].includes(tag) ||
+    document.activeElement?.isContentEditable;
+
+  // ESC — fecha qualquer modal aberto
+  if (e.key === "Escape") {
+    const modaisAbertos = document.querySelectorAll(
+      ".modal-overlay.active, .modal-rapido.active",
+    );
+    if (modaisAbertos.length > 0) {
+      modaisAbertos.forEach((m) => m.classList.remove("active"));
+      // Fecha também menus de perfil
+      fecharPerfilMenu?.();
+      e.preventDefault();
+      return;
+    }
+  }
+
+  // Ignora demais atalhos se estiver digitando
+  if (editavel) return;
+
+  // N — novo lançamento
+  if (e.key === "n" || e.key === "N") {
+    e.preventDefault();
+    if (typeof abrirModalLancamento === "function") abrirModalLancamento();
+    else if (typeof abrirModalRapido === "function") abrirModalRapido();
+    return;
+  }
+
+  // S — foca na busca (dashboard)
+  if (e.key === "s" || e.key === "S") {
+    const busca = document.getElementById("busca-input");
+    if (busca) {
+      e.preventDefault();
+      busca.focus();
+      busca.select();
+    }
+    return;
+  }
+
+  // ← → — navega entre meses (dashboard e lançamentos)
+  if (e.key === "ArrowLeft" && typeof mudarMes === "function") {
+    e.preventDefault();
+    mudarMes(-1);
+  }
+  if (e.key === "ArrowRight" && typeof mudarMes === "function") {
+    e.preventDefault();
+    mudarMes(1);
+  }
+});
