@@ -150,12 +150,16 @@ function aplicarMascaraMoeda(input) {
   input.addEventListener("focus", () => setTimeout(() => input.select(), 10));
 }
 
-// Lê o valor real de um input com máscara
-function lerValorMoeda(input) {
-  if (input.dataset.valor) return parseFloat(input.dataset.valor);
-  const raw = input.value.replace(/\./g, "").replace(",", ".");
-  return parseFloat(raw) || 0;
+// Aplica máscara em múltiplos inputs por ID
+function aplicarMascaraEmTodos(...ids) {
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) aplicarMascaraMoeda(el);
+  });
 }
+if (input.dataset.valor) return parseFloat(input.dataset.valor);
+const raw = input.value.replace(/\./g, "").replace(",", ".");
+return parseFloat(raw) || 0;
 
 // Cor dinâmica no input de valor conforme tipo
 function aplicarCorTipo(inputValor, tipo) {

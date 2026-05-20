@@ -717,11 +717,21 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <div class="form-group">
             <label>Valor alvo</label
-            ><input type="number" id="m-alvo" placeholder="0,00" step="0.01" />
+            ><input
+              type="text"
+              inputmode="decimal"
+              id="m-alvo"
+              placeholder="0,00"
+            />
           </div>
           <div class="form-group">
             <label>Valor atual</label
-            ><input type="number" id="m-atual" placeholder="0,00" step="0.01" />
+            ><input
+              type="text"
+              inputmode="decimal"
+              id="m-atual"
+              placeholder="0,00"
+            />
           </div>
         </div>
         <div class="form-group">
@@ -750,7 +760,12 @@
         <h2>Atualizar progresso</h2>
         <div class="form-group">
           <label>Valor atual</label
-          ><input type="number" id="p-atual" placeholder="0,00" step="0.01" />
+          ><input
+            type="text"
+            inputmode="decimal"
+            id="p-atual"
+            placeholder="0,00"
+          />
         </div>
         <div class="modal-footer">
           <button class="btn-cancel" onclick="fecharModalProgresso()">
@@ -768,11 +783,10 @@
         <div class="form-group">
           <label id="modal-orc-label">Limite mensal (R$)</label>
           <input
-            type="number"
+            type="text"
+            inputmode="decimal"
             id="orc-limite"
             placeholder="0,00"
-            step="0.01"
-            min="0"
           />
         </div>
         <p style="font-size: 12px; color: var(--text-muted); margin-top: -8px">
@@ -1253,9 +1267,12 @@
       function abrirModalMeta() {
         editandoMetaId = null;
         document.getElementById("modal-meta-titulo").textContent = "Nova meta";
-        ["m-nome", "m-alvo", "m-prazo"].forEach(
+        ["m-nome", "m-prazo"].forEach(
           (id) => (document.getElementById(id).value = ""),
         );
+        document.getElementById("m-alvo").value = "";
+        document.getElementById("m-atual").value = "";
+        aplicarMascaraEmTodos("m-alvo", "m-atual");
         document.getElementById("m-atual").value = "0";
         document.getElementById("grupo-status-meta").style.display = "none";
         document.getElementById("modal-meta").classList.add("active");
@@ -1278,9 +1295,8 @@
       async function salvarMeta() {
         const body = {
           nome: document.getElementById("m-nome").value,
-          valor_alvo: parseFloat(document.getElementById("m-alvo").value) || 0,
-          valor_atual:
-            parseFloat(document.getElementById("m-atual").value) || 0,
+          valor_alvo: lerValorMoeda(document.getElementById("m-alvo")),
+          valor_atual: lerValorMoeda(document.getElementById("m-atual")),
           prazo: document.getElementById("m-prazo").value,
           status: document.getElementById("m-status")?.value || "ativa",
         };
@@ -1306,7 +1322,12 @@
       }
       function abrirProgresso(id, atual) {
         progressoId = id;
-        document.getElementById("p-atual").value = atual;
+        const elPAtual = document.getElementById("p-atual");
+        elPAtual.value = parseFloat(atual).toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+        });
+        elPAtual.dataset.valor = atual;
+        aplicarMascaraMoeda(elPAtual);
         document.getElementById("modal-progresso").classList.add("active");
       }
       function fecharModalProgresso() {
@@ -1316,8 +1337,7 @@
         await fetchAPI(`/api/metas/${progressoId}/progresso`, {
           method: "PATCH",
           body: JSON.stringify({
-            valor_atual:
-              parseFloat(document.getElementById("p-atual").value) || 0,
+            valor_atual: lerValorMoeda(document.getElementById("p-atual")),
           }),
         });
         toast("Progresso atualizado!");
@@ -1399,7 +1419,16 @@
         document.getElementById("modal-orc-label").textContent = categoriaId
           ? `Limite mensal para ${nomeCategoria} (R$)`
           : "Limite mensal total (R$)";
-        document.getElementById("orc-limite").value = limiteAtual || "";
+        const elOrcLim = document.getElementById("orc-limite");
+        if (limiteAtual) {
+          elOrcLim.value = parseFloat(limiteAtual).toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+          });
+          elOrcLim.dataset.valor = limiteAtual;
+        } else {
+          elOrcLim.value = "";
+        }
+        aplicarMascaraMoeda(elOrcLim);
         document.getElementById("modal-orc").classList.add("active");
       }
       function fecharModalOrc() {
@@ -1407,7 +1436,7 @@
       }
 
       async function salvarOrc() {
-        const limite = parseFloat(document.getElementById("orc-limite").value);
+        const limite = lerValorMoeda(document.getElementById("orc-limite"));
         if (!limite || limite <= 0) {
           toast("Informe um valor válido.", "erro");
           return;

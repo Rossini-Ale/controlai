@@ -749,11 +749,10 @@
           <div class="form-group">
             <label>Valor (R$)</label
             ><input
-              type="number"
+              type="text"
+              inputmode="decimal"
               id="r-valor-rec"
               placeholder="0,00"
-              step="0.01"
-              min="0"
             />
           </div>
         </div>
@@ -1649,9 +1648,11 @@
         editandoRecId = null;
         document.getElementById("modal-rec-titulo").textContent =
           "Nova recorrência";
-        ["r-valor-rec", "r-descricao", "r-fim", "r-obs"].forEach(
+        ["r-descricao", "r-fim", "r-obs"].forEach(
           (id) => (document.getElementById(id).value = ""),
         );
+        document.getElementById("r-valor-rec").value = "";
+        aplicarMascaraMoeda(document.getElementById("r-valor-rec"));
         document.getElementById("r-tipo").value = "despesa";
         document.getElementById("r-frequencia").value = "mensal";
         document.getElementById("r-dia").value = "1";
@@ -1673,7 +1674,12 @@
         document.getElementById("modal-rec-titulo").textContent =
           "Editar recorrência";
         document.getElementById("r-tipo").value = rec.tipo;
-        document.getElementById("r-valor-rec").value = rec.valor;
+        const elRecVal = document.getElementById("r-valor-rec");
+        elRecVal.value = parseFloat(rec.valor).toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+        });
+        elRecVal.dataset.valor = rec.valor;
+        aplicarMascaraMoeda(elRecVal);
         document.getElementById("r-descricao").value = rec.descricao;
         document.getElementById("r-frequencia").value = rec.frequencia;
         document.getElementById("r-dia").value = rec.dia_vencimento;
@@ -1693,7 +1699,7 @@
       async function salvarRec() {
         const body = {
           tipo: document.getElementById("r-tipo").value,
-          valor: parseFloat(document.getElementById("r-valor-rec").value),
+          valor: lerValorMoeda(document.getElementById("r-valor-rec")),
           descricao: document.getElementById("r-descricao").value,
           categoria_id:
             document.getElementById("r-categoria-rec").value || null,

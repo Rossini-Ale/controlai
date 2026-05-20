@@ -550,7 +550,12 @@
         </div>
         <div class="form-group">
           <label>Saldo inicial</label
-          ><input type="number" id="f-saldo" placeholder="0,00" step="0.01" />
+          ><input
+            type="text"
+            inputmode="decimal"
+            id="f-saldo"
+            placeholder="0,00"
+          />
         </div>
         <div class="form-group">
           <label>Cor</label
@@ -577,11 +582,10 @@
         <div class="form-group">
           <label>Valor (R$)</label
           ><input
-            type="number"
+            type="text"
+            inputmode="decimal"
             id="t-valor"
             placeholder="0,00"
-            step="0.01"
-            min="0"
           />
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
@@ -635,10 +639,10 @@
           <div class="form-group">
             <label>Limite (R$)</label
             ><input
-              type="number"
+              type="text"
+              inputmode="decimal"
               id="c-limite"
               placeholder="0,00"
-              step="0.01"
             />
           </div>
           <div class="form-group">
@@ -698,10 +702,10 @@
           <div class="form-group">
             <label>Valor total (R$)</label
             ><input
-              type="number"
+              type="text"
+              inputmode="decimal"
               id="l-valor"
               placeholder="0,00"
-              step="0.01"
               oninput="calcularParcela()"
             />
           </div>
@@ -988,7 +992,12 @@
           "Editar conta";
         document.getElementById("f-nome").value = nome;
         document.getElementById("f-tipo").value = tipo;
-        document.getElementById("f-saldo").value = saldo;
+        const elSaldo = document.getElementById("f-saldo");
+        elSaldo.value = parseFloat(saldo).toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+        });
+        elSaldo.dataset.valor = saldo;
+        aplicarMascaraMoeda(elSaldo);
         document.getElementById("f-cor").value = cor;
         document.getElementById("modal-conta").classList.add("active");
       }
@@ -997,8 +1006,7 @@
         const body = {
           nome: document.getElementById("f-nome").value,
           tipo: document.getElementById("f-tipo").value,
-          saldo_inicial:
-            parseFloat(document.getElementById("f-saldo").value) || 0,
+          saldo_inicial: lerValorMoeda(document.getElementById("f-saldo")),
           cor: document.getElementById("f-cor").value,
         };
         if (!body.nome) {
@@ -1070,7 +1078,7 @@
           conta_destino_id: parseInt(
             document.getElementById("t-destino").value,
           ),
-          valor: parseFloat(document.getElementById("t-valor").value),
+          valor: lerValorMoeda(document.getElementById("t-valor")),
           data: document.getElementById("t-data").value,
           descricao:
             document.getElementById("t-descricao").value ||
@@ -1200,7 +1208,12 @@
         document.getElementById("modal-cartao-titulo").textContent =
           "Editar cartão";
         document.getElementById("c-nome").value = nome;
-        document.getElementById("c-limite").value = limite;
+        const elLim = document.getElementById("c-limite");
+        elLim.value = parseFloat(limite).toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+        });
+        elLim.dataset.valor = limite;
+        aplicarMascaraMoeda(elLim);
         document.getElementById("c-cor").value = cor;
         document.getElementById("c-fechamento").value = fechamento;
         document.getElementById("c-vencimento").value = vencimento;
@@ -1210,7 +1223,7 @@
       async function salvarCartao() {
         const body = {
           nome: document.getElementById("c-nome").value,
-          limite: parseFloat(document.getElementById("c-limite").value) || 0,
+          limite: lerValorMoeda(document.getElementById("c-limite")),
           cor: document.getElementById("c-cor").value,
           dia_fechamento:
             parseInt(document.getElementById("c-fechamento").value) || 1,
@@ -1358,9 +1371,11 @@
               .map((c) => `<option value="${c.id}">${c.nome}</option>`)
               .join("")
           : `<option value="">Sem categorias</option>`;
-        ["l-descricao", "l-valor", "l-obs"].forEach(
+        ["l-descricao", "l-obs"].forEach(
           (id) => (document.getElementById(id).value = ""),
         );
+        document.getElementById("l-valor").value = "";
+        aplicarMascaraMoeda(document.getElementById("l-valor"));
         document.getElementById("l-parcelas").value = "1";
         document.getElementById("parcela-preview").style.display = "none";
         document.getElementById("modal-lancar").classList.add("active");
@@ -1385,7 +1400,7 @@
       async function lancar() {
         const body = {
           descricao: document.getElementById("l-descricao").value,
-          valor: parseFloat(document.getElementById("l-valor").value),
+          valor: lerValorMoeda(document.getElementById("l-valor")),
           parcelas: parseInt(document.getElementById("l-parcelas").value) || 1,
           categoria_id: document.getElementById("l-categoria").value,
           data: document.getElementById("l-data").value,
