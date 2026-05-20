@@ -418,9 +418,9 @@
         .aba-btn {
           flex: 1;
           justify-content: center;
-          padding: 8px 6px;
-          font-size: 11px;
-          gap: 4px;
+          padding: 8px 4px;
+          font-size: 10px;
+          gap: 3px;
         }
         .charts-grid {
           grid-template-columns: 1fr;
@@ -448,6 +448,13 @@
           onclick="trocarAba('relatorios')"
         >
           <i class="fa-solid fa-chart-bar"></i> Relatórios
+        </button>
+        <button
+          class="aba-btn"
+          id="aba-comparativo-btn"
+          onclick="trocarAba('comparativo')"
+        >
+          <i class="fa-solid fa-code-compare"></i> Comparativo
         </button>
         <button class="aba-btn" id="aba-metas-btn" onclick="trocarAba('metas')">
           <i class="fa-solid fa-bullseye"></i> Metas
@@ -524,6 +531,88 @@
         <div class="chart-card">
           <h3>Receitas por categoria — <span id="label-mes-rec"></span></h3>
           <div class="cat-lista" id="cat-lista-rec"></div>
+        </div>
+      </div>
+
+      <!-- ABA COMPARATIVO -->
+      <div class="aba-conteudo" id="aba-comparativo">
+        <div
+          style="
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+          "
+        >
+          <select
+            id="comp-meses"
+            style="
+              background: var(--bg-secondary);
+              border: 0.5px solid var(--border);
+              color: var(--text-primary);
+              border-radius: 9px;
+              padding: 8px 12px;
+              font-size: 14px;
+              outline: none;
+            "
+          >
+            <option value="3">Últimos 3 meses</option>
+            <option value="6" selected>Últimos 6 meses</option>
+            <option value="12">Últimos 12 meses</option>
+          </select>
+          <button class="btn" onclick="carregarComparativo()">
+            <i class="fa-solid fa-rotate"></i> Atualizar
+          </button>
+        </div>
+
+        <!-- Cards de totais -->
+        <div
+          id="comp-cards"
+          class="cards-grid"
+          style="margin-bottom: 24px"
+        ></div>
+
+        <!-- Gráfico de barras comparativo -->
+        <div
+          style="
+            background: var(--bg-secondary);
+            border: 0.5px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 24px;
+          "
+        >
+          <h3
+            style="
+              font-size: 14px;
+              font-weight: 600;
+              color: var(--text-secondary);
+              margin-bottom: 16px;
+            "
+          >
+            Receitas vs Despesas por mês
+          </h3>
+          <canvas id="chart-comparativo" height="120"></canvas>
+        </div>
+
+        <!-- Comparativo por categoria -->
+        <div
+          style="
+            background: var(--bg-secondary);
+            border: 0.5px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+          "
+        >
+          <div
+            style="padding: 16px 20px; border-bottom: 0.5px solid var(--border)"
+          >
+            <h3 style="font-size: 14px; font-weight: 600; margin: 0">
+              Despesas por categoria
+            </h3>
+          </div>
+          <div id="comp-categorias" style="padding: 16px"></div>
         </div>
       </div>
 
@@ -744,17 +833,188 @@
         document.getElementById(`aba-${aba}`).classList.add("active");
         document.getElementById("page-title").textContent = {
           relatorios: "Relatórios",
+          comparativo: "Comparativo",
           metas: "Metas",
           orcamento: "Orçamento",
         }[aba];
         if (aba === "metas") carregarMetas();
         if (aba === "orcamento") carregarOrcamento();
+        if (aba === "comparativo") carregarComparativo();
       }
 
       // Abre aba por URL param
       const abaParam = new URLSearchParams(window.location.search).get("aba");
-      if (abaParam && ["relatorios", "metas", "orcamento"].includes(abaParam))
+      if (
+        abaParam &&
+        ["relatorios", "comparativo", "metas", "orcamento"].includes(abaParam)
+      )
         trocarAba(abaParam);
+
+      // ══════════════════════════════════════
+      // COMPARATIVO MÊS A MÊS
+      // ══════════════════════════════════════
+      let chartComparativo = null;
+
+      async function carregarComparativo() {
+        const qtd = parseInt(document.getElementById("comp-meses").value) || 6;
+        document.getElementById("comp-cards").innerHTML = skeletonCards(3);
+        document.getElementById("comp-categorias").innerHTML =
+          `<div style="color:var(--text-muted);font-size:13px;padding:8px">Carregando...</div>`;
+
+        // Gera lista dos últimos N meses
+        const meses = [];
+        const agora = new Date();
+        for (let i = qtd - 1; i >= 0; i--) {
+          const d = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
+          meses.push({ mes: d.getMonth() + 1, ano: d.getFullYear() });
+        }
+
+        // Busca resumo de cada mês em paralelo
+        const resumos = await Promise.all(
+          meses.map(({ mes, ano }) =>
+            fetchAPI(`/api/relatorios/resumo?mes=${mes}&ano=${ano}`).then(
+              (d) => ({ mes, ano, ...(d || {}) }),
+            ),
+          ),
+        );
+
+        // Cards de média
+        const totalReceitas = resumos.reduce(
+          (s, r) => s + (parseFloat(r.total_receitas) || 0),
+          0,
+        );
+        const totalDespesas = resumos.reduce(
+          (s, r) => s + (parseFloat(r.total_despesas) || 0),
+          0,
+        );
+        const mediaSaldo = (totalReceitas - totalDespesas) / qtd;
+        document.getElementById("comp-cards").innerHTML = `
+          <div class="card"><div class="card-label">Média receitas/mês</div><div class="card-value green">${formatarMoeda(totalReceitas / qtd)}</div></div>
+          <div class="card"><div class="card-label">Média despesas/mês</div><div class="card-value red">${formatarMoeda(totalDespesas / qtd)}</div></div>
+          <div class="card"><div class="card-label">Média saldo/mês</div><div class="card-value ${mediaSaldo >= 0 ? "green" : "red"}">${formatarMoeda(mediaSaldo)}</div></div>`;
+
+        // Gráfico de barras
+        const labels = meses.map(
+          ({ mes, ano }) =>
+            `${nomeMes(mes).substring(0, 3)}/${String(ano).slice(2)}`,
+        );
+        const receitas = resumos.map((r) => parseFloat(r.total_receitas) || 0);
+        const despesas = resumos.map((r) => parseFloat(r.total_despesas) || 0);
+        const isDark =
+          !document.documentElement.classList.contains("tema-claro");
+        const gridColor = isDark ? "#2d3748" : "#e2e8f0";
+        const tickColor = isDark ? "#6b7280" : "#94a3b8";
+
+        if (chartComparativo) chartComparativo.destroy();
+        chartComparativo = new Chart(
+          document.getElementById("chart-comparativo"),
+          {
+            type: "bar",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "Receitas",
+                  data: receitas,
+                  backgroundColor: "#10b981",
+                  borderRadius: 4,
+                },
+                {
+                  label: "Despesas",
+                  data: despesas,
+                  backgroundColor: "#ef4444",
+                  borderRadius: 4,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  labels: {
+                    color: tickColor,
+                    font: { size: 11 },
+                    boxWidth: 12,
+                  },
+                },
+              },
+              scales: {
+                x: {
+                  ticks: {
+                    color: tickColor,
+                    font: { size: 10 },
+                    maxRotation: 0,
+                  },
+                  grid: { color: gridColor },
+                },
+                y: {
+                  ticks: {
+                    color: tickColor,
+                    font: { size: 10 },
+                    callback: (v) => formatarMoedaRaw(v),
+                  },
+                  grid: { color: gridColor },
+                },
+              },
+            },
+          },
+        );
+
+        // Comparativo por categoria — mês atual vs anterior
+        const { mes: mesAtual, ano: anoAtual } = meses[meses.length - 1];
+        const { mes: mesAnt, ano: anoAnt } =
+          meses.length >= 2 ? meses[meses.length - 2] : meses[0];
+
+        const [catAtual, catAnt] = await Promise.all([
+          fetchAPI(
+            `/api/relatorios/por-categoria?mes=${mesAtual}&ano=${anoAtual}&tipo=despesa`,
+          ).then((d) => d || []),
+          fetchAPI(
+            `/api/relatorios/por-categoria?mes=${mesAnt}&ano=${anoAnt}&tipo=despesa`,
+          ).then((d) => d || []),
+        ]);
+
+        const wrap = document.getElementById("comp-categorias");
+        if (catAtual.length === 0) {
+          wrap.innerHTML = `<p style="color:var(--text-muted);font-size:13px">Sem dados no mês atual.</p>`;
+          return;
+        }
+        const maxValor = Math.max(
+          ...catAtual.map((c) => parseFloat(c.total) || 0),
+        );
+        wrap.innerHTML = catAtual
+          .map((cat) => {
+            const total = parseFloat(cat.total) || 0;
+            const pct = maxValor > 0 ? (total / maxValor) * 100 : 0;
+            const cor = cat.cor || "#6b7280";
+            const ant = catAnt.find((c) => c.nome === cat.nome);
+            const totAnt = ant ? parseFloat(ant.total) || 0 : 0;
+            const delta = total - totAnt;
+            const deltaEl =
+              delta > 0
+                ? `<span style="color:var(--red);font-size:11px;white-space:nowrap">▲ ${formatarMoeda(delta)}</span>`
+                : delta < 0
+                  ? `<span style="color:var(--green);font-size:11px;white-space:nowrap">▼ ${formatarMoeda(Math.abs(delta))}</span>`
+                  : `<span style="color:var(--text-muted);font-size:11px">= igual</span>`;
+            return `<div style="margin-bottom:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:8px">
+              <div style="display:flex;align-items:center;gap:7px;min-width:0">
+                <span style="width:10px;height:10px;border-radius:50%;background:${cor};flex-shrink:0;display:inline-block"></span>
+                <span style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cat.nome || "Sem categoria"}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+                ${deltaEl}
+                <span style="font-size:13px;font-weight:700">${formatarMoeda(total)}</span>
+              </div>
+            </div>
+            <div style="background:var(--bg-tertiary);border-radius:99px;height:6px;overflow:hidden">
+              <div style="width:${pct}%;height:100%;background:${cor};border-radius:99px;transition:width 0.4s"></div>
+            </div>
+            ${totAnt > 0 ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px">Mês anterior: ${formatarMoeda(totAnt)}</div>` : ""}
+          </div>`;
+          })
+          .join("");
+      }
 
       // ══════════════════════════════════════
       // RELATÓRIOS

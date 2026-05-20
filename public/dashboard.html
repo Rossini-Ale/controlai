@@ -9,6 +9,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     />
     <link rel="stylesheet" href="/css/global.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
       .mes-nav {
         display: flex;
@@ -36,6 +37,49 @@
         min-width: 140px;
         text-align: center;
       }
+
+      /* Busca */
+      .busca-wrap {
+        position: relative;
+        margin-bottom: 20px;
+      }
+      .busca-input {
+        width: 100%;
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 14px 10px 38px;
+        color: var(--text-primary);
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .busca-input:focus {
+        border-color: var(--green);
+      }
+      .busca-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        font-size: 14px;
+        pointer-events: none;
+      }
+      .busca-clear {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 14px;
+        display: none;
+      }
+
+      /* Orçamento */
       .orc-card {
         background: var(--bg-secondary);
         border: 0.5px solid var(--border);
@@ -84,6 +128,37 @@
         color: var(--text-muted);
         text-align: right;
       }
+
+      /* Saldo previsto */
+      .previsto-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 20px;
+      }
+
+      /* Gráfico rosca */
+      .charts-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .chart-card {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+      }
+      .chart-card h3 {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+      }
+
+      /* Checklist */
       .checklist-item {
         display: flex;
         align-items: center;
@@ -110,6 +185,8 @@
         flex-shrink: 0;
         font-size: 11px;
       }
+
+      /* Transações mobile */
       .tx-mobile {
         background: var(--bg-secondary);
         border: 0.5px solid var(--border);
@@ -146,6 +223,12 @@
         font-size: 15px;
         font-weight: 700;
       }
+
+      @media (max-width: 768px) {
+        .charts-row {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
@@ -162,8 +245,42 @@
         </button>
       </div>
 
+      <!-- Busca -->
+      <div class="busca-wrap">
+        <i class="fa-solid fa-magnifying-glass busca-icon"></i>
+        <input
+          type="text"
+          class="busca-input"
+          id="busca-input"
+          placeholder="Buscar lançamentos..."
+          oninput="buscarTransacoes(this.value)"
+        />
+        <button class="busca-clear" id="busca-clear" onclick="limparBusca()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Resultado da busca -->
+      <div
+        id="busca-resultado"
+        style="display: none; margin-bottom: 20px"
+      ></div>
+
       <div id="checklist-wrap"></div>
       <div class="cards-grid" id="cards-resumo"></div>
+
+      <!-- Gráficos -->
+      <div class="charts-row" id="charts-row" style="display: none">
+        <div class="chart-card">
+          <h3>Despesas por categoria</h3>
+          <canvas id="chart-categorias" height="180"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Saldo previsto no fim do mês</h3>
+          <div id="saldo-previsto-wrap" style="padding-top: 8px"></div>
+        </div>
+      </div>
+
       <div id="orc-wrap"></div>
       <div id="rec-vencendo-wrap"></div>
 
@@ -205,9 +322,11 @@
       document.getElementById("sidebar").innerHTML = renderSidebar("Dashboard");
       document.getElementById("mobileheader").innerHTML =
         renderMobileHeader("Dashboard");
-      document.getElementById("tabbar").innerHTML = renderTabBar("Dashboard"); // ← corrigido
+      document.getElementById("tabbar").innerHTML = renderTabBar("Dashboard");
 
       let { mes, ano } = getMesAno();
+      let todasTransacoes = [];
+      let chartCategorias = null;
 
       function atualizarLabel() {
         document.getElementById("mes-label").textContent =
@@ -262,77 +381,270 @@
         const res = await fetchAPI(
           `/api/transacoes?mes=${mes}&ano=${ano}&limit=100`,
         );
-        const data = Array.isArray(res) ? res : res?.data || [];
-        if (!data) return;
+        todasTransacoes = Array.isArray(res) ? res : res?.data || [];
 
-        const el = document.getElementById("total-tx");
-        if (el) el.textContent = data.length;
+        const recentes = todasTransacoes.slice(0, 8);
+        renderTransacoesDesktop(recentes);
+        renderTransacoesMobile(recentes);
 
-        const recentes = data.slice(0, 8);
+        // Carrega gráfico e saldo previsto em paralelo
+        carregarGraficoCategorias();
+        carregarSaldoPrevisto();
+      }
 
-        // Desktop
+      async function carregarGraficoCategorias() {
+        const { m, a } = { m: mes, a: ano };
+        const data = await fetchAPI(
+          `/api/relatorios/por-categoria?mes=${m}&ano=${a}&tipo=despesa`,
+        );
+        if (!data || data.length === 0) {
+          document.getElementById("charts-row").style.display = "none";
+          return;
+        }
+        document.getElementById("charts-row").style.display = "grid";
+
+        const top5 = data.slice(0, 5);
+        const labels = top5.map((d) => d.nome || "Outros");
+        const valores = top5.map((d) => parseFloat(d.total) || 0);
+        const cores = top5.map((d) => d.cor || "#6b7280");
+
+        if (chartCategorias) chartCategorias.destroy();
+        chartCategorias = new Chart(
+          document.getElementById("chart-categorias"),
+          {
+            type: "doughnut",
+            data: {
+              labels,
+              datasets: [
+                {
+                  data: valores,
+                  backgroundColor: cores,
+                  borderWidth: 0,
+                  hoverOffset: 4,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              cutout: "65%",
+              plugins: {
+                legend: {
+                  position: "bottom",
+                  labels: {
+                    color:
+                      getComputedStyle(document.documentElement)
+                        .getPropertyValue("--text-muted")
+                        .trim() || "#6b7280",
+                    font: { size: 11 },
+                    padding: 10,
+                    boxWidth: 10,
+                  },
+                },
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) => ` ${formatarMoedaRaw(ctx.parsed)}`,
+                  },
+                },
+              },
+            },
+          },
+        );
+      }
+
+      async function carregarSaldoPrevisto() {
+        const wrap = document.getElementById("saldo-previsto-wrap");
+        const recorrentes = await fetchAPI("/api/recorrentes");
+        const lista = Array.isArray(recorrentes)
+          ? recorrentes.filter((r) => r.ativa)
+          : [];
+
+        const hoje = new Date();
+        const diasNoMes = new Date(
+          hoje.getFullYear(),
+          hoje.getMonth() + 1,
+          0,
+        ).getDate();
+        const diasRestantes = diasNoMes - hoje.getDate();
+
+        const MULT = {
+          diaria: 1,
+          semanal: 1 / 7,
+          quinzenal: 1 / 15,
+          mensal: 1 / 30,
+          bimestral: 1 / 60,
+          trimestral: 1 / 90,
+          semestral: 1 / 180,
+          anual: 1 / 365,
+        };
+
+        let receitasPrevistas = 0,
+          despesasPrevistas = 0;
+        lista.forEach((r) => {
+          const valorDiario = parseFloat(r.valor) * (MULT[r.frequencia] || 0);
+          const total = valorDiario * diasRestantes;
+          if (r.tipo === "receita") receitasPrevistas += total;
+          else despesasPrevistas += total;
+        });
+
+        // Saldo atual do mês
+        const resumo = await fetchAPI(
+          `/api/relatorios/resumo?mes=${mes}&ano=${ano}`,
+        );
+        const saldoAtual = parseFloat(resumo?.saldo) || 0;
+        const saldoPrevisto =
+          saldoAtual + receitasPrevistas - despesasPrevistas;
+        const cor = saldoPrevisto >= 0 ? "var(--green)" : "var(--red)";
+
+        wrap.innerHTML = `
+          <div style="text-align:center;padding:8px 0">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Saldo atual</div>
+            <div style="font-size:18px;font-weight:700;margin-bottom:12px">${formatarMoeda(saldoAtual)}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">+ recorrentes (${diasRestantes} dias)</div>
+            <div style="display:flex;justify-content:center;gap:16px;font-size:12px;margin-bottom:12px">
+              <span style="color:var(--green)">+${formatarMoeda(receitasPrevistas)}</span>
+              <span style="color:var(--red)">-${formatarMoeda(despesasPrevistas)}</span>
+            </div>
+            <div style="border-top:0.5px solid var(--border);padding-top:10px">
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Previsão fim do mês</div>
+              <div style="font-size:22px;font-weight:700;color:${cor}">${formatarMoeda(saldoPrevisto)}</div>
+            </div>
+          </div>`;
+      }
+
+      function renderTransacoesDesktop(data) {
         const tbody = document.getElementById("tbody-transacoes");
-        if (tbody) {
-          if (recentes.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="padding:0"><div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transação", "Nenhum lançamento neste mês.", "Novo lançamento", "window.location.href='/lancamentos.html'")}</div></td></tr>`;
-          } else {
-            tbody.innerHTML = recentes
-              .map(
-                (t) => `
-              <tr>
-                <td>${formatarData(t.data)}</td>
-                <td>${t.is_transferencia ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}${t.descricao}</td>
-                <td><span style="display:inline-flex;align-items:center;gap:5px">
-                  <span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>
-                  ${t.categoria_nome || "—"}
-                </span></td>
-                <td><span class="badge ${t.is_transferencia ? "transferencia" : t.tipo}">${formatarMoeda(t.valor)}</span></td>
-              </tr>`,
-              )
-              .join("");
-          }
+        if (!tbody) return;
+        if (data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" style="padding:0"><div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transação", "Nenhum lançamento neste mês.", "Novo lançamento", "window.location.href='/lancamentos.html'")}</div></td></tr>`;
+          return;
+        }
+        tbody.innerHTML = data
+          .map(
+            (t) => `
+          <tr>
+            <td>${formatarData(t.data)}</td>
+            <td>${t.is_transferencia ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}${t.descricao}</td>
+            <td><span style="display:inline-flex;align-items:center;gap:6px">
+              <span style="width:24px;height:24px;border-radius:50%;background:${t.categoria_cor ? t.categoria_cor + "22" : "var(--bg-tertiary)"};display:inline-flex;align-items:center;justify-content:center">
+                <i class="fa-solid ${t.categoria_icone || "fa-tag"}" style="font-size:10px;color:${t.categoria_cor || "#6b7280"}"></i>
+              </span>
+              ${t.categoria_nome || "—"}
+            </span></td>
+            <td><span class="badge ${t.is_transferencia ? "transferencia" : t.tipo}">${formatarMoeda(t.valor)}</span></td>
+          </tr>`,
+          )
+          .join("");
+      }
+
+      function renderTransacoesMobile(data) {
+        const mob = document.getElementById("lista-mobile");
+        if (!mob) return;
+        if (data.length === 0) {
+          mob.innerHTML = emptyState(
+            "fa-right-left",
+            "Nenhuma transação",
+            "Nenhum lançamento neste mês.",
+            "Novo lançamento",
+            "window.location.href='/lancamentos.html'",
+          );
+          return;
+        }
+        mob.innerHTML = data
+          .map((t) => {
+            const isT = !!t.is_transferencia;
+            const cor = isT
+              ? "#6366f1"
+              : t.tipo === "receita"
+                ? "var(--green)"
+                : "var(--red)";
+            const bg = isT
+              ? "rgba(99,102,241,0.15)"
+              : t.tipo === "receita"
+                ? "rgba(16,185,129,0.15)"
+                : "rgba(239,68,68,0.15)";
+            const sinal = isT ? "" : t.tipo === "receita" ? "+" : "-";
+            const catIcone =
+              t.categoria_icone || (isT ? "fa-right-left" : "fa-tag");
+            const catCor = isT ? "#6366f1" : t.categoria_cor || "#6b7280";
+            return `<div class="tx-mobile">
+            <div class="tx-mobile-icon" style="background:${isT ? bg : catCor + "22"}">
+              <i class="fa-solid ${catIcone}" style="color:${catCor}"></i>
+            </div>
+            <div class="tx-mobile-info">
+              <div class="tx-mobile-desc">${t.descricao}</div>
+              <div class="tx-mobile-meta">${formatarData(t.data)}${t.categoria_nome ? ` · ${t.categoria_nome}` : ""}</div>
+            </div>
+            <div class="tx-mobile-valor" style="color:${cor}">${sinal}${formatarMoeda(t.valor)}</div>
+          </div>`;
+          })
+          .join("");
+      }
+
+      // ── Busca em tempo real ──
+      let buscaTimer = null;
+      function buscarTransacoes(q) {
+        const clear = document.getElementById("busca-clear");
+        const resultDiv = document.getElementById("busca-resultado");
+        clear.style.display = q ? "block" : "none";
+
+        clearTimeout(buscaTimer);
+        if (!q.trim()) {
+          resultDiv.style.display = "none";
+          return;
         }
 
-        // Mobile
-        const mob = document.getElementById("lista-mobile");
-        if (mob) {
-          if (recentes.length === 0) {
-            mob.innerHTML = emptyState(
-              "fa-right-left",
-              "Nenhuma transação",
-              "Nenhum lançamento neste mês.",
-              "Novo lançamento",
-              "window.location.href='/lancamentos.html'",
-            );
-          } else {
-            mob.innerHTML = recentes
-              .map((t) => {
-                const isT = !!t.is_transferencia;
-                const cor = isT
-                  ? "#6366f1"
-                  : t.tipo === "receita"
-                    ? "var(--green)"
-                    : "var(--red)";
-                const bg = isT
-                  ? "rgba(99,102,241,0.15)"
-                  : t.tipo === "receita"
-                    ? "rgba(16,185,129,0.15)"
-                    : "rgba(239,68,68,0.15)";
-                const sinal = isT ? "" : t.tipo === "receita" ? "+" : "-";
-                return `<div class="tx-mobile">
-                <div class="tx-mobile-icon" style="background:${bg}">
-                  <i class="fa-solid ${isT ? "fa-right-left" : t.tipo === "receita" ? "fa-arrow-up" : "fa-arrow-down"}" style="color:${cor}"></i>
-                </div>
-                <div class="tx-mobile-info">
-                  <div class="tx-mobile-desc">${t.descricao}</div>
-                  <div class="tx-mobile-meta">${formatarData(t.data)}${t.categoria_nome ? ` · ${t.categoria_nome}` : ""}</div>
-                </div>
-                <div class="tx-mobile-valor" style="color:${cor}">${sinal}${formatarMoeda(t.valor)}</div>
+        buscaTimer = setTimeout(() => {
+          const termo = q.toLowerCase().trim();
+          const filtradas = todasTransacoes.filter(
+            (t) =>
+              (t.descricao || "").toLowerCase().includes(termo) ||
+              (t.categoria_nome || "").toLowerCase().includes(termo) ||
+              (t.conta_nome || "").toLowerCase().includes(termo),
+          );
+
+          resultDiv.style.display = "block";
+          if (filtradas.length === 0) {
+            resultDiv.innerHTML = `
+              <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:12px;padding:20px;text-align:center;color:var(--text-muted);font-size:13px">
+                <i class="fa-solid fa-magnifying-glass" style="font-size:20px;margin-bottom:8px;display:block"></i>
+                Nenhum resultado para "${q}"
               </div>`;
-              })
-              .join("");
+            return;
           }
-        }
+
+          resultDiv.innerHTML = `
+            <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:12px;overflow:hidden">
+              <div style="padding:10px 14px;border-bottom:0.5px solid var(--border);font-size:12px;color:var(--text-muted)">
+                ${filtradas.length} resultado(s) para "<strong style="color:var(--text-primary)">${q}</strong>"
+              </div>
+              ${filtradas
+                .slice(0, 10)
+                .map((t) => {
+                  const isT = !!t.is_transferencia;
+                  const cor = isT
+                    ? "#6366f1"
+                    : t.tipo === "receita"
+                      ? "var(--green)"
+                      : "var(--red)";
+                  const sinal = isT ? "" : t.tipo === "receita" ? "+" : "-";
+                  return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:0.5px solid var(--border)">
+                  <div>
+                    <div style="font-size:14px;font-weight:600;margin-bottom:2px">${t.descricao}</div>
+                    <div style="font-size:11px;color:var(--text-muted)">${formatarData(t.data)} · ${t.categoria_nome || "—"}</div>
+                  </div>
+                  <div style="font-size:14px;font-weight:700;color:${cor}">${sinal}${formatarMoeda(t.valor)}</div>
+                </div>`;
+                })
+                .join("")}
+              ${filtradas.length > 10 ? `<div style="padding:10px 14px;font-size:12px;color:var(--text-muted);text-align:center">+ ${filtradas.length - 10} mais → <a href="/lancamentos.html" style="color:var(--green)">ver todos</a></div>` : ""}
+            </div>`;
+        }, 200);
+      }
+
+      function limparBusca() {
+        document.getElementById("busca-input").value = "";
+        document.getElementById("busca-clear").style.display = "none";
+        document.getElementById("busca-resultado").style.display = "none";
       }
 
       async function carregarRecorrentesVencendo() {
@@ -343,7 +655,6 @@
           wrap.innerHTML = "";
           return;
         }
-
         const FREQ = {
           diaria: "Diária",
           semanal: "Semanal",
@@ -355,7 +666,6 @@
           anual: "Anual",
         };
         const hoje = new Date().toISOString().split("T")[0];
-
         wrap.innerHTML = `
           <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -363,8 +673,7 @@
                 <i class="fa-solid fa-rotate" style="color:#f59e0b"></i>
                 <span style="font-size:14px;font-weight:600">Recorrentes nos próximos 7 dias</span>
               </div>
-              <a href="/lancamentos.html?aba=recorrentes"
-                style="font-size:12px;color:var(--green);text-decoration:none;font-weight:600">Ver todas →</a>
+              <a href="/lancamentos.html?aba=recorrentes" style="font-size:12px;color:var(--green);text-decoration:none;font-weight:600">Ver todas →</a>
             </div>
             ${lista
               .map((r) => {
@@ -419,8 +728,7 @@
           <div class="orc-card">
             <div class="orc-card-header">
               <h3><i class="fa-solid fa-bullseye" style="color:var(--green)"></i> Orçamento do mês</h3>
-              <a href="/relatorios.html?aba=orcamento"
-                style="font-size:12px;color:var(--green);text-decoration:none;font-weight:600">Ver detalhes →</a>
+              <a href="/relatorios.html?aba=orcamento" style="font-size:12px;color:var(--green);text-decoration:none;font-weight:600">Ver detalhes →</a>
             </div>
             <div class="orc-valores">
               <span>Gasto: <strong>${formatarMoeda(gasto)}</strong></span>
@@ -459,7 +767,7 @@
             icon: "fa-credit-card",
             label: "Cadastrar um cartão",
             link: "/contas.html?aba=cartoes",
-          }, // ← corrigido
+          },
           {
             feito: !!data.telegram_chat_id,
             icon: "fa-telegram",
@@ -467,8 +775,8 @@
             link: "/configuracoes.html",
           },
         ];
-        const total = itens.length;
-        const feitos = itens.filter((i) => i.feito).length;
+        const total = itens.length,
+          feitos = itens.filter((i) => i.feito).length;
         if (feitos === total) {
           localStorage.setItem("controlai_onboarding_checklist", "1");
           return;
