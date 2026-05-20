@@ -346,13 +346,24 @@ thead th {
 }
 tbody tr {
   border-bottom: 0.5px solid var(--border);
-  transition: background 0.15s;
+  transition: background 0.12s ease;
 }
 tbody tr:last-child {
   border-bottom: none;
 }
 tbody tr:hover {
   background: var(--bg-tertiary);
+}
+
+/* Zebra striping suave — linhas pares com fundo levemente diferente */
+tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.04);
+}
+tbody tr:nth-child(even):hover {
+  background: var(--bg-tertiary);
+}
+:root.tema-claro tbody tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.025);
 }
 tbody td {
   padding: 13px 20px;
@@ -392,6 +403,9 @@ tbody td {
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
+  /* Área de toque mínima 44px (Apple/Google guidelines) */
+  min-height: 36px;
+  min-width: 36px;
 }
 .btn-danger:hover {
   background: var(--red);
@@ -408,6 +422,9 @@ tbody td {
   cursor: pointer;
   transition: all 0.2s;
   margin-right: 6px;
+  /* Área de toque mínima 44px */
+  min-height: 36px;
+  min-width: 36px;
 }
 .btn-edit:hover {
   border-color: var(--blue);
@@ -418,13 +435,27 @@ tbody td {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0);
   z-index: 100;
   align-items: center;
   justify-content: center;
+  transition: background 0.25s ease;
 }
 .modal-overlay.active {
   display: flex;
+  background: rgba(0, 0, 0, 0.6);
+}
+/* Força o reflow para a transição funcionar ao ativar */
+.modal-overlay.active {
+  animation: backdropIn 0.25s ease forwards;
+}
+@keyframes backdropIn {
+  from {
+    background: rgba(0, 0, 0, 0);
+  }
+  to {
+    background: rgba(0, 0, 0, 0.6);
+  }
 }
 
 .modal {
@@ -434,7 +465,19 @@ tbody td {
   padding: 28px;
   width: 100%;
   max-width: 440px;
-  animation: fadeUp 0.25s ease;
+  animation: modalIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 @keyframes fadeUp {
@@ -1027,7 +1070,12 @@ tbody td {
   }
   .btn-edit,
   .btn-danger {
-    padding: 7px 12px;
+    padding: 10px 14px;
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   .saldo-card {
     padding: 12px;

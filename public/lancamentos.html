@@ -909,6 +909,35 @@
         .toISOString()
         .split("T")[0];
 
+      // ── Persistência de filtros na URL ──
+      function lerFiltrosDaURL() {
+        const p = new URLSearchParams(window.location.search);
+        if (p.get("mes"))
+          document.getElementById("filtro-mes").value = p.get("mes");
+        if (p.get("ano"))
+          document.getElementById("filtro-ano").value = p.get("ano");
+        if (p.get("tipo"))
+          document.getElementById("filtro-tipo").value = p.get("tipo");
+        if (p.get("categoria"))
+          document.getElementById("filtro-categoria").value =
+            p.get("categoria");
+      }
+
+      function salvarFiltrosNaURL() {
+        const m = document.getElementById("filtro-mes").value;
+        const a = document.getElementById("filtro-ano").value;
+        const tipo = document.getElementById("filtro-tipo").value;
+        const cat = document.getElementById("filtro-categoria").value;
+        const p = new URLSearchParams();
+        p.set("mes", m);
+        p.set("ano", a);
+        if (tipo) p.set("tipo", tipo);
+        if (cat) p.set("categoria", cat);
+        if (abaAtiva !== "lancamentos") p.set("aba", abaAtiva);
+        const novaURL = `${window.location.pathname}?${p.toString()}`;
+        history.pushState(null, "", novaURL);
+      }
+
       async function init() {
         [categorias, contas] = await Promise.all([
           fetchAPI("/api/categorias").then((d) => d || []),
@@ -922,7 +951,10 @@
               .join("")
           : `<option value="">Sem contas</option>`;
         ajustarLayout();
-        carregarTransacoes();
+
+        // Lê filtros da URL antes de carregar (restaura estado)
+        lerFiltrosDaURL();
+
         // Abre aba por URL param
         const abaParam = new URLSearchParams(window.location.search).get("aba");
         if (
@@ -930,6 +962,8 @@
           ["lancamentos", "recorrentes", "categorias"].includes(abaParam)
         )
           trocarAba(abaParam);
+
+        carregarTransacoes();
       }
 
       // ── Abas ──
@@ -974,6 +1008,9 @@
         const a = document.getElementById("filtro-ano").value;
         const tipo = document.getElementById("filtro-tipo").value;
         const catId = document.getElementById("filtro-categoria").value;
+
+        // Persiste filtros na URL
+        salvarFiltrosNaURL();
         if (isMobile())
           document.getElementById("lista-mobile").innerHTML = skeletonLista(3);
         else
