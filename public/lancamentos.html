@@ -571,24 +571,75 @@
     <!-- Modal lançamento -->
     <div class="modal-overlay" id="modal-lancamento">
       <div class="modal">
-        <h2 id="modal-titulo">Novo lançamento</h2>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
-          <div class="form-group">
-            <label>Tipo</label
-            ><select id="f-tipo" onchange="filtrarCategorias()">
-              <option value="despesa">Despesa</option>
-              <option value="receita">Receita</option>
-            </select>
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+          "
+        >
+          <h2 id="modal-titulo" style="margin: 0">Novo lançamento</h2>
+          <button
+            onclick="fecharModalLancamento()"
+            style="
+              background: none;
+              border: none;
+              color: var(--text-muted);
+              font-size: 20px;
+              cursor: pointer;
+              padding: 4px;
+            "
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <!-- Toggle de tipo — igual ao modal rápido -->
+        <div class="tipo-toggle" style="margin-bottom: 16px">
+          <div
+            class="tipo-btn active-despesa"
+            id="f-tipo-despesa"
+            onclick="selecionarTipoModal('despesa')"
+          >
+            <i class="fa-solid fa-arrow-down" style="margin-right: 4px"></i
+            >Despesa
           </div>
-          <div class="form-group">
-            <label>Valor</label
-            ><input
-              type="text"
-              inputmode="decimal"
-              id="f-valor"
-              placeholder="0,00"
-            />
+          <div
+            class="tipo-btn"
+            id="f-tipo-receita"
+            onclick="selecionarTipoModal('receita')"
+          >
+            <i class="fa-solid fa-arrow-up" style="margin-right: 4px"></i
+            >Receita
           </div>
+          <div
+            class="tipo-btn"
+            id="f-tipo-cartao"
+            onclick="selecionarTipoModal('cartao')"
+            style="display: none"
+          >
+            <i class="fa-solid fa-credit-card" style="margin-right: 4px"></i
+            >Cartão
+          </div>
+        </div>
+        <!-- Input hidden para manter compatibilidade com o código existente -->
+        <input type="hidden" id="f-tipo" value="despesa" />
+        <div class="form-group">
+          <label>Valor (R$)</label>
+          <input
+            type="text"
+            inputmode="decimal"
+            id="f-valor"
+            placeholder="0,00"
+            style="
+              font-size: 20px;
+              font-weight: 600;
+              padding: 14px 13px;
+              transition:
+                border-color 0.2s,
+                background 0.2s;
+            "
+          />
         </div>
         <div class="form-group">
           <label>Descrição</label
@@ -614,11 +665,21 @@
         <div class="form-group">
           <label>Observação (opcional)</label><input type="text" id="f-obs" />
         </div>
-        <div class="modal-footer">
-          <button class="btn-cancel" onclick="fecharModalLancamento()">
+        <div style="display: flex; gap: 10px; margin-top: 8px">
+          <button
+            onclick="fecharModalLancamento()"
+            class="btn-cancel"
+            style="flex: 1; padding: 12px"
+          >
             Cancelar
           </button>
-          <button class="btn" onclick="salvarLancamento()">Salvar</button>
+          <button
+            onclick="salvarLancamento()"
+            class="btn"
+            style="flex: 2; justify-content: center; padding: 12px"
+          >
+            Salvar
+          </button>
         </div>
       </div>
     </div>
@@ -1007,14 +1068,26 @@
           .join("");
       }
 
+      function selecionarTipoModal(tipo) {
+        document.getElementById("f-tipo").value = tipo;
+        ["despesa", "receita", "cartao"].forEach((t) => {
+          const btn = document.getElementById(`f-tipo-${t}`);
+          if (btn)
+            btn.className = `tipo-btn${tipo === t ? ` active-${t}` : ""}`;
+        });
+        filtrarCategorias();
+        const inputValor = document.getElementById("f-valor");
+        if (inputValor) aplicarCorTipo(inputValor, tipo);
+      }
+
       function filtrarCategorias() {
         const tipo = document.getElementById("f-tipo").value;
         const sel = document.getElementById("f-categoria");
-        const f = categorias.filter((c) => c.tipo === tipo);
+        const tc = tipo === "cartao" ? "despesa" : tipo;
+        const f = categorias.filter((c) => c.tipo === tc);
         sel.innerHTML = f.length
           ? f.map((c) => `<option value="${c.id}">${c.nome}</option>`).join("")
           : `<option value="">Sem categorias</option>`;
-        // Cor dinâmica no input de valor
         const inputValor = document.getElementById("f-valor");
         if (inputValor) aplicarCorTipo(inputValor, tipo);
       }
@@ -1022,18 +1095,16 @@
       function abrirModalLancamento() {
         editandoLancId = null;
         document.getElementById("modal-titulo").textContent = "Novo lançamento";
-        document.getElementById("f-tipo").value = "despesa";
         const inputValor = document.getElementById("f-valor");
         inputValor.value = "";
         delete inputValor.dataset.valor;
         aplicarMascaraMoeda(inputValor);
-        aplicarCorTipo(inputValor, "despesa");
         document.getElementById("f-descricao").value = "";
         document.getElementById("f-data").value = new Date()
           .toISOString()
           .split("T")[0];
         document.getElementById("f-obs").value = "";
-        filtrarCategorias();
+        selecionarTipoModal("despesa");
         document.getElementById("modal-lancamento").classList.add("active");
         setTimeout(() => inputValor.focus(), 100);
       }
@@ -1048,13 +1119,18 @@
         editandoLancId = id;
         document.getElementById("modal-titulo").textContent =
           "Editar lançamento";
-        document.getElementById("f-tipo").value = item.tipo;
-        document.getElementById("f-valor").value = item.valor;
+        const inputValor = document.getElementById("f-valor");
+        // Para edição mostra o valor formatado
+        inputValor.value = parseFloat(item.valor).toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+        });
+        inputValor.dataset.valor = item.valor;
+        aplicarMascaraMoeda(inputValor);
         document.getElementById("f-descricao").value = item.descricao;
         document.getElementById("f-data").value =
           item.data?.split("T")[0] || "";
         document.getElementById("f-obs").value = item.observacao || "";
-        filtrarCategorias();
+        selecionarTipoModal(item.tipo);
         document.getElementById("f-categoria").value = item.categoria_id;
         document.getElementById("f-conta").value = item.conta_id;
         document.getElementById("modal-lancamento").classList.add("active");
