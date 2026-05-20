@@ -50,6 +50,34 @@
         color: #6366f1;
       }
 
+      /* Timeline sticky */
+      .timeline-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 4px;
+        margin-bottom: 6px;
+        margin-top: 4px;
+        position: sticky;
+        top: 56px; /* altura do mobile header */
+        z-index: 10;
+        background: var(--bg-primary);
+      }
+      .timeline-label {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-primary);
+        text-transform: capitalize;
+      }
+      .timeline-date {
+        font-size: 11px;
+        color: var(--text-muted);
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        border-radius: 20px;
+        padding: 2px 8px;
+      }
+
       /* Recorrentes */
       .rec-grid {
         display: grid;
@@ -674,7 +702,23 @@
             Cancelar
           </button>
           <button
-            onclick="salvarLancamento()"
+            onclick="salvarLancamento(false)"
+            id="btn-salvar-continuar"
+            class="btn"
+            style="
+              flex: 1;
+              justify-content: center;
+              padding: 12px;
+              background: var(--bg-tertiary);
+              color: var(--text-primary);
+              border: 0.5px solid var(--border);
+            "
+          >
+            + Outro
+          </button>
+          <button
+            onclick="salvarLancamento(true)"
+            id="btn-salvar"
             class="btn"
             style="flex: 2; justify-content: center; padding: 12px"
           >
@@ -992,6 +1036,33 @@
         if (atual) sel.value = atual;
       }
 
+      // ── Helpers de data para timeline ──
+      function labelData(dataISO) {
+        if (!dataISO) return "—";
+        const d = new Date(dataISO + "T00:00:00");
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const ontem = new Date(hoje);
+        ontem.setDate(hoje.getDate() - 1);
+        if (d.getTime() === hoje.getTime()) return "Hoje";
+        if (d.getTime() === ontem.getTime()) return "Ontem";
+        return d.toLocaleDateString("pt-BR", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        });
+      }
+
+      function agruparPorData(data) {
+        const grupos = {};
+        data.forEach((t) => {
+          const dia = (t.data || "").split("T")[0];
+          if (!grupos[dia]) grupos[dia] = [];
+          grupos[dia].push(t);
+        });
+        return grupos;
+      }
+
       function renderDesktop(data) {
         const tbody = document.getElementById("tabela-transacoes-desktop");
         if (data.length === 0) {
@@ -1002,10 +1073,26 @@
           .map((t) => {
             const isT = !!t.is_transferencia;
             const label = isT ? "transferencia" : t.tipo;
+            const parcelaLabel =
+              t.parcelas > 1
+                ? `<span style="font-size:10px;color:var(--text-muted);margin-left:5px;font-weight:400">[${t.parcela_atual}/${t.parcelas}]</span>`
+                : "";
             return `<tr>
             <td>${formatarData(t.data)}</td>
-            <td>${isT ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}${t.descricao}</td>
-            <td>${isT ? `<span style="color:var(--text-muted);font-size:12px">—</span>` : `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>${t.categoria_nome || "—"}</span>`}</td>
+            <td>
+              ${isT ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}
+              ${t.descricao}${parcelaLabel}
+            </td>
+            <td>${
+              isT
+                ? `<span style="color:var(--text-muted);font-size:12px">—</span>`
+                : `<span style="display:inline-flex;align-items:center;gap:6px">
+                  <span style="width:26px;height:26px;border-radius:50%;background:${t.categoria_cor ? t.categoria_cor + "22" : "var(--bg-tertiary)"};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i class="fa-solid ${t.categoria_icone || "fa-tag"}" style="font-size:10px;color:${t.categoria_cor || "#6b7280"}"></i>
+                  </span>
+                  ${t.categoria_nome || "—"}
+                </span>`
+            }</td>
             <td>${t.conta_nome || "—"}</td>
             <td><span class="badge ${label}">${isT ? "transferência" : t.tipo}</span></td>
             <td><span class="badge ${label}">${formatarMoeda(t.valor)}</span></td>
@@ -1013,8 +1100,8 @@
               isT
                 ? `<button class="btn-danger" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
                 : `<button class="btn-edit" onclick="editarLancamento(${t.id})"><i class="fa-solid fa-pen"></i></button>
-               <button class="btn-edit" onclick="duplicarLancamento(${t.id})" title="Duplicar"><i class="fa-solid fa-copy"></i></button>
-               <button class="btn-danger" onclick="deletarLancamento(${t.id})"><i class="fa-solid fa-trash"></i></button>`
+                 <button class="btn-edit" onclick="duplicarLancamento(${t.id})" title="Duplicar"><i class="fa-solid fa-copy"></i></button>
+                 <button class="btn-danger" onclick="deletarLancamento(${t.id})"><i class="fa-solid fa-trash"></i></button>`
             }</td>
           </tr>`;
           })
@@ -1033,39 +1120,77 @@
           );
           return;
         }
-        lista.innerHTML = data
-          .map((t) => {
+
+        // Agrupa por data para timeline
+        const grupos = agruparPorData(data);
+        let html = "";
+
+        Object.entries(grupos).forEach(([dia, transacoes]) => {
+          // Cabeçalho sticky do dia
+          html += `
+            <div class="timeline-header">
+              <span class="timeline-label">${labelData(dia)}</span>
+              <span class="timeline-date">${new Date(dia + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span>
+            </div>`;
+
+          transacoes.forEach((t) => {
             const isT = !!t.is_transferencia;
             const cor = isT
               ? "#6366f1"
               : t.tipo === "receita"
                 ? "var(--green)"
                 : "var(--red)";
+            const bg = isT
+              ? "rgba(99,102,241,0.15)"
+              : t.tipo === "receita"
+                ? "rgba(16,185,129,0.15)"
+                : "rgba(239,68,68,0.15)";
             const sinal = isT ? "" : t.tipo === "receita" ? "+" : "-";
-            return `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;border-left:3px solid ${cor}">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-              <div style="flex:1;margin-right:8px">
-                <div style="font-size:15px;font-weight:600;margin-bottom:3px">${isT ? `<i class="fa-solid fa-right-left" style="color:#6366f1;font-size:11px;margin-right:6px"></i>` : ""}${t.descricao}</div>
-                <div style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                  <span>${formatarData(t.data)}</span>
-                  ${!isT && t.categoria_nome ? `<span>·</span><span style="display:inline-flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>${t.categoria_nome}</span>` : ""}
-                  ${t.conta_nome ? `<span>·</span><span>${t.conta_nome}</span>` : ""}
+            const catIcone = t.categoria_icone || "fa-tag";
+            const catCor = t.categoria_cor || "#6b7280";
+            const parcelaLabel =
+              t.parcelas > 1
+                ? `<span style="font-size:10px;background:var(--bg-tertiary);color:var(--text-muted);padding:1px 6px;border-radius:20px;margin-left:4px">${t.parcela_atual}/${t.parcelas}</span>`
+                : "";
+
+            html += `
+              <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:14px 14px 10px;margin-bottom:8px">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+                  <!-- Ícone de categoria -->
+                  <div style="width:40px;height:40px;border-radius:50%;background:${isT ? "rgba(99,102,241,0.15)" : catCor + "22"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i class="fa-solid ${isT ? "fa-right-left" : catIcone}" style="font-size:15px;color:${isT ? "#6366f1" : catCor}"></i>
+                  </div>
+                  <!-- Info -->
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:14px;font-weight:600;margin-bottom:2px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">
+                      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">${t.descricao}</span>
+                      ${parcelaLabel}
+                    </div>
+                    <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+                      ${!isT && t.categoria_nome ? `<span>${t.categoria_nome}</span>` : ""}
+                      ${t.conta_nome ? `${!isT && t.categoria_nome ? "<span>·</span>" : ""}<span>${t.conta_nome}</span>` : ""}
+                    </div>
+                  </div>
+                  <!-- Valor -->
+                  <div style="text-align:right;flex-shrink:0">
+                    <div style="font-size:15px;font-weight:700;color:${cor}">${sinal}${formatarMoeda(t.valor)}</div>
+                  </div>
                 </div>
-              </div>
-              <div style="text-align:right"><div style="font-size:16px;font-weight:700;color:${cor}">${sinal}${formatarMoeda(t.valor)}</div></div>
-            </div>
-            <div style="display:flex;gap:8px;justify-content:flex-end">
-              ${
-                isT
-                  ? `<button class="btn-danger" style="padding:6px 14px;font-size:12px" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
-                  : `<button class="btn-edit" onclick="editarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-pen"></i> Editar</button>
-                 <button class="btn-edit" onclick="duplicarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-copy"></i></button>
-                 <button class="btn-danger" onclick="deletarLancamento(${t.id})" style="padding:6px 14px;font-size:12px"><i class="fa-solid fa-trash"></i></button>`
-              }
-            </div>
-          </div>`;
-          })
-          .join("");
+                <!-- Ações -->
+                <div style="display:flex;gap:6px;justify-content:flex-end;border-top:0.5px solid var(--border);padding-top:8px">
+                  ${
+                    isT
+                      ? `<button class="btn-danger" style="padding:5px 12px;font-size:12px" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
+                      : `<button class="btn-edit" onclick="editarLancamento(${t.id})" style="padding:5px 12px;font-size:12px"><i class="fa-solid fa-pen"></i></button>
+                       <button class="btn-edit" onclick="duplicarLancamento(${t.id})" style="padding:5px 12px;font-size:12px"><i class="fa-solid fa-copy"></i></button>
+                       <button class="btn-danger" onclick="deletarLancamento(${t.id})" style="padding:5px 12px;font-size:12px"><i class="fa-solid fa-trash"></i></button>`
+                  }
+                </div>
+              </div>`;
+          });
+        });
+
+        lista.innerHTML = html;
       }
 
       function selecionarTipoModal(tipo) {
@@ -1105,6 +1230,7 @@
           .split("T")[0];
         document.getElementById("f-obs").value = "";
         selecionarTipoModal("despesa");
+        document.getElementById("btn-salvar-continuar").style.display = "flex";
         document.getElementById("modal-lancamento").classList.add("active");
         setTimeout(() => inputValor.focus(), 100);
       }
@@ -1133,10 +1259,11 @@
         selecionarTipoModal(item.tipo);
         document.getElementById("f-categoria").value = item.categoria_id;
         document.getElementById("f-conta").value = item.conta_id;
+        document.getElementById("btn-salvar-continuar").style.display = "none";
         document.getElementById("modal-lancamento").classList.add("active");
       }
 
-      async function salvarLancamento() {
+      async function salvarLancamento(fecharApos = true) {
         const body = {
           tipo: document.getElementById("f-tipo").value,
           valor: lerValorMoeda(document.getElementById("f-valor")),
@@ -1150,21 +1277,46 @@
           toast("Preencha descrição, valor e data.", "erro");
           return;
         }
-        if (editandoLancId) {
-          await fetchAPI(`/api/transacoes/${editandoLancId}`, {
-            method: "PUT",
-            body: JSON.stringify(body),
-          });
-          toast("Lançamento atualizado!");
-        } else {
-          await fetchAPI("/api/transacoes", {
-            method: "POST",
-            body: JSON.stringify(body),
-          });
-          toast("Lançamento criado!");
+
+        // Loading state
+        const btn = document.getElementById(
+          fecharApos ? "btn-salvar" : "btn-salvar-continuar",
+        );
+        const labelOriginal = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+
+        try {
+          if (editandoLancId) {
+            await fetchAPI(`/api/transacoes/${editandoLancId}`, {
+              method: "PUT",
+              body: JSON.stringify(body),
+            });
+            toast("Lançamento atualizado!");
+            fecharModalLancamento();
+          } else {
+            await fetchAPI("/api/transacoes", {
+              method: "POST",
+              body: JSON.stringify(body),
+            });
+            if (fecharApos) {
+              toast("Lançamento criado!");
+              fecharModalLancamento();
+            } else {
+              toast("Salvo! Adicione outro.");
+              // Mantém modal aberto — limpa só valor e descrição
+              const inputValor = document.getElementById("f-valor");
+              inputValor.value = "";
+              delete inputValor.dataset.valor;
+              document.getElementById("f-descricao").value = "";
+              setTimeout(() => inputValor.focus(), 50);
+            }
+          }
+          carregarTransacoes();
+        } finally {
+          btn.innerHTML = labelOriginal;
+          btn.disabled = false;
         }
-        fecharModalLancamento();
-        carregarTransacoes();
       }
 
       async function duplicarLancamento(id) {
