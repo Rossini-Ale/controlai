@@ -214,7 +214,7 @@ function renderMobileHeader(paginaAtiva) {
     .substring(0, 2)
     .toUpperCase();
   return `
-    <header class="mobile-header mobile-only">
+    <header class="mobile-header">
       <button class="mobile-avatar-btn" onclick="togglePerfilMenu()" aria-label="Perfil">
         ${iniciais}
       </button>

@@ -704,8 +704,10 @@ tbody td {
 
 /* ── Mobile ── */
 @media (max-width: 768px) {
-  .mobile-header {
-    display: flex;
+  /* mobile-only usa display:block mas header precisa de flex — override explícito */
+  .mobile-header,
+  .mobile-header.mobile-only {
+    display: flex !important;
   }
 
   .sidebar {
@@ -1025,6 +1027,9 @@ tbody td {
     display: none;
   }
   .mobile-only {
+    display: none !important;
+  }
+  .mobile-header {
     display: none !important;
   }
   .desktop-only {
