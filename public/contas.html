@@ -1171,7 +1171,7 @@
               <div class="cartao-info-item"><label>Vencimento</label><span>Dia ${c.dia_vencimento}</span></div>
             </div>
             <div class="limite-bar"><div class="limite-fill" style="width:${pct}%;background:${corBarra}"></div></div>
-            <div class="limite-texto"><span>${pct.toFixed(0)}% do limite usado</span><span>Disponível: ${formatarMoeda(limite - fatura)}</span></div>
+            <div class="limite-texto"><span>Gasto: ${formatarMoeda(fatura)}</span><span>Disponível: ${formatarMoeda(limite - fatura)}</span></div>
             <div class="cartao-acoes">
               <button class="btn-fatura" onclick="verFatura(${c.id},'${c.nome}',${c.dia_vencimento})"><i class="fa-solid fa-file-invoice"></i> Ver fatura</button>
               <button class="btn-edit" onclick="editarCartao(${c.id},'${c.nome}',${limite},${c.dia_fechamento},${c.dia_vencimento},'${cor}')"><i class="fa-solid fa-pen"></i></button>
