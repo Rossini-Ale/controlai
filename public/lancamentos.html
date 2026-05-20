@@ -1280,12 +1280,30 @@
         inputData.min = minData;
         inputData.max = maxData;
         document.getElementById("f-obs").value = "";
-        // Remove aviso de duplicação se existir
         document.getElementById("aviso-duplicado")?.remove();
         selecionarTipoModal("despesa");
         document.getElementById("btn-salvar-continuar").style.display = "flex";
         document.getElementById("modal-lancamento").classList.add("active");
-        setTimeout(() => inputValor.focus(), 100);
+
+        // Remove chips anteriores para não duplicar
+        document.getElementById("qa-f-valor")?.remove();
+
+        setTimeout(() => {
+          inputValor.focus();
+          // Quick-amounts
+          renderQuickAmounts("f-valor", [10, 20, 50, 100, 200]);
+          // Pull-to-dismiss (mobile)
+          ativarPullToDismiss("modal-lancamento", fecharModalLancamento);
+          // Pré-carrega mapa para categoria inteligente
+          construirMapaCategoria();
+        }, 100);
+
+        // Categoria inteligente — ouve a descrição
+        const inputDesc = document.getElementById("f-descricao");
+        inputDesc.oninput = (e) => {
+          if (e.target.value.length >= 3)
+            sugerirCategoria(e.target.value, "f-categoria");
+        };
       }
       function fecharModalLancamento() {
         document.getElementById("modal-lancamento").classList.remove("active");

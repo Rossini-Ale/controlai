@@ -510,10 +510,24 @@ async function abrirModalRapido() {
   inputValor.value = "";
   delete inputValor.dataset.valor;
   document.getElementById("r-descricao").value = "";
-  // Aplica máscara de moeda
   aplicarMascaraMoeda(inputValor);
+  // Remove chips anteriores para não duplicar
+  document.getElementById("qa-r-valor")?.remove();
   document.getElementById("modal-rapido").classList.add("active");
-  setTimeout(() => inputValor.focus(), 100);
+  setTimeout(() => {
+    inputValor.focus();
+    renderQuickAmounts("r-valor", [10, 20, 50, 100, 200]);
+    ativarPullToDismiss("modal-rapido", fecharModalRapido);
+    construirMapaCategoria();
+  }, 100);
+  // Categoria inteligente
+  const inputDesc = document.getElementById("r-descricao");
+  if (inputDesc) {
+    inputDesc.oninput = (e) => {
+      if (e.target.value.length >= 3)
+        sugerirCategoria(e.target.value, "r-categoria");
+    };
+  }
 }
 function fecharModalRapido() {
   document.getElementById("modal-rapido").classList.remove("active");
@@ -647,3 +661,211 @@ document.addEventListener("keydown", (e) => {
     mudarMes(1);
   }
 });
+
+// ════════════════════════════════════════
+// AVISO DE CONEXÃO OFFLINE
+// ════════════════════════════════════════
+(function () {
+  let banner = null;
+
+  function criarBanner() {
+    if (banner) return;
+    banner = document.createElement("div");
+    banner.className = "offline-banner";
+    banner.innerHTML = `<i class="fa-solid fa-wifi-slash"></i> Você está offline. Suas ações serão pausadas até a conexão voltar.`;
+    document.body.appendChild(banner);
+  }
+
+  function mostrarOffline() {
+    criarBanner();
+    requestAnimationFrame(() => banner.classList.add("visivel"));
+    // Desabilita botões de salvar
+    document
+      .querySelectorAll(".btn[onclick*='salvar'], .btn[onclick*='Salvar']")
+      .forEach((b) => {
+        b.dataset.offlineDisabled = "1";
+        b.disabled = true;
+      });
+  }
+
+  function mostrarOnline() {
+    if (banner) {
+      banner.innerHTML = `<i class="fa-solid fa-wifi"></i> Conexão restaurada!`;
+      banner.style.background = "#10b981";
+      setTimeout(() => {
+        banner.classList.remove("visivel");
+        setTimeout(() => {
+          banner?.remove();
+          banner = null;
+        }, 400);
+      }, 2000);
+    }
+    // Reabilita botões
+    document.querySelectorAll("[data-offline-disabled]").forEach((b) => {
+      b.disabled = false;
+      delete b.dataset.offlineDisabled;
+    });
+  }
+
+  window.addEventListener("offline", mostrarOffline);
+  window.addEventListener("online", mostrarOnline);
+  if (!navigator.onLine) mostrarOffline();
+})();
+
+// ════════════════════════════════════════
+// QUICK-AMOUNTS — chips de valor rápido
+// ════════════════════════════════════════
+function renderQuickAmounts(inputId, valores = [10, 50, 100, 200]) {
+  const input = document.getElementById(inputId);
+  if (!input || document.getElementById(`qa-${inputId}`)) return;
+
+  const wrap = document.createElement("div");
+  wrap.id = `qa-${inputId}`;
+  wrap.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;margin-top:6px";
+
+  valores.forEach((v) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.textContent = formatarMoedaRaw(v);
+    chip.style.cssText = `
+      background: var(--bg-tertiary);
+      border: 0.5px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    `;
+    chip.onmouseenter = () => {
+      chip.style.borderColor = "var(--green)";
+      chip.style.color = "var(--green)";
+    };
+    chip.onmouseleave = () => {
+      chip.style.borderColor = "var(--border)";
+      chip.style.color = "var(--text-secondary)";
+    };
+    chip.onclick = () => {
+      // Aplica o valor no input com máscara
+      input.value = v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      input.dataset.valor = v;
+      input.dispatchEvent(new Event("input")); // atualiza cor dinâmica
+      input.focus();
+    };
+    wrap.appendChild(chip);
+  });
+
+  input.parentNode.appendChild(wrap);
+}
+
+// ════════════════════════════════════════
+// CATEGORIA INTELIGENTE
+// Sugere categoria baseada no histórico
+// ════════════════════════════════════════
+let _mapaCategoria = null; // cache em memória
+
+async function construirMapaCategoria() {
+  if (_mapaCategoria) return _mapaCategoria;
+  try {
+    const res = await fetchAPI("/api/transacoes?limit=200");
+    const data = Array.isArray(res) ? res : res?.data || [];
+    const mapa = {}; // { "uber": { catId: 3, count: 5 }, ... }
+    data.forEach((t) => {
+      if (!t.categoria_id || !t.descricao) return;
+      const chave = t.descricao.toLowerCase().trim().split(" ")[0]; // primeira palavra
+      if (!mapa[chave]) mapa[chave] = {};
+      mapa[chave][t.categoria_id] = (mapa[chave][t.categoria_id] || 0) + 1;
+    });
+    _mapaCategoria = mapa;
+    return mapa;
+  } catch {
+    return {};
+  }
+}
+
+function sugerirCategoria(descricao, selectId) {
+  if (!_mapaCategoria || !descricao) return;
+  const chave = descricao.toLowerCase().trim().split(" ")[0];
+  if (!_mapaCategoria[chave]) return;
+
+  // Pega a categoria mais frequente para essa palavra
+  const contagens = _mapaCategoria[chave];
+  const melhorId = Object.entries(contagens).sort(
+    (a, b) => b[1] - a[1],
+  )[0]?.[0];
+  if (!melhorId) return;
+
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+
+  // Só sugere se a opção existir e o usuário não tiver selecionado nada diferente
+  const opcao = [...sel.options].find(
+    (o) => String(o.value) === String(melhorId),
+  );
+  if (opcao) {
+    sel.value = melhorId;
+    // Feedback visual sutil
+    sel.style.borderColor = "var(--green)";
+    sel.style.transition = "border-color 0.3s";
+    setTimeout(() => (sel.style.borderColor = ""), 1500);
+  }
+}
+
+// ════════════════════════════════════════
+// PULL-TO-DISMISS em modais bottom-sheet
+// ════════════════════════════════════════
+function ativarPullToDismiss(modalId, fecharFn) {
+  const modal = document.querySelector(
+    `#${modalId} .modal, #${modalId} .modal-rapido-inner`,
+  );
+  if (!modal) return;
+
+  let startY = 0,
+    currentY = 0,
+    isDragging = false;
+  const LIMIAR = 120; // pixels para fechar
+
+  modal.addEventListener(
+    "touchstart",
+    (e) => {
+      // Só ativa se o toque for no topo do modal (header)
+      const rect = modal.getBoundingClientRect();
+      const toqueY = e.touches[0].clientY;
+      if (toqueY - rect.top > 60) return; // ignora se tocar longe do topo
+      startY = e.touches[0].clientY;
+      isDragging = true;
+      modal.style.transition = "none";
+    },
+    { passive: true },
+  );
+
+  modal.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!isDragging) return;
+      currentY = e.touches[0].clientY;
+      const delta = Math.max(0, currentY - startY); // só para baixo
+      modal.style.transform = `translateY(${delta}px)`;
+      modal.style.opacity = `${Math.max(0.5, 1 - delta / (LIMIAR * 2))}`;
+    },
+    { passive: true },
+  );
+
+  modal.addEventListener("touchend", () => {
+    if (!isDragging) return;
+    isDragging = false;
+    const delta = currentY - startY;
+    modal.style.transition = "transform 0.25s ease, opacity 0.25s ease";
+
+    if (delta > LIMIAR) {
+      // Fecha com animação
+      modal.style.transform = "translateY(100%)";
+      modal.style.opacity = "0";
+      setTimeout(fecharFn, 220);
+    } else {
+      // Volta para posição original
+      modal.style.transform = "";
+      modal.style.opacity = "";
+    }
+  });
+}

@@ -315,6 +315,7 @@ body {
   border: 0.5px solid var(--border);
   border-radius: 14px;
   padding: 20px;
+  overflow: hidden; /* evita que valores grandes quebrem o card */
 }
 .card-label {
   font-size: 12px;
@@ -322,10 +323,18 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
+  /* Truncate para labels longos */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .card-value {
-  font-size: 24px;
+  /* Tipografia dinâmica — encolhe automaticamente se o valor for grande */
+  font-size: clamp(14px, 3.5vw, 24px);
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .card-value.green {
   color: var(--green);
@@ -335,6 +344,43 @@ body {
 }
 .card-value.blue {
   color: var(--blue);
+}
+
+/* Truncate global para descrições em tabelas e listas */
+.tx-desc-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+
+/* Banner offline */
+.offline-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #f59e0b;
+  color: #fff;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease;
+}
+.offline-banner.visivel {
+  transform: translateY(0);
+}
+@media (max-width: 768px) {
+  .offline-banner {
+    top: 56px;
+  } /* abaixo do header mobile */
 }
 
 .table-wrap {
@@ -394,6 +440,14 @@ tbody td {
   padding: 13px 20px;
   font-size: 14px;
   color: var(--text-primary);
+  max-width: 0; /* necessário para text-overflow funcionar em td */
+}
+/* Coluna de descrição truncada com tooltip nativo */
+tbody td:nth-child(2) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 240px;
 }
 
 .btn {
