@@ -85,7 +85,17 @@ function verificarAuth() {
 }
 
 // ── Helpers ──
+// Formata moeda — retorna span com classe valor-privado para o modo privacidade
 function formatarMoeda(valor) {
+  const formatado = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(valor || 0);
+  return `<span class="valor-privado">${formatado}</span>`;
+}
+
+// Versão sem wrapper — usar quando o valor vai dentro de atributos HTML ou JS puro
+function formatarMoedaRaw(valor) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -154,13 +164,21 @@ function aplicarPrivacidade() {
 function togglePrivacidade() {
   localStorage.setItem(PRIV_KEY, getPrivacidade() ? "0" : "1");
   aplicarPrivacidade();
-  // Atualiza label do card se existir
   const label = document.getElementById("priv-label");
   if (label) label.textContent = getPrivacidade() ? "Ocultos" : "Visíveis";
 }
 
-// Aplica ao carregar a página
-document.addEventListener("DOMContentLoaded", aplicarPrivacidade);
+// Aplica ao carregar + observa mudanças no DOM
+// (cobre valores injetados via fetchAPI após o carregamento inicial)
+document.addEventListener("DOMContentLoaded", () => {
+  aplicarPrivacidade();
+  if (getPrivacidade()) {
+    new MutationObserver(() => aplicarPrivacidade()).observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  }
+});
 
 function formatarData(data) {
   if (!data) return "—";

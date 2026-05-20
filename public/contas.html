@@ -1432,7 +1432,7 @@
           { method: "POST", body: JSON.stringify(body) },
         );
         if (res?.mensagem)
-          toast(`Fatura paga! ${formatarMoeda(res.valor)} debitado.`);
+          toast(`Fatura paga! ${formatarMoedaRaw(res.valor)} debitado.`);
         fecharModalPagar();
         carregarFatura();
         carregarCartoes();
