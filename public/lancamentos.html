@@ -2,6 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
+    <meta name="theme-color" content="#0f1117" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Controlaí — Lançamentos</title>
     <link
@@ -786,13 +787,39 @@
           </div>
         </div>
         <div class="form-group">
-          <label>Descrição</label
-          ><input
-            type="text"
-            id="f-descricao"
-            placeholder="Ex: Aluguel, Salário..."
-            tabindex="2"
-          />
+          <label>Descrição</label>
+          <div style="display: flex; gap: 8px; align-items: center">
+            <input
+              type="text"
+              id="f-descricao"
+              placeholder="Ex: Aluguel, Salário..."
+              tabindex="2"
+              style="flex: 1; min-width: 0"
+            />
+            <button
+              type="button"
+              id="btn-voz"
+              title="Lançar por voz"
+              style="
+                background: var(--bg-tertiary);
+                border: 0.5px solid var(--border);
+                color: var(--text-secondary);
+                border-radius: 10px;
+                padding: 0;
+                width: 48px;
+                height: 48px;
+                font-size: 16px;
+                cursor: pointer;
+                transition: all 0.2s;
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <i class="fa-solid fa-microphone"></i>
+            </button>
+          </div>
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
           <div class="form-group">
@@ -1711,7 +1738,6 @@
           renderQuickAmounts("f-valor", [10, 20, 50, 100, 200]);
           ativarInputCalculator("f-valor");
           ativarDynamicFontSize("f-valor");
-          // Auto-tabbing: categoria → conta → salvar
           ativarAutoTabbing("f-categoria", "f-conta");
           ativarAutoTabbing("f-conta", "f-data");
           renderSmartDescricoes(
@@ -1721,6 +1747,10 @@
           );
           ativarAutoScrollFoco("#modal-lancamento .modal");
           ativarPullToDismiss("modal-lancamento", fecharModalLancamento);
+          // Voz — preenche descrição e valor falando
+          ativarVoz("btn-voz", "f-descricao", "f-valor");
+          // Auto-save draft
+          ativarAutoSaveDraft();
           construirMapaCategoria();
         }, 100);
 
@@ -1734,6 +1764,7 @@
       function fecharModalLancamento() {
         document.getElementById("modal-lancamento").classList.remove("active");
         document.getElementById("aviso-duplicado")?.remove();
+        limparRascunho();
       }
 
       async function editarLancamento(id) {
@@ -1841,6 +1872,17 @@
             toastVariado("atualizado");
             fecharModalLancamento();
           } else {
+            // Se offline, adiciona à fila
+            if (!navigator.onLine) {
+              adicionarFilaOffline(
+                "/api/transacoes",
+                { method: "POST", body: JSON.stringify(body) },
+                body.descricao,
+              );
+              limparRascunho();
+              fecharModalLancamento();
+              return;
+            }
             await fetchAPI("/api/transacoes", {
               method: "POST",
               body: JSON.stringify(body),
@@ -1852,6 +1894,7 @@
               ts: Date.now(),
             };
             haptic(10);
+            limparRascunho();
             if (fecharApos) {
               toastVariado("salvo");
               fecharModalLancamento();
