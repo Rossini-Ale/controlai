@@ -1664,8 +1664,16 @@
           inputValor.focus();
           // Quick-amounts
           renderQuickAmounts("f-valor", [10, 20, 50, 100, 200]);
-          // Input calculator — detecta expressões matemáticas
+          // Input calculator
           ativarInputCalculator("f-valor");
+          // Smart autocomplete de descrições frequentes
+          renderSmartDescricoes(
+            "f-descricao",
+            "f-categoria",
+            "smart-desc-chips",
+          );
+          // Auto-scroll de foco (mobile)
+          ativarAutoScrollFoco("#modal-lancamento .modal");
           // Pull-to-dismiss (mobile)
           ativarPullToDismiss("modal-lancamento", fecharModalLancamento);
           // Pré-carrega mapa para categoria inteligente

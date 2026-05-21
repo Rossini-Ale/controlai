@@ -858,8 +858,175 @@ function abrirLongPressMenu(acoes, event) {
 }
 
 // ════════════════════════════════════════
-// AVISO DE CONEXÃO OFFLINE
+// AUTO-SCROLL DE FOCO EM FORMULÁRIOS
+// Centraliza o campo ativo na tela no mobile
 // ════════════════════════════════════════
+function ativarAutoScrollFoco(formSelector) {
+  const form = document.querySelector(formSelector);
+  if (!form || window.innerWidth > 768) return;
+
+  form.querySelectorAll("input, select, textarea").forEach((el) => {
+    el.addEventListener("focus", () => {
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 320); // aguarda o teclado abrir (~300ms)
+    });
+  });
+}
+
+// ════════════════════════════════════════
+// SMART AUTOCOMPLETE DE DESCRIÇÕES
+// Mostra chips com as descrições mais usadas
+// ════════════════════════════════════════
+async function renderSmartDescricoes(inputDescId, inputCatId, containerId) {
+  if (!_mapaCategoria) await construirMapaCategoria();
+
+  // Remove chips anteriores
+  document.getElementById(containerId)?.remove();
+  const inputDesc = document.getElementById(inputDescId);
+  if (!inputDesc) return;
+
+  // Constrói mapa de frequência de descrições
+  const freqDesc = {};
+  const catPorDesc = {};
+  try {
+    const res = await fetchAPI("/api/transacoes?limit=200");
+    const data = Array.isArray(res) ? res : res?.data || [];
+    data.forEach((t) => {
+      if (!t.descricao) return;
+      const key = t.descricao.trim();
+      freqDesc[key] = (freqDesc[key] || 0) + 1;
+      catPorDesc[key] = t.categoria_id; // última categoria usada
+    });
+  } catch {
+    return;
+  }
+
+  // Top 5 mais frequentes
+  const tops = Object.entries(freqDesc)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([desc]) => desc);
+
+  if (tops.length === 0) return;
+
+  const wrap = document.createElement("div");
+  wrap.id = containerId;
+  wrap.style.cssText = `
+    display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;
+    margin-bottom:10px;padding-bottom:2px;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  `;
+  wrap.style.setProperty("scrollbar-width", "none");
+
+  tops.forEach((desc) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.style.cssText = `
+      background:var(--bg-tertiary);border:0.5px solid var(--border);
+      color:var(--text-secondary);border-radius:20px;
+      padding:5px 12px;font-size:12px;cursor:pointer;
+      white-space:nowrap;transition:all 0.15s;flex-shrink:0;
+    `;
+    chip.textContent = desc;
+    chip.onmouseenter = () => {
+      chip.style.borderColor = "var(--green)";
+      chip.style.color = "var(--green)";
+    };
+    chip.onmouseleave = () => {
+      chip.style.borderColor = "var(--border)";
+      chip.style.color = "var(--text-secondary)";
+    };
+    chip.onclick = () => {
+      inputDesc.value = desc;
+      // Preenche categoria automaticamente
+      if (catPorDesc[desc] && inputCatId) {
+        const sel = document.getElementById(inputCatId);
+        if (sel) {
+          sel.value = catPorDesc[desc];
+          // Feedback visual
+          sel.style.borderColor = "var(--green)";
+          setTimeout(() => (sel.style.borderColor = ""), 1200);
+        }
+      }
+      wrap.remove();
+      // Foca no próximo campo
+      document.getElementById("f-valor")?.focus?.();
+    };
+    wrap.appendChild(chip);
+  });
+
+  // Insere antes do input de descrição
+  inputDesc.parentNode.insertBefore(wrap, inputDesc);
+}
+
+// ════════════════════════════════════════
+// CONFETE DE META BATIDA 🎉
+// ════════════════════════════════════════
+function dispararConfete() {
+  const CORES = [
+    "#10b981",
+    "#3b82f6",
+    "#f59e0b",
+    "#ef4444",
+    "#8b5cf6",
+    "#ec4899",
+    "#06b6d4",
+  ];
+  const TOTAL = 80;
+  const container = document.createElement("div");
+  container.style.cssText = `
+    position:fixed;inset:0;pointer-events:none;z-index:9998;overflow:hidden;
+  `;
+  document.body.appendChild(container);
+
+  for (let i = 0; i < TOTAL; i++) {
+    const el = document.createElement("div");
+    const cor = CORES[Math.floor(Math.random() * CORES.length)];
+    const x = Math.random() * 100; // posição horizontal %
+    const rot = Math.random() * 720 - 360; // rotação final
+    const dur = 1200 + Math.random() * 800; // duração ms
+    const tam = 6 + Math.random() * 8; // tamanho px
+    const del = Math.random() * 400; // delay ms
+
+    el.style.cssText = `
+      position:absolute;
+      left:${x}%;top:-10px;
+      width:${tam}px;height:${tam * (Math.random() > 0.5 ? 1 : 2.5)}px;
+      background:${cor};
+      border-radius:${Math.random() > 0.5 ? "50%" : "2px"};
+      opacity:1;
+      animation:confete-cair ${dur}ms ease-in ${del}ms forwards;
+    `;
+    container.appendChild(el);
+  }
+
+  // Injeta keyframes uma vez
+  if (!document.getElementById("confete-style")) {
+    const s = document.createElement("style");
+    s.id = "confete-style";
+    s.textContent = `
+      @keyframes confete-cair {
+        0%   { transform: translateY(0)     rotate(0deg);    opacity:1; }
+        80%  { opacity:1; }
+        100% { transform: translateY(110vh) rotate(var(--rot,360deg)); opacity:0; }
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  // Aplica rotação via CSS custom property
+  container.querySelectorAll("div").forEach((el) => {
+    const rot = Math.random() * 720 - 360;
+    el.style.setProperty("--rot", `${rot}deg`);
+  });
+
+  // Remove após animação
+  setTimeout(() => container.remove(), 2500);
+
+  // Háptico de celebração
+  if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+}
 (function () {
   let banner = null;
 

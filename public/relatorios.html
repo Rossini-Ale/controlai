@@ -1334,13 +1334,28 @@
         document.getElementById("modal-progresso").classList.remove("active");
       }
       async function salvarProgresso() {
+        const valorAtual = lerValorMoeda(document.getElementById("p-atual"));
         await fetchAPI(`/api/metas/${progressoId}/progresso`, {
           method: "PATCH",
-          body: JSON.stringify({
-            valor_atual: lerValorMoeda(document.getElementById("p-atual")),
-          }),
+          body: JSON.stringify({ valor_atual: valorAtual }),
         });
-        toast("Progresso atualizado!");
+        // Verifica se bateu 100% — dispara confete
+        const metas = await fetchAPI("/api/metas");
+        const meta = (metas || []).find((m) => m.id === progressoId);
+        if (meta) {
+          const pct =
+            parseFloat(meta.valor_alvo) > 0
+              ? (valorAtual / parseFloat(meta.valor_alvo)) * 100
+              : 0;
+          if (pct >= 100) {
+            toast("🎉 Meta atingida! Parabéns!");
+            dispararConfete();
+          } else {
+            toast("Progresso atualizado!");
+          }
+        } else {
+          toast("Progresso atualizado!");
+        }
         fecharModalProgresso();
         carregarMetas();
       }

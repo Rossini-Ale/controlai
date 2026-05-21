@@ -360,23 +360,25 @@ body {
   overflow: hidden; /* evita que valores grandes quebrem o card */
 }
 .card-label {
-  font-size: 12px;
+  font-size: 11px;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-  /* Truncate para labels longos */
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  opacity: 0.75;
 }
 .card-value {
-  /* Tipografia dinâmica — encolhe automaticamente se o valor for grande */
-  font-size: clamp(14px, 3.5vw, 24px);
-  font-weight: 700;
+  font-size: clamp(16px, 3.5vw, 26px);
+  font-weight: 800;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
 }
 .card-value.green {
   color: var(--green);
@@ -560,22 +562,27 @@ tbody td:nth-child(2) {
   z-index: 100;
   align-items: center;
   justify-content: center;
-  transition: background 0.25s ease;
+  transition:
+    background 0.25s ease,
+    backdrop-filter 0.25s ease;
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
 }
 .modal-overlay.active {
   display: flex;
-  background: rgba(0, 0, 0, 0.6);
-}
-/* Força o reflow para a transição funcionar ao ativar */
-.modal-overlay.active {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   animation: backdropIn 0.25s ease forwards;
 }
 @keyframes backdropIn {
   from {
     background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
   }
   to {
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(8px);
   }
 }
 
