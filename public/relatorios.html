@@ -1417,7 +1417,15 @@
                   : pct >= 80
                     ? "#f59e0b"
                     : "var(--green)";
-            return `<div class="orc-cat-card"><div class="orc-cat-header"><div class="orc-cat-nome"><span style="width:10px;height:10px;border-radius:50%;background:${cat.cor || "#6b7280"};display:inline-block"></span><i class="fa-solid ${cat.icone || "fa-tag"}" style="color:${cat.cor || "#6b7280"};font-size:12px"></i>${cat.nome}</div><div style="display:flex;gap:6px"><button class="btn-def-limite" onclick="abrirModalOrc(${cat.id},'${cat.nome}',${limite || 0})"><i class="fa-solid fa-pen"></i> ${orc ? "Editar" : "Definir"}</button>${orc ? `<button class="btn-rem-limite" onclick="removerOrc(${orc.id})"><i class="fa-solid fa-trash"></i></button>` : ""}</div></div>${orc ? `<div class="orc-cat-bar"><div class="orc-cat-fill" style="width:${pct}%;background:${cor}"></div></div><div class="orc-cat-footer"><span>Gasto: <strong style="color:var(--text-primary)">${formatarMoeda(gasto)}</strong></span><span>Limite: <strong style="color:var(--text-primary)">${formatarMoeda(limite)}</strong></span><span style="color:${cor}"><strong>${pct.toFixed(0)}%</strong></span></div>` : `<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Sem limite definido</div>`}</div>`;
+            const statusClass =
+              pct >= 100
+                ? "orc-status-ultrapassado"
+                : pct >= 80
+                  ? "orc-status-atencao"
+                  : orc
+                    ? "orc-status-ok"
+                    : "";
+            return `<div class="orc-cat-card ${statusClass}"><div class="orc-cat-header"><div class="orc-cat-nome"><span style="width:10px;height:10px;border-radius:50%;background:${cat.cor || "#6b7280"};display:inline-block"></span><i class="fa-solid ${cat.icone || "fa-tag"}" style="color:${cat.cor || "#6b7280"};font-size:12px"></i>${cat.nome}</div><div style="display:flex;gap:6px"><button class="btn-def-limite" onclick="abrirModalOrc(${cat.id},'${cat.nome}',${limite || 0})"><i class="fa-solid fa-pen"></i> ${orc ? "Editar" : "Definir"}</button>${orc ? `<button class="btn-rem-limite" onclick="removerOrc(${orc.id})"><i class="fa-solid fa-trash"></i></button>` : ""}</div></div>${orc ? `<div class="orc-cat-bar"><div class="orc-cat-fill" style="width:${pct}%;background:${cor}"></div></div><div class="orc-cat-footer"><span>Gasto: <strong style="color:var(--text-primary)">${formatarMoeda(gasto)}</strong></span><span>Limite: <strong style="color:var(--text-primary)">${formatarMoeda(limite)}</strong></span><span style="color:${cor}"><strong>${pct.toFixed(0)}%</strong></span></div>` : `<div style="font-size:12px;color:var(--text-muted);margin-top:4px">Sem limite definido</div>`}</div>`;
           })
           .join("");
       }

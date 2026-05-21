@@ -1213,3 +1213,48 @@ tbody td:nth-child(2) {
     display: none !important;
   }
 }
+
+/* ── Highlight de busca ── */
+mark {
+  background: rgba(245, 158, 11, 0.25);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+  font-weight: 600;
+}
+:root.tema-claro mark {
+  background: rgba(245, 158, 11, 0.4);
+}
+
+/* ── Sombra de status nos cards de orçamento ── */
+.orc-status-ok {
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.15),
+    0 2px 12px rgba(16, 185, 129, 0.06);
+  transition: box-shadow 0.4s ease;
+}
+.orc-status-atencao {
+  box-shadow:
+    0 0 0 1.5px rgba(245, 158, 11, 0.25),
+    0 2px 12px rgba(245, 158, 11, 0.1);
+  transition: box-shadow 0.4s ease;
+}
+.orc-status-ultrapassado {
+  box-shadow:
+    0 0 0 1.5px rgba(239, 68, 68, 0.35),
+    0 2px 16px rgba(239, 68, 68, 0.12);
+  animation: pulseBorder 2s ease-in-out infinite;
+}
+@keyframes pulseBorder {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1.5px rgba(239, 68, 68, 0.3),
+      0 2px 16px rgba(239, 68, 68, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(239, 68, 68, 0.5),
+      0 4px 20px rgba(239, 68, 68, 0.2);
+  }
+}

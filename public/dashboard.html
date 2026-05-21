@@ -245,6 +245,18 @@
         </button>
       </div>
 
+      <!-- Saudação dinâmica -->
+      <div id="saudacao-wrap" style="margin-bottom: 16px">
+        <h2
+          id="saudacao-texto"
+          style="font-size: 18px; font-weight: 700; color: var(--text-primary)"
+        ></h2>
+        <p
+          style="font-size: 13px; color: var(--text-muted); margin-top: 2px"
+          id="saudacao-sub"
+        ></p>
+      </div>
+
       <!-- Busca -->
       <div class="busca-wrap">
         <i class="fa-solid fa-magnifying-glass busca-icon"></i>
@@ -627,10 +639,13 @@
                       ? "var(--green)"
                       : "var(--red)";
                   const sinal = isT ? "" : t.tipo === "receita" ? "+" : "-";
+                  // Highlight no texto
+                  const descHighlight = highlightTermo(t.descricao, termo);
+                  const catHighlight = highlightTermo(t.categoria_nome, termo);
                   return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:0.5px solid var(--border)">
                   <div>
-                    <div style="font-size:14px;font-weight:600;margin-bottom:2px">${t.descricao}</div>
-                    <div style="font-size:11px;color:var(--text-muted)">${formatarData(t.data)} · ${t.categoria_nome || "—"}</div>
+                    <div style="font-size:14px;font-weight:600;margin-bottom:2px">${descHighlight}</div>
+                    <div style="font-size:11px;color:var(--text-muted)">${formatarData(t.data)} · ${catHighlight || "—"}</div>
                   </div>
                   <div style="font-size:14px;font-weight:700;color:${cor}">${sinal}${formatarMoeda(t.valor)}</div>
                 </div>`;
@@ -821,6 +836,22 @@
       atualizarLabel();
       carregarDados();
       carregarChecklist();
+
+      // Saudação dinâmica
+      (function () {
+        const nome = getNome().split(" ")[0];
+        document.getElementById("saudacao-texto").textContent =
+          `${saudacao()}, ${nome}!`;
+        const hoje = new Date();
+        const diasNoMes = new Date(
+          hoje.getFullYear(),
+          hoje.getMonth() + 1,
+          0,
+        ).getDate();
+        const diasRestantes = diasNoMes - hoje.getDate();
+        document.getElementById("saudacao-sub").textContent =
+          `${hoje.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })} · ${diasRestantes} dias restantes no mês`;
+      })();
     </script>
   </body>
 </html>

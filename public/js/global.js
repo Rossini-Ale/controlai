@@ -1027,6 +1027,97 @@ function dispararConfete() {
   // Háptico de celebração
   if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
 }
+
+// ════════════════════════════════════════
+// DYNAMIC FONT SIZE no input de valor
+// ════════════════════════════════════════
+function ativarDynamicFontSize(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const BASE = 22,
+    MIN = 13;
+  function ajustar() {
+    const len = input.value.length;
+    const size =
+      len <= 8
+        ? BASE
+        : len <= 14
+          ? BASE - (len - 8) * 1.2
+          : Math.max(MIN, BASE - (len - 8) * 1.2);
+    input.style.fontSize = `${Math.round(size)}px`;
+  }
+  input.addEventListener("input", ajustar);
+  ajustar();
+}
+
+// ════════════════════════════════════════
+// AUTO-TABBING — avança foco após seleção
+// ════════════════════════════════════════
+function ativarAutoTabbing(selectId, proximoId, delay = 150) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.addEventListener("change", () => {
+    setTimeout(() => {
+      const proximo = document.getElementById(proximoId);
+      if (proximo) proximo.focus();
+    }, delay);
+  });
+}
+
+// ════════════════════════════════════════
+// NOTIFICAÇÕES LOCAIS (Web Notifications)
+// ════════════════════════════════════════
+async function pedirPermissaoNotificacao() {
+  if (!("Notification" in window)) return false;
+  if (Notification.permission === "granted") return true;
+  if (Notification.permission === "denied") return false;
+  const perm = await Notification.requestPermission();
+  return perm === "granted";
+}
+
+function notificarVencimentos(lista) {
+  if (!("Notification" in window) || Notification.permission !== "granted")
+    return;
+  if (!lista || lista.length === 0) return;
+  const hoje = new Date().toISOString().split("T")[0];
+  const hojeList = lista.filter(
+    (r) => r.proxima_geracao?.split("T")[0] === hoje,
+  );
+  if (hojeList.length === 0) return;
+  const nomes = hojeList.map((r) => r.descricao).join(", ");
+  new Notification("Controlaí — Vencimento hoje!", {
+    body:
+      hojeList.length === 1
+        ? `"${nomes}" vence hoje. Não se esqueça!`
+        : `${hojeList.length} contas vencem hoje: ${nomes}`,
+    tag: "controlai-vencimento",
+  });
+}
+
+async function verificarENotificar() {
+  const ok = await pedirPermissaoNotificacao();
+  if (!ok) return;
+  try {
+    const data = await fetchAPI("/api/recorrentes/vencendo?dias=0");
+    notificarVencimentos(Array.isArray(data) ? data : []);
+  } catch {
+    /* silencioso */
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(verificarENotificar, 3000);
+});
+
+// ════════════════════════════════════════
+// HIGHLIGHT DE BUSCA
+// ════════════════════════════════════════
+function highlightTermo(texto, termo) {
+  if (!termo || !texto) return texto || "";
+  const escaped = termo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return texto.replace(new RegExp(`(${escaped})`, "gi"), "<mark>$1</mark>");
+}
+
 (function () {
   let banner = null;
 
