@@ -3,11 +3,11 @@ const router = express.Router();
 const db = require("../config/db");
 const auth = require("../middleware/auth");
 
-// Listar categorias
+// Listar categorias (exclui deletadas)
 router.get("/", auth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT * FROM Categorias WHERE usuario_id = ?",
+      "SELECT * FROM Categorias WHERE usuario_id = ? AND deleted_at IS NULL",
       [req.usuarioId],
     );
     res.json(rows);
@@ -37,7 +37,7 @@ router.put("/:id", auth, async (req, res) => {
   const { nome, tipo, icone, cor } = req.body;
   try {
     await db.query(
-      "UPDATE Categorias SET nome=?, tipo=?, icone=?, cor=? WHERE id=? AND usuario_id=?",
+      "UPDATE Categorias SET nome=?, tipo=?, icone=?, cor=? WHERE id=? AND usuario_id=? AND deleted_at IS NULL",
       [nome, tipo, icone, cor, req.params.id, req.usuarioId],
     );
     res.json({ mensagem: "Categoria atualizada!" });
@@ -46,29 +46,64 @@ router.put("/:id", auth, async (req, res) => {
   }
 });
 
-// Deletar categoria
-// Deletar categoria
+// Soft delete categoria
 router.delete("/:id", auth, async (req, res) => {
   try {
-    // Verifica se tem transações vinculadas
+    // Verifica transações vinculadas ativas
     const [transacoes] = await db.query(
-      "SELECT COUNT(*) as total FROM Transacoes WHERE categoria_id = ?",
+      "SELECT COUNT(*) as total FROM Transacoes WHERE categoria_id = ? AND deleted_at IS NULL",
       [req.params.id],
     );
-
     if (transacoes[0].total > 0) {
       return res.status(400).json({
         erro: `Esta categoria possui ${transacoes[0].total} transação(ões) vinculada(s) e não pode ser excluída.`,
       });
     }
-
-    await db.query("DELETE FROM Categorias WHERE id=? AND usuario_id=?", [
-      req.params.id,
-      req.usuarioId,
-    ]);
-    res.json({ mensagem: "Categoria deletada!" });
+    await db.query(
+      "UPDATE Categorias SET deleted_at = NOW() WHERE id=? AND usuario_id=? AND deleted_at IS NULL",
+      [req.params.id, req.usuarioId],
+    );
+    res.json({ mensagem: "Categoria movida para a lixeira." });
   } catch (err) {
     res.status(500).json({ erro: "Erro ao deletar categoria." });
   }
 });
+
+// ── Lixeira de categorias ──
+router.get("/lixeira", auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM Categorias WHERE usuario_id=? AND deleted_at IS NOT NULL ORDER BY deleted_at DESC",
+      [req.usuarioId],
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao buscar lixeira." });
+  }
+});
+
+router.patch("/:id/restaurar", auth, async (req, res) => {
+  try {
+    await db.query(
+      "UPDATE Categorias SET deleted_at = NULL WHERE id=? AND usuario_id=?",
+      [req.params.id, req.usuarioId],
+    );
+    res.json({ mensagem: "Categoria restaurada!" });
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao restaurar categoria." });
+  }
+});
+
+router.delete("/:id/permanente", auth, async (req, res) => {
+  try {
+    await db.query(
+      "DELETE FROM Categorias WHERE id=? AND usuario_id=? AND deleted_at IS NOT NULL",
+      [req.params.id, req.usuarioId],
+    );
+    res.json({ mensagem: "Categoria deletada permanentemente." });
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao deletar permanentemente." });
+  }
+});
+
 module.exports = router;

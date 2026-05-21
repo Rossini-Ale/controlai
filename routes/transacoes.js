@@ -2,17 +2,16 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 const auth = require("../middleware/auth");
+
+// ── Listar transações (exclui deletadas) ──
 router.get("/", auth, async (req, res) => {
   const { mes, ano, tipo, categoria_id, conta_id, page, limit } = req.query;
-
-  // Paginação — padrão 30 por página, máximo 100
   const paginaAtual = Math.max(1, parseInt(page) || 1);
   const porPagina = Math.min(100, parseInt(limit) || 30);
   const offset = (paginaAtual - 1) * porPagina;
 
   try {
-    // Base da query
-    let where = "WHERE t.usuario_id = ?";
+    let where = "WHERE t.usuario_id = ? AND t.deleted_at IS NULL";
     const params = [req.usuarioId];
 
     if (mes && ano) {
@@ -32,15 +31,11 @@ router.get("/", auth, async (req, res) => {
       params.push(conta_id);
     }
 
-    // Total de registros (para calcular páginas)
     const [[{ total }]] = await db.query(
-      `SELECT COUNT(*) AS total
-       FROM Transacoes t
-       ${where}`,
+      `SELECT COUNT(*) AS total FROM Transacoes t ${where}`,
       params,
     );
 
-    // Registros da página atual
     const [rows] = await db.query(
       `SELECT t.*,
               c.nome  AS categoria_nome,
@@ -73,14 +68,13 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
-// Criar transação
+// ── Criar transação ──
 router.post("/", auth, async (req, res) => {
   const { conta_id, categoria_id, tipo, descricao, valor, data, observacao } =
     req.body;
   try {
     const [result] = await db.query(
-      `INSERT INTO Transacoes 
-       (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao) 
+      `INSERT INTO Transacoes (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         req.usuarioId,
@@ -101,15 +95,14 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
-// Editar transação
+// ── Editar transação ──
 router.put("/:id", auth, async (req, res) => {
   const { conta_id, categoria_id, tipo, descricao, valor, data, observacao } =
     req.body;
   try {
     await db.query(
-      `UPDATE Transacoes 
-       SET conta_id=?, categoria_id=?, tipo=?, descricao=?, valor=?, data=?, observacao=?
-       WHERE id=? AND usuario_id=?`,
+      `UPDATE Transacoes SET conta_id=?, categoria_id=?, tipo=?, descricao=?, valor=?, data=?, observacao=?
+       WHERE id=? AND usuario_id=? AND deleted_at IS NULL`,
       [
         conta_id,
         categoria_id,
@@ -128,36 +121,33 @@ router.put("/:id", auth, async (req, res) => {
   }
 });
 
-// Deletar transação
+// ── Soft delete — manda para lixeira ──
 router.delete("/:id", auth, async (req, res) => {
   try {
-    await db.query("DELETE FROM Transacoes WHERE id=? AND usuario_id=?", [
-      req.params.id,
-      req.usuarioId,
-    ]);
-    res.json({ mensagem: "Transação deletada!" });
+    await db.query(
+      "UPDATE Transacoes SET deleted_at = NOW() WHERE id=? AND usuario_id=? AND deleted_at IS NULL",
+      [req.params.id, req.usuarioId],
+    );
+    res.json({ mensagem: "Transação movida para a lixeira." });
   } catch (err) {
     res.status(500).json({ erro: "Erro ao deletar transação." });
   }
 });
-// Duplicar transação
+
+// ── Duplicar transação ──
 router.post("/:id/duplicar", auth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT * FROM Transacoes WHERE id = ? AND usuario_id = ?",
+      "SELECT * FROM Transacoes WHERE id=? AND usuario_id=? AND deleted_at IS NULL",
       [req.params.id, req.usuarioId],
     );
-    if (rows.length === 0) {
+    if (rows.length === 0)
       return res.status(404).json({ erro: "Transação não encontrada." });
-    }
     const orig = rows[0];
-    // Data padrão: hoje, mas pode ser sobrescrita pelo body
     const data = req.body.data || new Date().toISOString().split("T")[0];
     const valor = req.body.valor || orig.valor;
-
     const [result] = await db.query(
-      `INSERT INTO Transacoes
-         (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao)
+      `INSERT INTO Transacoes (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         req.usuarioId,
@@ -178,4 +168,74 @@ router.post("/:id/duplicar", auth, async (req, res) => {
     res.status(500).json({ erro: "Erro ao duplicar transação." });
   }
 });
+
+// ════════════════════════════════════════
+// LIXEIRA
+// ════════════════════════════════════════
+
+// Listar transações deletadas
+router.get("/lixeira", auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT t.*,
+              c.nome  AS categoria_nome,
+              c.cor   AS categoria_cor,
+              c.icone AS categoria_icone,
+              ct.nome AS conta_nome
+       FROM Transacoes t
+       LEFT JOIN Categorias c  ON t.categoria_id = c.id
+       LEFT JOIN Contas     ct ON t.conta_id     = ct.id
+       WHERE t.usuario_id = ? AND t.deleted_at IS NOT NULL
+       ORDER BY t.deleted_at DESC
+       LIMIT 100`,
+      [req.usuarioId],
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao buscar lixeira." });
+  }
+});
+
+// Restaurar transação da lixeira
+router.patch("/:id/restaurar", auth, async (req, res) => {
+  try {
+    await db.query(
+      "UPDATE Transacoes SET deleted_at = NULL WHERE id=? AND usuario_id=?",
+      [req.params.id, req.usuarioId],
+    );
+    res.json({ mensagem: "Transação restaurada!" });
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao restaurar transação." });
+  }
+});
+
+// Deletar permanentemente da lixeira
+router.delete("/:id/permanente", auth, async (req, res) => {
+  try {
+    await db.query(
+      "DELETE FROM Transacoes WHERE id=? AND usuario_id=? AND deleted_at IS NOT NULL",
+      [req.params.id, req.usuarioId],
+    );
+    res.json({ mensagem: "Transação deletada permanentemente." });
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao deletar permanentemente." });
+  }
+});
+
+// Esvaziar lixeira (deleta tudo permanentemente)
+router.delete("/lixeira/esvaziar", auth, async (req, res) => {
+  try {
+    const [result] = await db.query(
+      "DELETE FROM Transacoes WHERE usuario_id=? AND deleted_at IS NOT NULL",
+      [req.usuarioId],
+    );
+    res.json({
+      mensagem: "Lixeira esvaziada!",
+      deletados: result.affectedRows,
+    });
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao esvaziar lixeira." });
+  }
+});
+
 module.exports = router;
