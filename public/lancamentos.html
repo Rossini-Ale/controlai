@@ -963,44 +963,69 @@
     <script src="/js/ui.js"></script>
     <script>
       verificarAuth();
-      document.getElementById("sidebar").innerHTML = renderSidebar("Lançamentos");
-      document.getElementById("mobileheader").innerHTML = renderMobileHeader("Lançamentos");
+      document.getElementById("sidebar").innerHTML =
+        renderSidebar("Lançamentos");
+      document.getElementById("mobileheader").innerHTML =
+        renderMobileHeader("Lançamentos");
       document.getElementById("tabbar").innerHTML = renderTabBar("Lançamentos");
 
       let abaAtiva = "lancamentos";
-      let editandoLancId = null, editandoRecId = null;
-      let categorias = [], contas = [], todasRec = [], filtroRecAtual = "todos";
+      let editandoLancId = null,
+        editandoRecId = null;
+      let categorias = [],
+        contas = [],
+        todasRec = [],
+        filtroRecAtual = "todos";
       let paginaAtual = 1;
       const POR_PAGINA = 30;
       const { mes, ano } = getMesAno();
-      const FREQ_LABEL = { diaria:"Diária",semanal:"Semanal",quinzenal:"Quinzenal",mensal:"Mensal",bimestral:"Bimestral",trimestral:"Trimestral",semestral:"Semestral",anual:"Anual" };
-      const DIAS_SEMANA = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+      const FREQ_LABEL = {
+        diaria: "Diária",
+        semanal: "Semanal",
+        quinzenal: "Quinzenal",
+        mensal: "Mensal",
+        bimestral: "Bimestral",
+        trimestral: "Trimestral",
+        semestral: "Semestral",
+        anual: "Anual",
+      };
+      const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
       document.getElementById("filtro-mes").value = mes;
       const selAno = document.getElementById("filtro-ano");
-      for (let a = ano; a >= ano - 3; a--) selAno.innerHTML += `<option value="${a}">${a}</option>`;
-      document.getElementById("f-data").value = new Date().toISOString().split("T")[0];
-      document.getElementById("r-inicio").value = new Date().toISOString().split("T")[0];
+      for (let a = ano; a >= ano - 3; a--)
+        selAno.innerHTML += `<option value="${a}">${a}</option>`;
+      document.getElementById("f-data").value = new Date()
+        .toISOString()
+        .split("T")[0];
+      document.getElementById("r-inicio").value = new Date()
+        .toISOString()
+        .split("T")[0];
 
       // ── Persistência de filtros na URL ──
       function lerFiltrosDaURL() {
         const p = new URLSearchParams(window.location.search);
-        if (p.get("mes"))       document.getElementById("filtro-mes").value       = p.get("mes");
-        if (p.get("ano"))       document.getElementById("filtro-ano").value       = p.get("ano");
-        if (p.get("tipo"))      document.getElementById("filtro-tipo").value      = p.get("tipo");
-        if (p.get("categoria")) document.getElementById("filtro-categoria").value = p.get("categoria");
+        if (p.get("mes"))
+          document.getElementById("filtro-mes").value = p.get("mes");
+        if (p.get("ano"))
+          document.getElementById("filtro-ano").value = p.get("ano");
+        if (p.get("tipo"))
+          document.getElementById("filtro-tipo").value = p.get("tipo");
+        if (p.get("categoria"))
+          document.getElementById("filtro-categoria").value =
+            p.get("categoria");
       }
 
       function salvarFiltrosNaURL() {
-        const m    = document.getElementById("filtro-mes").value;
-        const a    = document.getElementById("filtro-ano").value;
+        const m = document.getElementById("filtro-mes").value;
+        const a = document.getElementById("filtro-ano").value;
         const tipo = document.getElementById("filtro-tipo").value;
-        const cat  = document.getElementById("filtro-categoria").value;
-        const p    = new URLSearchParams();
+        const cat = document.getElementById("filtro-categoria").value;
+        const p = new URLSearchParams();
         p.set("mes", m);
         p.set("ano", a);
         if (tipo) p.set("tipo", tipo);
-        if (cat)  p.set("categoria", cat);
+        if (cat) p.set("categoria", cat);
         if (abaAtiva !== "lancamentos") p.set("aba", abaAtiva);
         const novaURL = `${window.location.pathname}?${p.toString()}`;
         history.pushState(null, "", novaURL);
@@ -1015,26 +1040,43 @@
         const data = await fetchAPI("/api/transacoes/lixeira");
         const lista = Array.isArray(data) ? data : [];
         if (lista.length === 0) {
-          wrap.innerHTML = emptyState("fa-trash-can","Lixeira vazia","Transações deletadas aparecem aqui por 30 dias.","","");
+          wrap.innerHTML = emptyState(
+            "fa-trash-can",
+            "Lixeira vazia",
+            "Transações deletadas aparecem aqui por 30 dias.",
+            "",
+            "",
+          );
           return;
         }
-        wrap.innerHTML = lista.map(t => {
-          const isT   = !!t.is_transferencia;
-          const cor   = isT ? "#6366f1" : t.tipo === "receita" ? "var(--green)" : "var(--red)";
-          const sinal = isT ? "" : t.tipo === "receita" ? "+" : "-";
-          const catCor   = t.categoria_cor   || "#6b7280";
-          const catIcone = t.categoria_icone || "fa-tag";
-          const diasRestantes = t.deleted_at
-            ? Math.max(0, 30 - Math.floor((Date.now() - new Date(t.deleted_at)) / 86400000))
-            : 30;
-          return `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;opacity:0.85">
+        wrap.innerHTML = lista
+          .map((t) => {
+            const isT = !!t.is_transferencia;
+            const cor = isT
+              ? "#6366f1"
+              : t.tipo === "receita"
+                ? "var(--green)"
+                : "var(--red)";
+            const sinal = isT ? "" : t.tipo === "receita" ? "+" : "-";
+            const catCor = t.categoria_cor || "#6b7280";
+            const catIcone = t.categoria_icone || "fa-tag";
+            const diasRestantes = t.deleted_at
+              ? Math.max(
+                  0,
+                  30 -
+                    Math.floor(
+                      (Date.now() - new Date(t.deleted_at)) / 86400000,
+                    ),
+                )
+              : 30;
+            return `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;opacity:0.85">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
               <div style="width:38px;height:38px;border-radius:50%;background:${catCor}22;display:flex;align-items:center;justify-content:center;flex-shrink:0">
                 <i class="fa-solid ${catIcone}" style="font-size:14px;color:${catCor}"></i>
               </div>
               <div style="flex:1;min-width:0">
                 <div style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.descricao}</div>
-                <div style="font-size:11px;color:var(--text-muted)">${formatarData(t.data)} · ${t.categoria_nome||"—"}</div>
+                <div style="font-size:11px;color:var(--text-muted)">${formatarData(t.data)} · ${t.categoria_nome || "—"}</div>
               </div>
               <div style="text-align:right;flex-shrink:0">
                 <div style="font-size:14px;font-weight:700;color:${cor}">${sinal}${formatarMoeda(t.valor)}</div>
@@ -1050,28 +1092,37 @@
               </button>
             </div>
           </div>`;
-        }).join("");
+          })
+          .join("");
       }
 
       async function restaurarTransacao(id) {
-        await fetchAPI(`/api/transacoes/${id}/restaurar`, { method:"PATCH" });
+        await fetchAPI(`/api/transacoes/${id}/restaurar`, { method: "PATCH" });
         toast("Transação restaurada!");
         carregarLixeira();
       }
 
       async function deletarPermanente(id) {
-        const ok = await confirmar("Deletar permanentemente? Esta ação não pode ser desfeita.");
+        const ok = await confirmar(
+          "Deletar permanentemente? Esta ação não pode ser desfeita.",
+        );
         if (!ok) return;
-        await fetchAPI(`/api/transacoes/${id}/permanente`, { method:"DELETE" });
+        await fetchAPI(`/api/transacoes/${id}/permanente`, {
+          method: "DELETE",
+        });
         toast("Deletado permanentemente.", "info");
         carregarLixeira();
       }
 
       async function esvaziarLixeira() {
-        const ok = await confirmar("Esvaziar a lixeira? Todos os itens serão deletados permanentemente.");
+        const ok = await confirmar(
+          "Esvaziar a lixeira? Todos os itens serão deletados permanentemente.",
+        );
         if (!ok) return;
-        const res = await fetchAPI("/api/transacoes/lixeira/esvaziar", { method:"DELETE" });
-        toast(`${res?.deletados||0} item(s) deletado(s).`, "info");
+        const res = await fetchAPI("/api/transacoes/lixeira/esvaziar", {
+          method: "DELETE",
+        });
+        toast(`${res?.deletados || 0} item(s) deletado(s).`, "info");
         carregarLixeira();
       }
 
@@ -1079,26 +1130,40 @@
       // SWIPE NOS CARDS MOBILE
       // ══════════════════════════════════════
       function ativarSwipe(container, card, onDelete, onEdit) {
-        let startX = 0, currentX = 0, isDragging = false;
+        let startX = 0,
+          currentX = 0,
+          isDragging = false;
         const LIMIAR = 80;
 
-        card.addEventListener("touchstart", e => {
-          startX = e.touches[0].clientX;
-          isDragging = true;
-          card.classList.add("swiping");
-        }, { passive: true });
+        card.addEventListener(
+          "touchstart",
+          (e) => {
+            startX = e.touches[0].clientX;
+            isDragging = true;
+            card.classList.add("swiping");
+          },
+          { passive: true },
+        );
 
-        card.addEventListener("touchmove", e => {
-          if (!isDragging) return;
-          currentX = e.touches[0].clientX;
-          const delta   = currentX - startX;
-          const clamped = Math.max(-140, Math.min(140, delta));
-          card.style.transform = `translateX(${clamped}px)`;
-          const left  = container.querySelector(".swipe-actions-left");
-          const right = container.querySelector(".swipe-actions-right");
-          if (left)  left.style.opacity  = delta > 20  ? Math.min(1, (delta-20)/60)   : 0;
-          if (right) right.style.opacity = delta < -20 ? Math.min(1, (-delta-20)/60) : 0;
-        }, { passive: true });
+        card.addEventListener(
+          "touchmove",
+          (e) => {
+            if (!isDragging) return;
+            currentX = e.touches[0].clientX;
+            const delta = currentX - startX;
+            const clamped = Math.max(-140, Math.min(140, delta));
+            card.style.transform = `translateX(${clamped}px)`;
+            const left = container.querySelector(".swipe-actions-left");
+            const right = container.querySelector(".swipe-actions-right");
+            if (left)
+              left.style.opacity =
+                delta > 20 ? Math.min(1, (delta - 20) / 60) : 0;
+            if (right)
+              right.style.opacity =
+                delta < -20 ? Math.min(1, (-delta - 20) / 60) : 0;
+          },
+          { passive: true },
+        );
 
         card.addEventListener("touchend", () => {
           if (!isDragging) return;
@@ -1108,37 +1173,50 @@
           card.style.transition = "transform 0.25s ease";
           if (delta > LIMIAR) {
             card.style.transform = "translateX(140px)";
-            setTimeout(() => { card.style.transform = ""; onEdit?.(); }, 200);
+            setTimeout(() => {
+              card.style.transform = "";
+              onEdit?.();
+            }, 200);
           } else if (delta < -LIMIAR) {
             card.style.transform = "translateX(-140px)";
-            card.style.opacity   = "0";
+            card.style.opacity = "0";
             setTimeout(() => {
-              container.style.maxHeight  = container.offsetHeight + "px";
-              container.style.transition = "max-height 0.3s ease, opacity 0.3s ease";
-              container.style.maxHeight  = "0";
-              container.style.opacity    = "0";
+              container.style.maxHeight = container.offsetHeight + "px";
+              container.style.transition =
+                "max-height 0.3s ease, opacity 0.3s ease";
+              container.style.maxHeight = "0";
+              container.style.opacity = "0";
               setTimeout(onDelete, 300);
             }, 200);
           } else {
             card.style.transform = "";
-            container.querySelector(".swipe-actions-left") ?.style && (container.querySelector(".swipe-actions-left").style.opacity  = "");
-            container.querySelector(".swipe-actions-right")?.style && (container.querySelector(".swipe-actions-right").style.opacity = "");
+            container.querySelector(".swipe-actions-left")?.style &&
+              (container.querySelector(".swipe-actions-left").style.opacity =
+                "");
+            container.querySelector(".swipe-actions-right")?.style &&
+              (container.querySelector(".swipe-actions-right").style.opacity =
+                "");
           }
         });
       }
 
       function renderCardMobile(t) {
-        const isT   = !!t.is_transferencia;
-        const cor   = isT ? "#6366f1" : t.tipo === "receita" ? "var(--green)" : "var(--red)";
+        const isT = !!t.is_transferencia;
+        const cor = isT
+          ? "#6366f1"
+          : t.tipo === "receita"
+            ? "var(--green)"
+            : "var(--red)";
         const sinal = isT ? "" : t.tipo === "receita" ? "+" : "-";
         const catIcone = t.categoria_icone || "fa-tag";
-        const catCor   = isT ? "#6366f1" : (t.categoria_cor || "#6b7280");
-        const parcelaLabel = t.parcelas > 1
-          ? `<span style="font-size:10px;background:var(--bg-tertiary);color:var(--text-muted);padding:1px 6px;border-radius:20px;margin-left:4px">${t.parcela_atual}/${t.parcelas}</span>`
-          : "";
+        const catCor = isT ? "#6366f1" : t.categoria_cor || "#6b7280";
+        const parcelaLabel =
+          t.parcelas > 1
+            ? `<span style="font-size:10px;background:var(--bg-tertiary);color:var(--text-muted);padding:1px 6px;border-radius:20px;margin-left:4px">${t.parcela_atual}/${t.parcelas}</span>`
+            : "";
         return `<div style="display:flex;align-items:center;gap:12px">
-          <div style="width:40px;height:40px;border-radius:50%;background:${isT?"rgba(99,102,241,0.15)":catCor+"22"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <i class="fa-solid ${isT?"fa-right-left":catIcone}" style="font-size:15px;color:${catCor}"></i>
+          <div style="width:40px;height:40px;border-radius:50%;background:${isT ? "rgba(99,102,241,0.15)" : catCor + "22"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <i class="fa-solid ${isT ? "fa-right-left" : catIcone}" style="font-size:15px;color:${catCor}"></i>
           </div>
           <div style="flex:1;min-width:0">
             <div style="font-size:14px;font-weight:600;margin-bottom:2px;display:flex;align-items:center;flex-wrap:wrap;gap:4px">
@@ -1146,8 +1224,8 @@
               ${parcelaLabel}
             </div>
             <div style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:5px">
-              ${!isT&&t.categoria_nome?`<span>${t.categoria_nome}</span>`:""}
-              ${t.conta_nome?`${!isT&&t.categoria_nome?"<span>·</span>":""}<span>${t.conta_nome}</span>`:""}
+              ${!isT && t.categoria_nome ? `<span>${t.categoria_nome}</span>` : ""}
+              ${t.conta_nome ? `${!isT && t.categoria_nome ? "<span>·</span>" : ""}<span>${t.conta_nome}</span>` : ""}
             </div>
           </div>
           <div style="text-align:right;flex-shrink:0">
@@ -1159,7 +1237,13 @@
       function renderMobileComSwipe(data) {
         const lista = document.getElementById("lista-mobile");
         if (data.length === 0) {
-          lista.innerHTML = emptyState("fa-right-left","Nenhuma transação","Nenhuma transação encontrada.","Novo lançamento","abrirModalLancamento()");
+          lista.innerHTML = emptyState(
+            "fa-right-left",
+            "Nenhuma transação",
+            "Nenhuma transação encontrada.",
+            "Novo lançamento",
+            "abrirModalLancamento()",
+          );
           return;
         }
         const grupos = agruparPorData(data);
@@ -1167,9 +1251,9 @@
         Object.entries(grupos).forEach(([dia, txs]) => {
           html += `<div class="timeline-header">
             <span class="timeline-label">${labelData(dia)}</span>
-            <span class="timeline-date">${new Date(dia+"T00:00:00").toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}</span>
+            <span class="timeline-date">${new Date(dia + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span>
           </div>`;
-          txs.forEach(t => {
+          txs.forEach((t) => {
             html += `<div id="sw-wrap-${t.id}" class="swipe-container">
               <div class="swipe-actions swipe-actions-right" style="opacity:0">
                 <button class="swipe-action-btn" style="background:var(--red)" onclick="deletarLancamento(${t.id})">
@@ -1187,26 +1271,32 @@
         });
         lista.innerHTML = html;
         // Ativa swipe em cada card
-        data.forEach(t => {
+        data.forEach((t) => {
           if (t.is_transferencia) return;
           const container = document.getElementById(`sw-wrap-${t.id}`);
-          const card      = document.getElementById(`sw-card-${t.id}`);
+          const card = document.getElementById(`sw-card-${t.id}`);
           if (container && card) {
-            ativarSwipe(container, card,
+            ativarSwipe(
+              container,
+              card,
               () => deletarLancamento(t.id),
-              () => editarLancamento(t.id)
+              () => editarLancamento(t.id),
             );
           }
         });
       }
+
+      async function init() {
         [categorias, contas] = await Promise.all([
-          fetchAPI("/api/categorias").then(d => d || []),
-          fetchAPI("/api/contas").then(d => d || []),
+          fetchAPI("/api/categorias").then((d) => d || []),
+          fetchAPI("/api/contas").then((d) => d || []),
         ]);
         filtrarCategorias();
         preencherFiltroCategorias();
         document.getElementById("f-conta").innerHTML = contas.length
-          ? contas.map(c => `<option value="${c.id}">${c.nome}</option>`).join("")
+          ? contas
+              .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+              .join("")
           : `<option value="">Sem contas</option>`;
         ajustarLayout();
 
@@ -1215,31 +1305,45 @@
 
         // Abre aba por URL param
         const abaParam = new URLSearchParams(window.location.search).get("aba");
-        if (abaParam && ["lancamentos","recorrentes","categorias","lixeira"].includes(abaParam)) trocarAba(abaParam);
+        if (
+          abaParam &&
+          ["lancamentos", "recorrentes", "categorias", "lixeira"].includes(
+            abaParam,
+          )
+        )
+          trocarAba(abaParam);
 
         carregarTransacoes();
+      }
 
       // ── Abas ──
       function trocarAba(aba) {
         abaAtiva = aba;
-        document.querySelectorAll(".aba-btn").forEach(b => b.classList.remove("active"));
-        document.querySelectorAll(".aba-conteudo").forEach(c => c.classList.remove("active"));
+        document
+          .querySelectorAll(".aba-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document
+          .querySelectorAll(".aba-conteudo")
+          .forEach((c) => c.classList.remove("active"));
         document.getElementById(`aba-${aba}-btn`).classList.add("active");
         document.getElementById(`aba-${aba}`).classList.add("active");
         const labels = {
-          lancamentos:  ["Lançamentos",    "Novo"],
-          recorrentes:  ["Recorrentes",    "Nova recorrência"],
-          categorias:   ["Categorias",     "Nova categoria"],
-          lixeira:      ["Lixeira",        ""],
+          lancamentos: ["Lançamentos", "Novo"],
+          recorrentes: ["Recorrentes", "Nova recorrência"],
+          categorias: ["Categorias", "Nova categoria"],
+          lixeira: ["Lixeira", ""],
         };
-        document.getElementById("page-title").textContent    = labels[aba][0];
+        document.getElementById("page-title").textContent = labels[aba][0];
         document.getElementById("btn-novo-label").textContent = labels[aba][1];
         // Esconde botão Novo na lixeira
-        const btnNovo = document.getElementById("btn-novo-label")?.closest(".btn");
+        const btnNovo = document
+          .getElementById("btn-novo-label")
+          ?.closest(".btn");
         if (btnNovo) btnNovo.style.display = aba === "lixeira" ? "none" : "";
-        if (aba === "recorrentes" && todasRec.length === 0) carregarRecorrentes();
+        if (aba === "recorrentes" && todasRec.length === 0)
+          carregarRecorrentes();
         if (aba === "categorias") carregarCategorias();
-        if (aba === "lixeira")    carregarLixeira();
+        if (aba === "lixeira") carregarLixeira();
       }
 
       function abrirModalAtivo() {
@@ -1248,22 +1352,27 @@
         else abrirModalCategoria();
       }
 
-      function isMobile() { return window.innerWidth <= 768; }
+      function isMobile() {
+        return window.innerWidth <= 768;
+      }
 
       // ══════════════════════════════════════
       // LANÇAMENTOS
       // ══════════════════════════════════════
       async function carregarTransacoes(resetPagina = true) {
         if (resetPagina) paginaAtual = 1;
-        const m     = document.getElementById("filtro-mes").value;
-        const a     = document.getElementById("filtro-ano").value;
-        const tipo  = document.getElementById("filtro-tipo").value;
+        const m = document.getElementById("filtro-mes").value;
+        const a = document.getElementById("filtro-ano").value;
+        const tipo = document.getElementById("filtro-tipo").value;
         const catId = document.getElementById("filtro-categoria").value;
 
         // Persiste filtros na URL
         salvarFiltrosNaURL();
-        if (isMobile()) document.getElementById("lista-mobile").innerHTML = skeletonLista(3);
-        else document.getElementById("tabela-transacoes-desktop").innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px">${skeletonLista(1)}</td></tr>`;
+        if (isMobile())
+          document.getElementById("lista-mobile").innerHTML = skeletonLista(3);
+        else
+          document.getElementById("tabela-transacoes-desktop").innerHTML =
+            `<tr><td colspan="7" style="text-align:center;padding:24px">${skeletonLista(1)}</td></tr>`;
         let url = `/api/transacoes?mes=${m}&ano=${a}&page=${paginaAtual}&limit=${POR_PAGINA}`;
         if (tipo === "receita" || tipo === "despesa") url += `&tipo=${tipo}`;
         if (catId) url += `&categoria_id=${catId}`;
@@ -1271,37 +1380,53 @@
         if (!res) return;
         let data = Array.isArray(res) ? res : res.data || [];
         const paginacao = res.paginacao || null;
-        if (tipo === "transferencia") data = data.filter(t => t.is_transferencia);
-        else if (tipo === "receita" || tipo === "despesa") data = data.filter(t => !t.is_transferencia);
-        if (catId && Array.isArray(res)) data = data.filter(t => String(t.categoria_id) === String(catId));
-        if (isMobile()) renderMobileComSwipe(data); else renderDesktop(data);
+        if (tipo === "transferencia")
+          data = data.filter((t) => t.is_transferencia);
+        else if (tipo === "receita" || tipo === "despesa")
+          data = data.filter((t) => !t.is_transferencia);
+        if (catId && Array.isArray(res))
+          data = data.filter((t) => String(t.categoria_id) === String(catId));
+        if (isMobile()) renderMobileComSwipe(data);
+        else renderDesktop(data);
         renderPaginacao(paginacao);
       }
 
       function renderPaginacao(paginacao) {
-        const old = document.getElementById("paginacao-wrap"); if (old) old.remove();
+        const old = document.getElementById("paginacao-wrap");
+        if (old) old.remove();
         if (!paginacao || paginacao.total_paginas <= 1) return;
         const wrap = document.createElement("div");
         wrap.id = "paginacao-wrap";
-        wrap.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:0.5px solid var(--border);background:var(--bg-secondary);border-radius:0 0 14px 14px;";
+        wrap.style.cssText =
+          "display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:0.5px solid var(--border);background:var(--bg-secondary);border-radius:0 0 14px 14px;";
         wrap.innerHTML = `
-          <button onclick="irPagina(${paginacao.pagina-1})" style="background:${paginacao.tem_anterior?"var(--bg-tertiary)":"transparent"};border:0.5px solid var(--border);color:${paginacao.tem_anterior?"var(--text-primary)":"var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_anterior?"pointer":"default"}" ${!paginacao.tem_anterior?"disabled":""}>
+          <button onclick="irPagina(${paginacao.pagina - 1})" style="background:${paginacao.tem_anterior ? "var(--bg-tertiary)" : "transparent"};border:0.5px solid var(--border);color:${paginacao.tem_anterior ? "var(--text-primary)" : "var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_anterior ? "pointer" : "default"}" ${!paginacao.tem_anterior ? "disabled" : ""}>
             <i class="fa-solid fa-chevron-left"></i> Anterior
           </button>
           <span style="font-size:13px;color:var(--text-muted)">Página <strong style="color:var(--text-primary)">${paginacao.pagina}</strong> de <strong style="color:var(--text-primary)">${paginacao.total_paginas}</strong> · ${paginacao.total} lançamento(s)</span>
-          <button onclick="irPagina(${paginacao.pagina+1})" style="background:${paginacao.tem_proxima?"var(--bg-tertiary)":"transparent"};border:0.5px solid var(--border);color:${paginacao.tem_proxima?"var(--text-primary)":"var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_proxima?"pointer":"default"}" ${!paginacao.tem_proxima?"disabled":""}>
+          <button onclick="irPagina(${paginacao.pagina + 1})" style="background:${paginacao.tem_proxima ? "var(--bg-tertiary)" : "transparent"};border:0.5px solid var(--border);color:${paginacao.tem_proxima ? "var(--text-primary)" : "var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_proxima ? "pointer" : "default"}" ${!paginacao.tem_proxima ? "disabled" : ""}>
             Próxima <i class="fa-solid fa-chevron-right"></i>
           </button>`;
-        const tw = document.querySelector(".table-wrap.desktop-only") || document.getElementById("lista-mobile");
+        const tw =
+          document.querySelector(".table-wrap.desktop-only") ||
+          document.getElementById("lista-mobile");
         if (tw) tw.after(wrap);
       }
 
-      function irPagina(p) { paginaAtual = p; carregarTransacoes(false); window.scrollTo({top:0,behavior:"smooth"}); }
+      function irPagina(p) {
+        paginaAtual = p;
+        carregarTransacoes(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
 
       function preencherFiltroCategorias() {
         const sel = document.getElementById("filtro-categoria");
         const atual = sel.value;
-        sel.innerHTML = `<option value="">Todas categorias</option>` + categorias.map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
+        sel.innerHTML =
+          `<option value="">Todas categorias</option>` +
+          categorias
+            .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+            .join("");
         if (atual) sel.value = atual;
       }
 
@@ -1309,16 +1434,22 @@
       function labelData(dataISO) {
         if (!dataISO) return "—";
         const d = new Date(dataISO + "T00:00:00");
-        const hoje = new Date(); hoje.setHours(0,0,0,0);
-        const ontem = new Date(hoje); ontem.setDate(hoje.getDate() - 1);
-        if (d.getTime() === hoje.getTime())  return "Hoje";
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const ontem = new Date(hoje);
+        ontem.setDate(hoje.getDate() - 1);
+        if (d.getTime() === hoje.getTime()) return "Hoje";
         if (d.getTime() === ontem.getTime()) return "Ontem";
-        return d.toLocaleDateString("pt-BR", { weekday:"long", day:"numeric", month:"long" });
+        return d.toLocaleDateString("pt-BR", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        });
       }
 
       function agruparPorData(data) {
         const grupos = {};
-        data.forEach(t => {
+        data.forEach((t) => {
           const dia = (t.data || "").split("T")[0];
           if (!grupos[dia]) grupos[dia] = [];
           grupos[dia].push(t);
@@ -1329,47 +1460,58 @@
       function renderDesktop(data) {
         const tbody = document.getElementById("tabela-transacoes-desktop");
         if (data.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7" style="padding:0"><div style="padding:16px">${emptyState("fa-right-left","Nenhuma transação","Nenhuma transação encontrada neste período.","Novo lançamento","abrirModalLancamento()")}</div></td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="7" style="padding:0"><div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transação", "Nenhuma transação encontrada neste período.", "Novo lançamento", "abrirModalLancamento()")}</div></td></tr>`;
           return;
         }
-        tbody.innerHTML = data.map(t => {
-          const isT = !!t.is_transferencia;
-          const label = isT ? "transferencia" : t.tipo;
-          const parcelaLabel = t.parcelas > 1
-            ? `<span style="font-size:10px;color:var(--text-muted);margin-left:5px;font-weight:400">[${t.parcela_atual}/${t.parcelas}]</span>`
-            : "";
-          return `<tr>
+        tbody.innerHTML = data
+          .map((t) => {
+            const isT = !!t.is_transferencia;
+            const label = isT ? "transferencia" : t.tipo;
+            const parcelaLabel =
+              t.parcelas > 1
+                ? `<span style="font-size:10px;color:var(--text-muted);margin-left:5px;font-weight:400">[${t.parcela_atual}/${t.parcelas}]</span>`
+                : "";
+            return `<tr>
             <td>${formatarData(t.data)}</td>
             <td>
               ${isT ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}
               ${t.descricao}${parcelaLabel}
             </td>
-            <td>${isT
-              ? `<span style="color:var(--text-muted);font-size:12px">—</span>`
-              : `<span style="display:inline-flex;align-items:center;gap:6px">
+            <td>${
+              isT
+                ? `<span style="color:var(--text-muted);font-size:12px">—</span>`
+                : `<span style="display:inline-flex;align-items:center;gap:6px">
                   <span style="width:26px;height:26px;border-radius:50%;background:${t.categoria_cor ? t.categoria_cor + "22" : "var(--bg-tertiary)"};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
-                    <i class="fa-solid ${t.categoria_icone||"fa-tag"}" style="font-size:10px;color:${t.categoria_cor||"#6b7280"}"></i>
+                    <i class="fa-solid ${t.categoria_icone || "fa-tag"}" style="font-size:10px;color:${t.categoria_cor || "#6b7280"}"></i>
                   </span>
-                  ${t.categoria_nome||"—"}
+                  ${t.categoria_nome || "—"}
                 </span>`
             }</td>
-            <td>${t.conta_nome||"—"}</td>
+            <td>${t.conta_nome || "—"}</td>
             <td><span class="badge ${label}">${isT ? "transferência" : t.tipo}</span></td>
             <td><span class="badge ${label}">${formatarMoeda(t.valor)}</span></td>
-            <td>${isT
-              ? `<button class="btn-danger" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
-              : `<button class="btn-edit" onclick="editarLancamento(${t.id})"><i class="fa-solid fa-pen"></i></button>
+            <td>${
+              isT
+                ? `<button class="btn-danger" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
+                : `<button class="btn-edit" onclick="editarLancamento(${t.id})"><i class="fa-solid fa-pen"></i></button>
                  <button class="btn-edit" onclick="duplicarLancamento(${t.id})" title="Duplicar"><i class="fa-solid fa-copy"></i></button>
                  <button class="btn-danger" onclick="deletarLancamento(${t.id})"><i class="fa-solid fa-trash"></i></button>`
             }</td>
           </tr>`;
-        }).join("");
+          })
+          .join("");
       }
 
       function renderMobile(data) {
         const lista = document.getElementById("lista-mobile");
         if (data.length === 0) {
-          lista.innerHTML = emptyState("fa-right-left","Nenhuma transação","Nenhuma transação encontrada neste período.","Novo lançamento","abrirModalLancamento()");
+          lista.innerHTML = emptyState(
+            "fa-right-left",
+            "Nenhuma transação",
+            "Nenhuma transação encontrada neste período.",
+            "Novo lançamento",
+            "abrirModalLancamento()",
+          );
           return;
         }
 
@@ -1382,26 +1524,35 @@
           html += `
             <div class="timeline-header">
               <span class="timeline-label">${labelData(dia)}</span>
-              <span class="timeline-date">${new Date(dia + "T00:00:00").toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit" })}</span>
+              <span class="timeline-date">${new Date(dia + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span>
             </div>`;
 
-          transacoes.forEach(t => {
-            const isT  = !!t.is_transferencia;
-            const cor  = isT ? "#6366f1" : t.tipo === "receita" ? "var(--green)" : "var(--red)";
-            const bg   = isT ? "rgba(99,102,241,0.15)" : t.tipo === "receita" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)";
+          transacoes.forEach((t) => {
+            const isT = !!t.is_transferencia;
+            const cor = isT
+              ? "#6366f1"
+              : t.tipo === "receita"
+                ? "var(--green)"
+                : "var(--red)";
+            const bg = isT
+              ? "rgba(99,102,241,0.15)"
+              : t.tipo === "receita"
+                ? "rgba(16,185,129,0.15)"
+                : "rgba(239,68,68,0.15)";
             const sinal = isT ? "" : t.tipo === "receita" ? "+" : "-";
             const catIcone = t.categoria_icone || "fa-tag";
-            const catCor   = t.categoria_cor   || "#6b7280";
-            const parcelaLabel = t.parcelas > 1
-              ? `<span style="font-size:10px;background:var(--bg-tertiary);color:var(--text-muted);padding:1px 6px;border-radius:20px;margin-left:4px">${t.parcela_atual}/${t.parcelas}</span>`
-              : "";
+            const catCor = t.categoria_cor || "#6b7280";
+            const parcelaLabel =
+              t.parcelas > 1
+                ? `<span style="font-size:10px;background:var(--bg-tertiary);color:var(--text-muted);padding:1px 6px;border-radius:20px;margin-left:4px">${t.parcela_atual}/${t.parcelas}</span>`
+                : "";
 
             html += `
               <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:14px 14px 10px;margin-bottom:8px">
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
                   <!-- Ícone de categoria -->
-                  <div style="width:40px;height:40px;border-radius:50%;background:${isT?"rgba(99,102,241,0.15)":catCor+"22"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                    <i class="fa-solid ${isT?"fa-right-left":catIcone}" style="font-size:15px;color:${isT?"#6366f1":catCor}"></i>
+                  <div style="width:40px;height:40px;border-radius:50%;background:${isT ? "rgba(99,102,241,0.15)" : catCor + "22"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i class="fa-solid ${isT ? "fa-right-left" : catIcone}" style="font-size:15px;color:${isT ? "#6366f1" : catCor}"></i>
                   </div>
                   <!-- Info -->
                   <div style="flex:1;min-width:0">
@@ -1421,9 +1572,10 @@
                 </div>
                 <!-- Ações -->
                 <div style="display:flex;gap:6px;justify-content:flex-end;border-top:0.5px solid var(--border);padding-top:8px">
-                  ${isT
-                    ? `<button class="btn-danger" style="padding:5px 12px;font-size:12px" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
-                    : `<button class="btn-edit" onclick="editarLancamento(${t.id})" style="padding:5px 12px;font-size:12px"><i class="fa-solid fa-pen"></i></button>
+                  ${
+                    isT
+                      ? `<button class="btn-danger" style="padding:5px 12px;font-size:12px" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
+                      : `<button class="btn-edit" onclick="editarLancamento(${t.id})" style="padding:5px 12px;font-size:12px"><i class="fa-solid fa-pen"></i></button>
                        <button class="btn-edit" onclick="duplicarLancamento(${t.id})" style="padding:5px 12px;font-size:12px"><i class="fa-solid fa-copy"></i></button>
                        <button class="btn-danger" onclick="deletarLancamento(${t.id})" style="padding:5px 12px;font-size:12px"><i class="fa-solid fa-trash"></i></button>`
                   }
@@ -1437,9 +1589,10 @@
 
       function selecionarTipoModal(tipo) {
         document.getElementById("f-tipo").value = tipo;
-        ["despesa","receita","cartao"].forEach(t => {
+        ["despesa", "receita", "cartao"].forEach((t) => {
           const btn = document.getElementById(`f-tipo-${t}`);
-          if (btn) btn.className = `tipo-btn${tipo === t ? ` active-${t}` : ""}`;
+          if (btn)
+            btn.className = `tipo-btn${tipo === t ? ` active-${t}` : ""}`;
         });
         filtrarCategorias();
         const inputValor = document.getElementById("f-valor");
@@ -1450,8 +1603,10 @@
         const tipo = document.getElementById("f-tipo").value;
         const sel = document.getElementById("f-categoria");
         const tc = tipo === "cartao" ? "despesa" : tipo;
-        const f = categorias.filter(c => c.tipo === tc);
-        sel.innerHTML = f.length ? f.map(c => `<option value="${c.id}">${c.nome}</option>`).join("") : `<option value="">Sem categorias</option>`;
+        const f = categorias.filter((c) => c.tipo === tc);
+        sel.innerHTML = f.length
+          ? f.map((c) => `<option value="${c.id}">${c.nome}</option>`).join("")
+          : `<option value="">Sem categorias</option>`;
         const inputValor = document.getElementById("f-valor");
         if (inputValor) aplicarCorTipo(inputValor, tipo);
       }
@@ -1473,8 +1628,8 @@
         const maxData = `${new Date().getFullYear() + 1}-12-31`;
         const inputData = document.getElementById("f-data");
         inputData.value = hoje;
-        inputData.min   = minData;
-        inputData.max   = maxData;
+        inputData.min = minData;
+        inputData.max = maxData;
         document.getElementById("f-obs").value = "";
         document.getElementById("aviso-duplicado")?.remove();
         selecionarTipoModal("despesa");
@@ -1497,7 +1652,8 @@
         // Categoria inteligente — ouve a descrição
         const inputDesc = document.getElementById("f-descricao");
         inputDesc.oninput = (e) => {
-          if (e.target.value.length >= 3) sugerirCategoria(e.target.value, "f-categoria");
+          if (e.target.value.length >= 3)
+            sugerirCategoria(e.target.value, "f-categoria");
         };
       }
       function fecharModalLancamento() {
@@ -1507,19 +1663,22 @@
 
       async function editarLancamento(id) {
         const todos = (await fetchAPI("/api/transacoes")) || [];
-        const item = todos.find(x => x.id === id);
+        const item = todos.find((x) => x.id === id);
         if (!item) return;
         editandoLancId = id;
-        document.getElementById("modal-titulo").textContent = "Editar lançamento";
+        document.getElementById("modal-titulo").textContent =
+          "Editar lançamento";
         const inputValor = document.getElementById("f-valor");
-        inputValor.value = parseFloat(item.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+        inputValor.value = parseFloat(item.valor).toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+        });
         inputValor.dataset.valor = item.valor;
         aplicarMascaraMoeda(inputValor);
         document.getElementById("f-descricao").value = item.descricao;
         const inputData = document.getElementById("f-data");
         inputData.value = item.data?.split("T")[0] || "";
-        inputData.min   = `${new Date().getFullYear() - 5}-01-01`;
-        inputData.max   = `${new Date().getFullYear() + 1}-12-31`;
+        inputData.min = `${new Date().getFullYear() - 5}-01-01`;
+        inputData.max = `${new Date().getFullYear() + 1}-12-31`;
         document.getElementById("f-obs").value = item.observacao || "";
         selecionarTipoModal(item.tipo);
         document.getElementById("f-categoria").value = item.categoria_id;
@@ -1530,16 +1689,17 @@
 
       async function salvarLancamento(fecharApos = true) {
         const body = {
-          tipo:        document.getElementById("f-tipo").value,
-          valor:       lerValorMoeda(document.getElementById("f-valor")),
-          descricao:   document.getElementById("f-descricao").value.trim(),
-          categoria_id:document.getElementById("f-categoria").value,
-          conta_id:    document.getElementById("f-conta").value,
-          data:        document.getElementById("f-data").value,
-          observacao:  document.getElementById("f-obs").value,
+          tipo: document.getElementById("f-tipo").value,
+          valor: lerValorMoeda(document.getElementById("f-valor")),
+          descricao: document.getElementById("f-descricao").value.trim(),
+          categoria_id: document.getElementById("f-categoria").value,
+          conta_id: document.getElementById("f-conta").value,
+          data: document.getElementById("f-data").value,
+          observacao: document.getElementById("f-obs").value,
         };
         if (!body.descricao || !body.valor || !body.data) {
-          toast("Preencha descrição, valor e data.", "erro"); return;
+          toast("Preencha descrição, valor e data.", "erro");
+          return;
         }
 
         // Detecção de duplicação — compara com último lançamento (2 min)
@@ -1548,8 +1708,8 @@
           if (
             diff < 120 &&
             ultimoLancamento.descricao === body.descricao &&
-            ultimoLancamento.valor     === body.valor &&
-            ultimoLancamento.data      === body.data
+            ultimoLancamento.valor === body.valor &&
+            ultimoLancamento.data === body.data
           ) {
             // Mostra aviso de duplicação se ainda não existe
             if (!document.getElementById("aviso-duplicado")) {
@@ -1564,7 +1724,9 @@
                 <i class="fa-solid fa-triangle-exclamation"></i>
                 <span>Você já fez um lançamento idêntico agora há pouco. Deseja salvar mesmo assim?</span>
                 <button onclick="confirmarDuplicado(${fecharApos})" style="background:#f59e0b;border:none;color:#fff;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;margin-left:auto">Sim, salvar</button>`;
-              const footer = document.querySelector("#modal-lancamento .modal > div:last-child");
+              const footer = document.querySelector(
+                "#modal-lancamento .modal > div:last-child",
+              );
               footer?.parentNode?.insertBefore(aviso, footer);
             }
             return;
@@ -1577,31 +1739,44 @@
       async function confirmarDuplicado(fecharApos) {
         document.getElementById("aviso-duplicado")?.remove();
         const body = {
-          tipo:        document.getElementById("f-tipo").value,
-          valor:       lerValorMoeda(document.getElementById("f-valor")),
-          descricao:   document.getElementById("f-descricao").value.trim(),
-          categoria_id:document.getElementById("f-categoria").value,
-          conta_id:    document.getElementById("f-conta").value,
-          data:        document.getElementById("f-data").value,
-          observacao:  document.getElementById("f-obs").value,
+          tipo: document.getElementById("f-tipo").value,
+          valor: lerValorMoeda(document.getElementById("f-valor")),
+          descricao: document.getElementById("f-descricao").value.trim(),
+          categoria_id: document.getElementById("f-categoria").value,
+          conta_id: document.getElementById("f-conta").value,
+          data: document.getElementById("f-data").value,
+          observacao: document.getElementById("f-obs").value,
         };
         await _executarSalvarLancamento(body, fecharApos);
       }
 
       async function _executarSalvarLancamento(body, fecharApos) {
-        const btn = document.getElementById(fecharApos ? "btn-salvar" : "btn-salvar-continuar");
+        const btn = document.getElementById(
+          fecharApos ? "btn-salvar" : "btn-salvar-continuar",
+        );
         const labelOriginal = btn.innerHTML;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-        btn.disabled  = true;
+        btn.disabled = true;
         try {
           if (editandoLancId) {
-            await fetchAPI(`/api/transacoes/${editandoLancId}`, { method:"PUT", body:JSON.stringify(body) });
+            await fetchAPI(`/api/transacoes/${editandoLancId}`, {
+              method: "PUT",
+              body: JSON.stringify(body),
+            });
             toast("Lançamento atualizado!");
             fecharModalLancamento();
           } else {
-            await fetchAPI("/api/transacoes", { method:"POST", body:JSON.stringify(body) });
+            await fetchAPI("/api/transacoes", {
+              method: "POST",
+              body: JSON.stringify(body),
+            });
             // Registra para detecção de duplicação
-            ultimoLancamento = { descricao:body.descricao, valor:body.valor, data:body.data, ts:Date.now() };
+            ultimoLancamento = {
+              descricao: body.descricao,
+              valor: body.valor,
+              data: body.data,
+              ts: Date.now(),
+            };
             if (fecharApos) {
               toast("Lançamento criado!");
               fecharModalLancamento();
@@ -1618,33 +1793,58 @@
           carregarTransacoes();
         } finally {
           btn.innerHTML = labelOriginal;
-          btn.disabled  = false;
+          btn.disabled = false;
         }
       }
 
       async function duplicarLancamento(id) {
-        const res = await fetchAPI(`/api/transacoes/${id}/duplicar`,{method:"POST",body:JSON.stringify({data:new Date().toISOString().split("T")[0]})});
-        if (res?.erro) { toast(res.erro,"erro"); return; }
-        toast("Lançamento duplicado para hoje!"); carregarTransacoes();
+        const res = await fetchAPI(`/api/transacoes/${id}/duplicar`, {
+          method: "POST",
+          body: JSON.stringify({
+            data: new Date().toISOString().split("T")[0],
+          }),
+        });
+        if (res?.erro) {
+          toast(res.erro, "erro");
+          return;
+        }
+        toast("Lançamento duplicado para hoje!");
+        carregarTransacoes();
       }
 
       async function deletarLancamento(id) {
-        const ok = await confirmar("Deseja deletar este lançamento?"); if (!ok) return;
-        await fetchAPI(`/api/transacoes/${id}`,{method:"DELETE"}); toast("Lançamento deletado!","info"); carregarTransacoes();
+        const ok = await confirmar("Deseja deletar este lançamento?");
+        if (!ok) return;
+        await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
+        toast("Lançamento deletado!", "info");
+        carregarTransacoes();
       }
 
       async function deletarTransferencia(tid) {
-        const ok = await confirmar("Deseja deletar esta transferência? As duas entradas serão removidas."); if (!ok) return;
-        await fetchAPI(`/api/transferencias/${tid}`,{method:"DELETE"}); toast("Transferência deletada!","info"); carregarTransacoes();
+        const ok = await confirmar(
+          "Deseja deletar esta transferência? As duas entradas serão removidas.",
+        );
+        if (!ok) return;
+        await fetchAPI(`/api/transferencias/${tid}`, { method: "DELETE" });
+        toast("Transferência deletada!", "info");
+        carregarTransacoes();
       }
 
       function ajustarLayout() {
         const desk = document.querySelector(".desktop-only");
         const mob = document.getElementById("lista-mobile");
-        if (isMobile()) { desk.style.display="none"; mob.style.display="block"; }
-        else { desk.style.display="block"; mob.style.display="none"; }
+        if (isMobile()) {
+          desk.style.display = "none";
+          mob.style.display = "block";
+        } else {
+          desk.style.display = "block";
+          mob.style.display = "none";
+        }
       }
-      window.addEventListener("resize", () => { ajustarLayout(); if (abaAtiva==="lancamentos") carregarTransacoes(); });
+      window.addEventListener("resize", () => {
+        ajustarLayout();
+        if (abaAtiva === "lancamentos") carregarTransacoes();
+      });
 
       // ══════════════════════════════════════
       // RECORRENTES
@@ -1652,189 +1852,472 @@
       async function carregarRecorrentes() {
         document.getElementById("rec-grid").innerHTML = skeletonCards(3);
         todasRec = (await fetchAPI("/api/recorrentes")) || [];
-        calcularResumoRec(); renderRecGrid();
+        calcularResumoRec();
+        renderRecGrid();
       }
 
       function calcularResumoRec() {
-        const MULT = {diaria:30,semanal:4.3,quinzenal:2,mensal:1,bimestral:0.5,trimestral:0.33,semestral:0.17,anual:0.083};
-        let rec=0,des=0;
-        for (const r of todasRec.filter(r=>r.ativa)) {
-          const v = parseFloat(r.valor)*(MULT[r.frequencia]||1);
-          if (r.tipo==="receita") rec+=v; else des+=v;
+        const MULT = {
+          diaria: 30,
+          semanal: 4.3,
+          quinzenal: 2,
+          mensal: 1,
+          bimestral: 0.5,
+          trimestral: 0.33,
+          semestral: 0.17,
+          anual: 0.083,
+        };
+        let rec = 0,
+          des = 0;
+        for (const r of todasRec.filter((r) => r.ativa)) {
+          const v = parseFloat(r.valor) * (MULT[r.frequencia] || 1);
+          if (r.tipo === "receita") rec += v;
+          else des += v;
         }
         document.getElementById("res-receitas").innerHTML = formatarMoeda(rec);
         document.getElementById("res-despesas").innerHTML = formatarMoeda(des);
-        const s=rec-des, el=document.getElementById("res-saldo");
-        el.innerHTML = formatarMoeda(s); el.className = "card-value "+(s>=0?"green":"red");
+        const s = rec - des,
+          el = document.getElementById("res-saldo");
+        el.innerHTML = formatarMoeda(s);
+        el.className = "card-value " + (s >= 0 ? "green" : "red");
       }
 
-      function filtrarRec(tipo,btn) {
-        filtroRecAtual=tipo;
-        document.querySelectorAll(".filtro-btn").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); renderRecGrid();
+      function filtrarRec(tipo, btn) {
+        filtroRecAtual = tipo;
+        document
+          .querySelectorAll(".filtro-btn")
+          .forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderRecGrid();
       }
 
       function renderRecGrid() {
         const grid = document.getElementById("rec-grid");
         let lista = todasRec;
-        if (filtroRecAtual==="despesa") lista=lista.filter(r=>r.tipo==="despesa");
-        else if (filtroRecAtual==="receita") lista=lista.filter(r=>r.tipo==="receita");
-        else if (filtroRecAtual==="pausada") lista=lista.filter(r=>!r.ativa);
-        if (lista.length===0) { grid.innerHTML=emptyState("fa-rotate","Nenhuma recorrência","Adicione contas fixas como aluguel, salário, assinaturas...","Nova recorrência","abrirModalRec()"); return; }
+        if (filtroRecAtual === "despesa")
+          lista = lista.filter((r) => r.tipo === "despesa");
+        else if (filtroRecAtual === "receita")
+          lista = lista.filter((r) => r.tipo === "receita");
+        else if (filtroRecAtual === "pausada")
+          lista = lista.filter((r) => !r.ativa);
+        if (lista.length === 0) {
+          grid.innerHTML = emptyState(
+            "fa-rotate",
+            "Nenhuma recorrência",
+            "Adicione contas fixas como aluguel, salário, assinaturas...",
+            "Nova recorrência",
+            "abrirModalRec()",
+          );
+          return;
+        }
         const hoje = new Date().toISOString().split("T")[0];
-        grid.innerHTML = lista.map(r => {
-          const proxima = r.proxima_geracao ? r.proxima_geracao.split("T")[0] : null;
-          const vencida = proxima && proxima < hoje;
-          const corTipo = r.tipo==="receita" ? "var(--green)" : "var(--red)";
-          const sinal = r.tipo==="receita" ? "+" : "-";
-          const diaLabel = r.frequencia==="semanal" ? `Toda ${DIAS_SEMANA[r.dia_vencimento]||"—"}` : r.frequencia==="diaria"||r.frequencia==="quinzenal" ? FREQ_LABEL[r.frequencia] : `Dia ${r.dia_vencimento} — ${FREQ_LABEL[r.frequencia]}`;
-          return `<div class="rec-card ${r.ativa?"":"pausada"}" style="--cor-tipo:${corTipo}">
+        grid.innerHTML = lista
+          .map((r) => {
+            const proxima = r.proxima_geracao
+              ? r.proxima_geracao.split("T")[0]
+              : null;
+            const vencida = proxima && proxima < hoje;
+            const corTipo =
+              r.tipo === "receita" ? "var(--green)" : "var(--red)";
+            const sinal = r.tipo === "receita" ? "+" : "-";
+            const diaLabel =
+              r.frequencia === "semanal"
+                ? `Toda ${DIAS_SEMANA[r.dia_vencimento] || "—"}`
+                : r.frequencia === "diaria" || r.frequencia === "quinzenal"
+                  ? FREQ_LABEL[r.frequencia]
+                  : `Dia ${r.dia_vencimento} — ${FREQ_LABEL[r.frequencia]}`;
+            return `<div class="rec-card ${r.ativa ? "" : "pausada"}" style="--cor-tipo:${corTipo}">
             <div class="rec-top">
               <div>
                 <div class="rec-titulo">${r.descricao}</div>
                 <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-                  <span class="badge-freq">${FREQ_LABEL[r.frequencia]||r.frequencia}</span>
-                  ${!r.ativa?`<span class="badge-pausada"><i class="fa-solid fa-pause" style="margin-right:3px"></i>Pausada</span>`:""}
+                  <span class="badge-freq">${FREQ_LABEL[r.frequencia] || r.frequencia}</span>
+                  ${!r.ativa ? `<span class="badge-pausada"><i class="fa-solid fa-pause" style="margin-right:3px"></i>Pausada</span>` : ""}
                 </div>
               </div>
               <div class="rec-valor ${r.tipo}">${sinal}${formatarMoeda(r.valor)}</div>
             </div>
             <div class="rec-meta">
               <div class="rec-meta-item"><i class="fa-solid fa-rotate"></i><span>${diaLabel}</span></div>
-              ${r.categoria_nome?`<div class="rec-meta-item"><i class="fa-solid fa-tag" style="color:${r.categoria_cor||"#6b7280"}"></i><span>${r.categoria_nome}</span></div>`:""}
-              ${r.conta_nome?`<div class="rec-meta-item"><i class="fa-solid fa-wallet"></i><span>${r.conta_nome}</span></div>`:""}
-              ${r.data_fim?`<div class="rec-meta-item"><i class="fa-solid fa-calendar-xmark"></i><span>Até ${formatarData(r.data_fim)}</span></div>`:""}
+              ${r.categoria_nome ? `<div class="rec-meta-item"><i class="fa-solid fa-tag" style="color:${r.categoria_cor || "#6b7280"}"></i><span>${r.categoria_nome}</span></div>` : ""}
+              ${r.conta_nome ? `<div class="rec-meta-item"><i class="fa-solid fa-wallet"></i><span>${r.conta_nome}</span></div>` : ""}
+              ${r.data_fim ? `<div class="rec-meta-item"><i class="fa-solid fa-calendar-xmark"></i><span>Até ${formatarData(r.data_fim)}</span></div>` : ""}
             </div>
             <div class="rec-proxima">
               <span class="rec-proxima-label"><i class="fa-solid fa-calendar-day"></i>Próxima geração</span>
-              <span class="rec-proxima-data ${vencida?"vencida":""}">${proxima?formatarData(proxima):"—"}${vencida?" ⚠️":""}</span>
+              <span class="rec-proxima-data ${vencida ? "vencida" : ""}">${proxima ? formatarData(proxima) : "—"}${vencida ? " ⚠️" : ""}</span>
             </div>
             <div class="rec-acoes">
-              <button class="btn-toggle" onclick="toggleRec(${r.id},${r.ativa})"><i class="fa-solid fa-${r.ativa?"pause":"play"}"></i>${r.ativa?"Pausar":"Ativar"}</button>
+              <button class="btn-toggle" onclick="toggleRec(${r.id},${r.ativa})"><i class="fa-solid fa-${r.ativa ? "pause" : "play"}"></i>${r.ativa ? "Pausar" : "Ativar"}</button>
               <button class="btn-historico" onclick="verHistorico(${r.id},'${r.descricao}')"><i class="fa-solid fa-clock-rotate-left"></i>Histórico</button>
               <button class="btn-edit" onclick="editarRec(${r.id})"><i class="fa-solid fa-pen"></i></button>
               <button class="btn-danger" onclick="deletarRec(${r.id})"><i class="fa-solid fa-trash"></i></button>
             </div>
           </div>`;
-        }).join("");
+          })
+          .join("");
       }
 
       function filtrarCategoriasRec() {
         const tipo = document.getElementById("r-tipo").value;
-        document.getElementById("r-categoria-rec").innerHTML = `<option value="">Sem categoria</option>` + categorias.filter(c=>c.tipo===tipo).map(c=>`<option value="${c.id}">${c.nome}</option>`).join("");
-        document.getElementById("r-conta-rec").innerHTML = `<option value="">Sem conta</option>` + contas.map(c=>`<option value="${c.id}">${c.nome}</option>`).join("");
+        document.getElementById("r-categoria-rec").innerHTML =
+          `<option value="">Sem categoria</option>` +
+          categorias
+            .filter((c) => c.tipo === tipo)
+            .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+            .join("");
+        document.getElementById("r-conta-rec").innerHTML =
+          `<option value="">Sem conta</option>` +
+          contas
+            .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+            .join("");
       }
 
       function atualizarCampoDia() {
-        const freq=document.getElementById("r-frequencia").value, grupo=document.getElementById("grupo-dia"), label=document.getElementById("label-dia"), input=document.getElementById("r-dia");
-        if (freq==="diaria"||freq==="quinzenal") { grupo.style.display="none"; return; }
-        grupo.style.display="block";
-        if (freq==="semanal") { label.textContent="Dia da semana"; input.min="0"; input.max="6"; input.placeholder="0=Dom…6=Sáb"; }
-        else { label.textContent="Dia do mês"; input.min="1"; input.max="31"; input.placeholder="1-31"; }
+        const freq = document.getElementById("r-frequencia").value,
+          grupo = document.getElementById("grupo-dia"),
+          label = document.getElementById("label-dia"),
+          input = document.getElementById("r-dia");
+        if (freq === "diaria" || freq === "quinzenal") {
+          grupo.style.display = "none";
+          return;
+        }
+        grupo.style.display = "block";
+        if (freq === "semanal") {
+          label.textContent = "Dia da semana";
+          input.min = "0";
+          input.max = "6";
+          input.placeholder = "0=Dom…6=Sáb";
+        } else {
+          label.textContent = "Dia do mês";
+          input.min = "1";
+          input.max = "31";
+          input.placeholder = "1-31";
+        }
       }
 
       function abrirModalRec() {
-        editandoRecId=null; document.getElementById("modal-rec-titulo").textContent="Nova recorrência";
-        ["r-descricao","r-fim","r-obs"].forEach(id=>document.getElementById(id).value="");
-        document.getElementById("r-valor-rec").value="";
+        editandoRecId = null;
+        document.getElementById("modal-rec-titulo").textContent =
+          "Nova recorrência";
+        ["r-descricao", "r-fim", "r-obs"].forEach(
+          (id) => (document.getElementById(id).value = ""),
+        );
+        document.getElementById("r-valor-rec").value = "";
         aplicarMascaraMoeda(document.getElementById("r-valor-rec"));
-        document.getElementById("r-tipo").value="despesa"; document.getElementById("r-frequencia").value="mensal"; document.getElementById("r-dia").value="1";
-        document.getElementById("r-inicio").value=new Date().toISOString().split("T")[0];
-        filtrarCategoriasRec(); atualizarCampoDia(); document.getElementById("modal-recorrente").classList.add("active");
+        document.getElementById("r-tipo").value = "despesa";
+        document.getElementById("r-frequencia").value = "mensal";
+        document.getElementById("r-dia").value = "1";
+        document.getElementById("r-inicio").value = new Date()
+          .toISOString()
+          .split("T")[0];
+        filtrarCategoriasRec();
+        atualizarCampoDia();
+        document.getElementById("modal-recorrente").classList.add("active");
       }
-      function fecharModalRec() { document.getElementById("modal-recorrente").classList.remove("active"); }
+      function fecharModalRec() {
+        document.getElementById("modal-recorrente").classList.remove("active");
+      }
 
       function editarRec(id) {
-        const rec=todasRec.find(r=>r.id===id); if (!rec) return;
-        editandoRecId=id; document.getElementById("modal-rec-titulo").textContent="Editar recorrência";
-        document.getElementById("r-tipo").value=rec.tipo; const elRecVal=document.getElementById("r-valor-rec");
-        elRecVal.value=parseFloat(rec.valor).toLocaleString("pt-BR",{minimumFractionDigits:2});
-        elRecVal.dataset.valor=rec.valor;
+        const rec = todasRec.find((r) => r.id === id);
+        if (!rec) return;
+        editandoRecId = id;
+        document.getElementById("modal-rec-titulo").textContent =
+          "Editar recorrência";
+        document.getElementById("r-tipo").value = rec.tipo;
+        const elRecVal = document.getElementById("r-valor-rec");
+        elRecVal.value = parseFloat(rec.valor).toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+        });
+        elRecVal.dataset.valor = rec.valor;
         aplicarMascaraMoeda(elRecVal);
-        document.getElementById("r-descricao").value=rec.descricao; document.getElementById("r-frequencia").value=rec.frequencia;
-        document.getElementById("r-dia").value=rec.dia_vencimento; document.getElementById("r-inicio").value=rec.data_inicio?.split("T")[0]||"";
-        document.getElementById("r-fim").value=rec.data_fim?.split("T")[0]||""; document.getElementById("r-obs").value=rec.observacao||"";
-        filtrarCategoriasRec(); document.getElementById("r-categoria-rec").value=rec.categoria_id||""; document.getElementById("r-conta-rec").value=rec.conta_id||"";
-        atualizarCampoDia(); document.getElementById("modal-recorrente").classList.add("active");
+        document.getElementById("r-descricao").value = rec.descricao;
+        document.getElementById("r-frequencia").value = rec.frequencia;
+        document.getElementById("r-dia").value = rec.dia_vencimento;
+        document.getElementById("r-inicio").value =
+          rec.data_inicio?.split("T")[0] || "";
+        document.getElementById("r-fim").value =
+          rec.data_fim?.split("T")[0] || "";
+        document.getElementById("r-obs").value = rec.observacao || "";
+        filtrarCategoriasRec();
+        document.getElementById("r-categoria-rec").value =
+          rec.categoria_id || "";
+        document.getElementById("r-conta-rec").value = rec.conta_id || "";
+        atualizarCampoDia();
+        document.getElementById("modal-recorrente").classList.add("active");
       }
 
       async function salvarRec() {
-        const body = { tipo:document.getElementById("r-tipo").value, valor:lerValorMoeda(document.getElementById("r-valor-rec")), descricao:document.getElementById("r-descricao").value, categoria_id:document.getElementById("r-categoria-rec").value||null, conta_id:document.getElementById("r-conta-rec").value||null, frequencia:document.getElementById("r-frequencia").value, dia_vencimento:parseInt(document.getElementById("r-dia").value)||1, data_inicio:document.getElementById("r-inicio").value, data_fim:document.getElementById("r-fim").value||null, observacao:document.getElementById("r-obs").value||null };
-        if (!body.descricao||!body.valor||isNaN(body.valor)||!body.data_inicio) { toast("Preencha descrição, valor e início.","erro"); return; }
-        if (editandoRecId) { await fetchAPI(`/api/recorrentes/${editandoRecId}`,{method:"PUT",body:JSON.stringify(body)}); toast("Recorrência atualizada!"); }
-        else { const res=await fetchAPI("/api/recorrentes",{method:"POST",body:JSON.stringify(body)}); toast(res?.proxima_geracao?`Criada! Próxima: ${formatarData(res.proxima_geracao)}`:"Recorrência criada!"); }
-        fecharModalRec(); carregarRecorrentes();
+        const body = {
+          tipo: document.getElementById("r-tipo").value,
+          valor: lerValorMoeda(document.getElementById("r-valor-rec")),
+          descricao: document.getElementById("r-descricao").value,
+          categoria_id:
+            document.getElementById("r-categoria-rec").value || null,
+          conta_id: document.getElementById("r-conta-rec").value || null,
+          frequencia: document.getElementById("r-frequencia").value,
+          dia_vencimento: parseInt(document.getElementById("r-dia").value) || 1,
+          data_inicio: document.getElementById("r-inicio").value,
+          data_fim: document.getElementById("r-fim").value || null,
+          observacao: document.getElementById("r-obs").value || null,
+        };
+        if (
+          !body.descricao ||
+          !body.valor ||
+          isNaN(body.valor) ||
+          !body.data_inicio
+        ) {
+          toast("Preencha descrição, valor e início.", "erro");
+          return;
+        }
+        if (editandoRecId) {
+          await fetchAPI(`/api/recorrentes/${editandoRecId}`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+          toast("Recorrência atualizada!");
+        } else {
+          const res = await fetchAPI("/api/recorrentes", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+          toast(
+            res?.proxima_geracao
+              ? `Criada! Próxima: ${formatarData(res.proxima_geracao)}`
+              : "Recorrência criada!",
+          );
+        }
+        fecharModalRec();
+        carregarRecorrentes();
       }
 
-      async function toggleRec(id,ativa) { await fetchAPI(`/api/recorrentes/${id}/ativar`,{method:"PATCH",body:JSON.stringify({ativa:!ativa})}); toast(!ativa?"Recorrência ativada!":"Recorrência pausada.","info"); carregarRecorrentes(); }
-      async function deletarRec(id) { const ok=await confirmar("Deseja deletar esta recorrência? As transações já geradas não serão afetadas."); if (!ok) return; await fetchAPI(`/api/recorrentes/${id}`,{method:"DELETE"}); toast("Recorrência deletada!","info"); carregarRecorrentes(); }
+      async function toggleRec(id, ativa) {
+        await fetchAPI(`/api/recorrentes/${id}/ativar`, {
+          method: "PATCH",
+          body: JSON.stringify({ ativa: !ativa }),
+        });
+        toast(!ativa ? "Recorrência ativada!" : "Recorrência pausada.", "info");
+        carregarRecorrentes();
+      }
+      async function deletarRec(id) {
+        const ok = await confirmar(
+          "Deseja deletar esta recorrência? As transações já geradas não serão afetadas.",
+        );
+        if (!ok) return;
+        await fetchAPI(`/api/recorrentes/${id}`, { method: "DELETE" });
+        toast("Recorrência deletada!", "info");
+        carregarRecorrentes();
+      }
 
-      async function verHistorico(id,nome) {
-        document.getElementById("hist-titulo").textContent=`Histórico — ${nome}`;
-        document.getElementById("hist-lista").innerHTML=skeletonLista(3);
+      async function verHistorico(id, nome) {
+        document.getElementById("hist-titulo").textContent =
+          `Histórico — ${nome}`;
+        document.getElementById("hist-lista").innerHTML = skeletonLista(3);
         document.getElementById("modal-hist").classList.add("active");
-        const res=await fetchAPI(`/api/recorrentes/${id}/historico`);
-        const data=Array.isArray(res)?res:[];
-        const lista=document.getElementById("hist-lista");
-        if (data.length===0) { lista.innerHTML=`<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px"><i class="fa-solid fa-clock-rotate-left" style="font-size:28px;margin-bottom:10px;display:block"></i>Nenhuma transação gerada ainda.</div>`; return; }
-        lista.innerHTML=data.map(t=>`<div class="historico-item"><div><div style="font-weight:600;font-size:13px">${formatarData(t.data)}</div><div style="font-size:11px;color:var(--text-muted)">${t.descricao}</div></div><span class="badge ${t.tipo}">${formatarMoeda(t.valor)}</span></div>`).join("");
+        const res = await fetchAPI(`/api/recorrentes/${id}/historico`);
+        const data = Array.isArray(res) ? res : [];
+        const lista = document.getElementById("hist-lista");
+        if (data.length === 0) {
+          lista.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px"><i class="fa-solid fa-clock-rotate-left" style="font-size:28px;margin-bottom:10px;display:block"></i>Nenhuma transação gerada ainda.</div>`;
+          return;
+        }
+        lista.innerHTML = data
+          .map(
+            (t) =>
+              `<div class="historico-item"><div><div style="font-weight:600;font-size:13px">${formatarData(t.data)}</div><div style="font-size:11px;color:var(--text-muted)">${t.descricao}</div></div><span class="badge ${t.tipo}">${formatarMoeda(t.valor)}</span></div>`,
+          )
+          .join("");
       }
-      function fecharHist() { document.getElementById("modal-hist").classList.remove("active"); }
+      function fecharHist() {
+        document.getElementById("modal-hist").classList.remove("active");
+      }
 
       // ══════════════════════════════════════
       // CATEGORIAS
       // ══════════════════════════════════════
-      let editandoCatId = null, iconeSelecionado = "fa-tag";
-      const icones = ["fa-tag","fa-utensils","fa-car","fa-house","fa-heart","fa-shirt","fa-graduation-cap","fa-briefcase","fa-plane","fa-cart-shopping","fa-bolt","fa-wifi","fa-phone","fa-tv","fa-music","fa-gamepad","fa-dumbbell","fa-pills","fa-dog","fa-baby","fa-book","fa-tools","fa-gas-pump","fa-bus","fa-train","fa-bicycle","fa-piggy-bank","fa-money-bill","fa-credit-card","fa-wallet","fa-building","fa-store","fa-hospital","fa-school","fa-church","fa-tree","fa-gift","fa-star","fa-coffee","fa-pizza-slice","fa-burger","fa-apple-whole","fa-droplet","fa-fire","fa-leaf","fa-sun","fa-moon","fa-umbrella","fa-scissors","fa-paint-brush","fa-camera","fa-laptop","fa-mobile","fa-headphones","fa-ticket","fa-film","fa-newspaper"];
+      let editandoCatId = null,
+        iconeSelecionado = "fa-tag";
+      const icones = [
+        "fa-tag",
+        "fa-utensils",
+        "fa-car",
+        "fa-house",
+        "fa-heart",
+        "fa-shirt",
+        "fa-graduation-cap",
+        "fa-briefcase",
+        "fa-plane",
+        "fa-cart-shopping",
+        "fa-bolt",
+        "fa-wifi",
+        "fa-phone",
+        "fa-tv",
+        "fa-music",
+        "fa-gamepad",
+        "fa-dumbbell",
+        "fa-pills",
+        "fa-dog",
+        "fa-baby",
+        "fa-book",
+        "fa-tools",
+        "fa-gas-pump",
+        "fa-bus",
+        "fa-train",
+        "fa-bicycle",
+        "fa-piggy-bank",
+        "fa-money-bill",
+        "fa-credit-card",
+        "fa-wallet",
+        "fa-building",
+        "fa-store",
+        "fa-hospital",
+        "fa-school",
+        "fa-church",
+        "fa-tree",
+        "fa-gift",
+        "fa-star",
+        "fa-coffee",
+        "fa-pizza-slice",
+        "fa-burger",
+        "fa-apple-whole",
+        "fa-droplet",
+        "fa-fire",
+        "fa-leaf",
+        "fa-sun",
+        "fa-moon",
+        "fa-umbrella",
+        "fa-scissors",
+        "fa-paint-brush",
+        "fa-camera",
+        "fa-laptop",
+        "fa-mobile",
+        "fa-headphones",
+        "fa-ticket",
+        "fa-film",
+        "fa-newspaper",
+      ];
 
       function renderIcones() {
-        document.getElementById("icone-seletor").innerHTML = icones.map(ic => `<div class="icone-opcao ${ic===iconeSelecionado?"selecionado":""}" onclick="selecionarIcone('${ic}')"><i class="fa-solid ${ic}"></i></div>`).join("");
+        document.getElementById("icone-seletor").innerHTML = icones
+          .map(
+            (ic) =>
+              `<div class="icone-opcao ${ic === iconeSelecionado ? "selecionado" : ""}" onclick="selecionarIcone('${ic}')"><i class="fa-solid ${ic}"></i></div>`,
+          )
+          .join("");
       }
-      function selecionarIcone(ic) { iconeSelecionado=ic; document.getElementById("preview-icone").className=`fa-solid ${ic}`; atualizarPreviewCat(); renderIcones(); }
-      function atualizarPreviewCat() { const cor=document.getElementById("c-cor").value; document.getElementById("preview-icone").style.color=cor; document.getElementById("preview-icone").style.borderColor=cor; }
+      function selecionarIcone(ic) {
+        iconeSelecionado = ic;
+        document.getElementById("preview-icone").className = `fa-solid ${ic}`;
+        atualizarPreviewCat();
+        renderIcones();
+      }
+      function atualizarPreviewCat() {
+        const cor = document.getElementById("c-cor").value;
+        document.getElementById("preview-icone").style.color = cor;
+        document.getElementById("preview-icone").style.borderColor = cor;
+      }
 
       async function carregarCategorias() {
-        const data=(await fetchAPI("/api/categorias"))||[];
-        renderListaCat("lista-despesas",data.filter(c=>c.tipo==="despesa"));
-        renderListaCat("lista-receitas",data.filter(c=>c.tipo==="receita"));
-        categorias=data; preencherFiltroCategorias();
+        const data = (await fetchAPI("/api/categorias")) || [];
+        renderListaCat(
+          "lista-despesas",
+          data.filter((c) => c.tipo === "despesa"),
+        );
+        renderListaCat(
+          "lista-receitas",
+          data.filter((c) => c.tipo === "receita"),
+        );
+        categorias = data;
+        preencherFiltroCategorias();
       }
 
-      function renderListaCat(id,lista) {
-        const el=document.getElementById(id);
-        if (lista.length===0) { el.innerHTML=`<p style="color:var(--text-muted);font-size:13px;padding:16px;text-align:center;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px">Nenhuma categoria.</p>`; return; }
-        el.innerHTML=lista.map(c=>`<div class="categoria-item"><div style="width:12px;height:12px;border-radius:50%;background:${c.cor||"#6b7280"};flex-shrink:0"></div><i class="fa-solid ${c.icone||"fa-tag"}" style="color:${c.cor||"#6b7280"};font-size:14px"></i><span class="categoria-nome">${c.nome}</span><div style="display:flex;gap:6px"><button class="btn-edit" onclick="editarCategoria(${c.id},'${c.nome}','${c.tipo}','${c.icone||"fa-tag"}','${c.cor||"#6b7280"}')"><i class="fa-solid fa-pen"></i></button><button class="btn-danger" onclick="deletarCategoria(${c.id})"><i class="fa-solid fa-trash"></i></button></div></div>`).join("");
+      function renderListaCat(id, lista) {
+        const el = document.getElementById(id);
+        if (lista.length === 0) {
+          el.innerHTML = `<p style="color:var(--text-muted);font-size:13px;padding:16px;text-align:center;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px">Nenhuma categoria.</p>`;
+          return;
+        }
+        el.innerHTML = lista
+          .map(
+            (c) =>
+              `<div class="categoria-item"><div style="width:12px;height:12px;border-radius:50%;background:${c.cor || "#6b7280"};flex-shrink:0"></div><i class="fa-solid ${c.icone || "fa-tag"}" style="color:${c.cor || "#6b7280"};font-size:14px"></i><span class="categoria-nome">${c.nome}</span><div style="display:flex;gap:6px"><button class="btn-edit" onclick="editarCategoria(${c.id},'${c.nome}','${c.tipo}','${c.icone || "fa-tag"}','${c.cor || "#6b7280"}')"><i class="fa-solid fa-pen"></i></button><button class="btn-danger" onclick="deletarCategoria(${c.id})"><i class="fa-solid fa-trash"></i></button></div></div>`,
+          )
+          .join("");
       }
 
       function abrirModalCategoria() {
-        editandoCatId=null; iconeSelecionado="fa-tag";
-        document.getElementById("modal-cat-titulo").textContent="Nova categoria";
-        document.getElementById("c-nome").value=""; document.getElementById("c-tipo").value="despesa"; document.getElementById("c-cor").value="#ef4444";
-        document.getElementById("preview-icone").className="fa-solid fa-tag"; document.getElementById("preview-icone").style.color="#ef4444";
-        renderIcones(); document.getElementById("modal-categoria").classList.add("active");
+        editandoCatId = null;
+        iconeSelecionado = "fa-tag";
+        document.getElementById("modal-cat-titulo").textContent =
+          "Nova categoria";
+        document.getElementById("c-nome").value = "";
+        document.getElementById("c-tipo").value = "despesa";
+        document.getElementById("c-cor").value = "#ef4444";
+        document.getElementById("preview-icone").className = "fa-solid fa-tag";
+        document.getElementById("preview-icone").style.color = "#ef4444";
+        renderIcones();
+        document.getElementById("modal-categoria").classList.add("active");
       }
-      function fecharModalCategoria() { document.getElementById("modal-categoria").classList.remove("active"); }
+      function fecharModalCategoria() {
+        document.getElementById("modal-categoria").classList.remove("active");
+      }
 
-      function editarCategoria(id,nome,tipo,icone,cor) {
-        editandoCatId=id; iconeSelecionado=icone;
-        document.getElementById("modal-cat-titulo").textContent="Editar categoria";
-        document.getElementById("c-nome").value=nome; document.getElementById("c-tipo").value=tipo; document.getElementById("c-cor").value=cor;
-        document.getElementById("preview-icone").className=`fa-solid ${icone}`; document.getElementById("preview-icone").style.color=cor;
-        renderIcones(); document.getElementById("modal-categoria").classList.add("active");
+      function editarCategoria(id, nome, tipo, icone, cor) {
+        editandoCatId = id;
+        iconeSelecionado = icone;
+        document.getElementById("modal-cat-titulo").textContent =
+          "Editar categoria";
+        document.getElementById("c-nome").value = nome;
+        document.getElementById("c-tipo").value = tipo;
+        document.getElementById("c-cor").value = cor;
+        document.getElementById("preview-icone").className =
+          `fa-solid ${icone}`;
+        document.getElementById("preview-icone").style.color = cor;
+        renderIcones();
+        document.getElementById("modal-categoria").classList.add("active");
       }
 
       async function salvarCategoria() {
-        const body={nome:document.getElementById("c-nome").value,tipo:document.getElementById("c-tipo").value,icone:iconeSelecionado,cor:document.getElementById("c-cor").value};
-        if (!body.nome) { toast("Informe o nome.","erro"); return; }
-        if (editandoCatId) { await fetchAPI(`/api/categorias/${editandoCatId}`,{method:"PUT",body:JSON.stringify(body)}); toast("Categoria atualizada!"); }
-        else { await fetchAPI("/api/categorias",{method:"POST",body:JSON.stringify(body)}); toast("Categoria criada!"); }
-        fecharModalCategoria(); carregarCategorias();
+        const body = {
+          nome: document.getElementById("c-nome").value,
+          tipo: document.getElementById("c-tipo").value,
+          icone: iconeSelecionado,
+          cor: document.getElementById("c-cor").value,
+        };
+        if (!body.nome) {
+          toast("Informe o nome.", "erro");
+          return;
+        }
+        if (editandoCatId) {
+          await fetchAPI(`/api/categorias/${editandoCatId}`, {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+          toast("Categoria atualizada!");
+        } else {
+          await fetchAPI("/api/categorias", {
+            method: "POST",
+            body: JSON.stringify(body),
+          });
+          toast("Categoria criada!");
+        }
+        fecharModalCategoria();
+        carregarCategorias();
       }
 
       async function deletarCategoria(id) {
-        const ok=await confirmar("Deseja deletar esta categoria?"); if (!ok) return;
-        const res=await fetchAPI(`/api/categorias/${id}`,{method:"DELETE"});
-        if (res?.erro) { toast(res.erro,"aviso"); return; }
-        toast("Categoria deletada!","info"); carregarCategorias();
+        const ok = await confirmar("Deseja deletar esta categoria?");
+        if (!ok) return;
+        const res = await fetchAPI(`/api/categorias/${id}`, {
+          method: "DELETE",
+        });
+        if (res?.erro) {
+          toast(res.erro, "aviso");
+          return;
+        }
+        toast("Categoria deletada!", "info");
+        carregarCategorias();
       }
 
       init();
