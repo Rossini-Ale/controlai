@@ -430,6 +430,27 @@
           grid-template-columns: 1fr;
         }
       }
+      /* Selects de filtro */
+      .filtro-select {
+        background: var(--bg-secondary);
+        border: 0.5px solid var(--border);
+        color: var(--text-primary);
+        border-radius: 10px;
+        padding: 11px 32px 11px 12px;
+        font-size: 14px;
+        outline: none;
+        width: 100%;
+        cursor: pointer;
+        transition: border-color 0.2s;
+        -webkit-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+      }
+      .filtro-select:focus {
+        border-color: var(--green);
+      }
     </style>
   </head>
   <body>
@@ -486,85 +507,59 @@
       <!-- ABA LANÇAMENTOS -->
       <div class="aba-conteudo active" id="aba-lancamentos">
         <div
-          class="filtros"
-          style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap"
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+          "
         >
-          <select
-            id="filtro-mes"
-            onchange="carregarTransacoes()"
-            style="
-              background: var(--bg-secondary);
-              border: 0.5px solid var(--border);
-              color: var(--text-primary);
-              border-radius: 9px;
-              padding: 8px 12px;
-              font-size: 14px;
-              outline: none;
-              flex: 1;
-            "
-          >
-            <option value="1">Janeiro</option>
-            <option value="2">Fevereiro</option>
-            <option value="3">Março</option>
-            <option value="4">Abril</option>
-            <option value="5">Maio</option>
-            <option value="6">Junho</option>
-            <option value="7">Julho</option>
-            <option value="8">Agosto</option>
-            <option value="9">Setembro</option>
-            <option value="10">Outubro</option>
-            <option value="11">Novembro</option>
-            <option value="12">Dezembro</option>
-          </select>
-          <select
-            id="filtro-ano"
-            onchange="carregarTransacoes()"
-            style="
-              background: var(--bg-secondary);
-              border: 0.5px solid var(--border);
-              color: var(--text-primary);
-              border-radius: 9px;
-              padding: 8px 12px;
-              font-size: 14px;
-              outline: none;
-              flex: 1;
-            "
-          ></select>
-          <select
-            id="filtro-tipo"
-            onchange="carregarTransacoes()"
-            style="
-              background: var(--bg-secondary);
-              border: 0.5px solid var(--border);
-              color: var(--text-primary);
-              border-radius: 9px;
-              padding: 8px 12px;
-              font-size: 14px;
-              outline: none;
-              flex: 1;
-            "
-          >
-            <option value="">Todos</option>
-            <option value="receita">Receitas</option>
-            <option value="despesa">Despesas</option>
-            <option value="transferencia">Transferências</option>
-          </select>
-          <select
-            id="filtro-categoria"
-            onchange="carregarTransacoes()"
-            style="
-              background: var(--bg-secondary);
-              border: 0.5px solid var(--border);
-              color: var(--text-primary);
-              border-radius: 9px;
-              padding: 8px 12px;
-              font-size: 14px;
-              outline: none;
-              flex: 1;
-            "
-          >
-            <option value="">Todas categorias</option>
-          </select>
+          <!-- Linha 1: Mês + Ano -->
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px">
+            <select
+              id="filtro-mes"
+              onchange="carregarTransacoes()"
+              class="filtro-select"
+            >
+              <option value="1">Janeiro</option>
+              <option value="2">Fevereiro</option>
+              <option value="3">Março</option>
+              <option value="4">Abril</option>
+              <option value="5">Maio</option>
+              <option value="6">Junho</option>
+              <option value="7">Julho</option>
+              <option value="8">Agosto</option>
+              <option value="9">Setembro</option>
+              <option value="10">Outubro</option>
+              <option value="11">Novembro</option>
+              <option value="12">Dezembro</option>
+            </select>
+            <select
+              id="filtro-ano"
+              onchange="carregarTransacoes()"
+              class="filtro-select"
+            ></select>
+          </div>
+          <!-- Linha 2: Tipo + Categoria -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+            <select
+              id="filtro-tipo"
+              onchange="carregarTransacoes()"
+              class="filtro-select"
+            >
+              <option value="">Todos</option>
+              <option value="receita">Receitas</option>
+              <option value="despesa">Despesas</option>
+              <option value="transferencia">Transferências</option>
+            </select>
+            <select
+              id="filtro-categoria"
+              onchange="carregarTransacoes()"
+              class="filtro-select"
+            >
+              <option value="">Todas categorias</option>
+            </select>
+          </div>
         </div>
         <div class="table-wrap desktop-only">
           <table>

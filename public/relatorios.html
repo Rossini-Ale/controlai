@@ -58,14 +58,27 @@
         flex-wrap: wrap;
         align-items: center;
       }
-      .filtros select {
+      .filtros select,
+      .filtro-select {
         background: var(--bg-secondary);
         border: 0.5px solid var(--border);
         color: var(--text-primary);
-        border-radius: 9px;
-        padding: 8px 12px;
+        border-radius: 10px;
+        padding: 11px 32px 11px 12px;
         font-size: 14px;
         outline: none;
+        width: 100%;
+        cursor: pointer;
+        transition: border-color 0.2s;
+        -webkit-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+      }
+      .filtro-select:focus,
+      .filtros select:focus {
+        border-color: var(--green);
       }
       .secao {
         margin-bottom: 28px;
@@ -471,32 +484,47 @@
 
       <!-- ABA RELATÓRIOS -->
       <div class="aba-conteudo active" id="aba-relatorios">
-        <div class="filtros">
-          <select id="filtro-mes">
-            <option value="1">Janeiro</option>
-            <option value="2">Fevereiro</option>
-            <option value="3">Março</option>
-            <option value="4">Abril</option>
-            <option value="5">Maio</option>
-            <option value="6">Junho</option>
-            <option value="7">Julho</option>
-            <option value="8">Agosto</option>
-            <option value="9">Setembro</option>
-            <option value="10">Outubro</option>
-            <option value="11">Novembro</option>
-            <option value="12">Dezembro</option>
-          </select>
-          <select id="filtro-ano"></select>
-          <button class="btn" onclick="carregarRelatorio()">
-            <i class="fa-solid fa-rotate"></i> Atualizar
-          </button>
-          <button
-            class="btn"
-            style="background: #6366f1"
-            onclick="exportarPDF()"
-          >
-            <i class="fa-solid fa-file-pdf"></i> Exportar PDF
-          </button>
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+          "
+        >
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px">
+            <select id="filtro-mes" class="filtro-select">
+              <option value="1">Janeiro</option>
+              <option value="2">Fevereiro</option>
+              <option value="3">Março</option>
+              <option value="4">Abril</option>
+              <option value="5">Maio</option>
+              <option value="6">Junho</option>
+              <option value="7">Julho</option>
+              <option value="8">Agosto</option>
+              <option value="9">Setembro</option>
+              <option value="10">Outubro</option>
+              <option value="11">Novembro</option>
+              <option value="12">Dezembro</option>
+            </select>
+            <select id="filtro-ano" class="filtro-select"></select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+            <button
+              class="btn"
+              style="width: 100%; justify-content: center"
+              onclick="carregarRelatorio()"
+            >
+              <i class="fa-solid fa-rotate"></i> Atualizar
+            </button>
+            <button
+              class="btn"
+              style="width: 100%; justify-content: center; background: #6366f1"
+              onclick="exportarPDF()"
+            >
+              <i class="fa-solid fa-file-pdf"></i> PDF
+            </button>
+          </div>
         </div>
         <div class="secao">
           <div class="secao-titulo">
@@ -631,18 +659,16 @@
 
       <!-- ABA ORÇAMENTO -->
       <div class="aba-conteudo" id="aba-orcamento">
-        <div class="orc-header">
-          <div>
-            <label
-              style="
-                font-size: 12px;
-                color: var(--text-muted);
-                display: block;
-                margin-bottom: 4px;
-              "
-              >Mês</label
-            >
-            <select id="orc-mes">
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+          "
+        >
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px">
+            <select id="orc-mes" class="filtro-select">
               <option value="1">Janeiro</option>
               <option value="2">Fevereiro</option>
               <option value="3">Março</option>
@@ -656,29 +682,24 @@
               <option value="11">Novembro</option>
               <option value="12">Dezembro</option>
             </select>
+            <select id="orc-ano" class="filtro-select"></select>
           </div>
-          <div>
-            <label
-              style="
-                font-size: 12px;
-                color: var(--text-muted);
-                display: block;
-                margin-bottom: 4px;
-              "
-              >Ano</label
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+            <button
+              class="btn"
+              style="width: 100%; justify-content: center"
+              onclick="carregarOrcamento()"
             >
-            <select id="orc-ano"></select>
+              <i class="fa-solid fa-rotate"></i> Atualizar
+            </button>
+            <button
+              class="btn"
+              style="width: 100%; justify-content: center; background: #6366f1"
+              onclick="copiarMesAnterior()"
+            >
+              <i class="fa-solid fa-copy"></i> Copiar mês
+            </button>
           </div>
-          <button class="btn" onclick="carregarOrcamento()">
-            <i class="fa-solid fa-rotate"></i> Atualizar
-          </button>
-          <button
-            class="btn"
-            style="background: #6366f1"
-            onclick="copiarMesAnterior()"
-          >
-            <i class="fa-solid fa-copy"></i> Copiar mês anterior
-          </button>
         </div>
         <div class="orc-secao-titulo">
           <i class="fa-solid fa-wallet"></i> Orçamento geral do mês
