@@ -742,21 +742,42 @@
         <input type="hidden" id="f-tipo" value="despesa" />
         <div class="form-group">
           <label>Valor (R$)</label>
-          <input
-            type="text"
-            inputmode="decimal"
-            id="f-valor"
-            placeholder="0,00"
-            tabindex="1"
-            style="
-              font-size: 20px;
-              font-weight: 600;
-              padding: 14px 13px;
-              transition:
-                border-color 0.2s,
-                background 0.2s;
-            "
-          />
+          <div style="display: flex; gap: 8px; align-items: stretch">
+            <input
+              type="text"
+              inputmode="decimal"
+              id="f-valor"
+              placeholder="0,00"
+              tabindex="1"
+              style="
+                flex: 1;
+                font-size: 20px;
+                font-weight: 600;
+                padding: 14px 13px;
+                transition:
+                  border-color 0.2s,
+                  background 0.2s;
+              "
+            />
+            <button
+              type="button"
+              onclick="inverterSinal()"
+              title="Inverter Despesa ↔ Receita"
+              style="
+                background: var(--bg-tertiary);
+                border: 0.5px solid var(--border);
+                color: var(--text-secondary);
+                border-radius: 10px;
+                padding: 0 14px;
+                font-size: 16px;
+                cursor: pointer;
+                transition: all 0.2s;
+                flex-shrink: 0;
+              "
+            >
+              <i class="fa-solid fa-plus-minus"></i>
+            </button>
+          </div>
         </div>
         <div class="form-group">
           <label>Descrição</label
@@ -1367,6 +1388,25 @@
         if (aba === "lixeira") carregarLixeira();
       }
 
+      function inverterSinal() {
+        const tipo = document.getElementById("f-tipo").value;
+        const novoTipo = tipo === "despesa" ? "receita" : "despesa";
+        selecionarTipoModal(novoTipo);
+        haptic(8);
+        // Feedback no botão
+        const btn = document.querySelector('[onclick="inverterSinal()"]');
+        if (btn) {
+          btn.style.borderColor =
+            novoTipo === "receita" ? "var(--green)" : "var(--red)";
+          btn.style.color =
+            novoTipo === "receita" ? "var(--green)" : "var(--red)";
+          setTimeout(() => {
+            btn.style.borderColor = "";
+            btn.style.color = "";
+          }, 800);
+        }
+      }
+
       function abrirModalAtivo() {
         if (abaAtiva === "lancamentos") abrirModalLancamento();
         else if (abaAtiva === "recorrentes") abrirModalRec();
@@ -1492,7 +1532,7 @@
               t.parcelas > 1
                 ? `<span style="font-size:10px;color:var(--text-muted);margin-left:5px;font-weight:400">[${t.parcela_atual}/${t.parcelas}]</span>`
                 : "";
-            return `<tr>
+            return `<tr data-id="${t.id}" style="transition:transform 0.3s ease,opacity 0.3s ease,max-height 0.25s ease">
             <td>${formatarData(t.data)}</td>
             <td>
               ${isT ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}
@@ -1850,13 +1890,42 @@
         );
         if (!ok) return;
         haptic(15);
-        // Optimistic — remove da tela imediatamente
-        const elId = `sw-wrap-${id}`;
-        optimisticDelete(
-          elId,
-          () => fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" }),
-          () => carregarTransacoes(), // restaura se falhar
-        );
+
+        // Mobile — optimistic com swipe
+        const elMobile = document.getElementById(`sw-wrap-${id}`);
+        if (elMobile) {
+          optimisticDelete(
+            `sw-wrap-${id}`,
+            () => fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" }),
+            () => carregarTransacoes(),
+          );
+          return;
+        }
+
+        // Desktop — animação de deslizar para a esquerda
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        if (row) {
+          row.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+          row.style.transform = "translateX(-100%)";
+          row.style.opacity = "0";
+          setTimeout(async () => {
+            row.style.transition = "max-height 0.25s ease";
+            row.style.maxHeight = row.offsetHeight + "px";
+            row.style.overflow = "hidden";
+            requestAnimationFrame(() => {
+              row.style.maxHeight = "0";
+            });
+            setTimeout(async () => {
+              row.remove();
+              await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
+            }, 250);
+          }, 300);
+          return;
+        }
+
+        // Fallback
+        await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
+        carregarTransacoes();
       }
 
       async function deletarTransferencia(tid) {
@@ -1992,6 +2061,7 @@
               <button class="btn-edit" onclick="editarRec(${r.id})"><i class="fa-solid fa-pen"></i></button>
               <button class="btn-danger" onclick="deletarRec(${r.id})"><i class="fa-solid fa-trash"></i></button>
             </div>
+            ${r.observacao ? renderBotaoCopiar(r.observacao, `rec-${r.id}`) : ""}
           </div>`;
           })
           .join("");

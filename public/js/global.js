@@ -1231,3 +1231,117 @@ function ativarPullToDismiss(modalId, fecharFn) {
     }
   });
 }
+
+// ════════════════════════════════════════
+// VISIBILIDADE — atualiza ao voltar para a aba
+// ════════════════════════════════════════
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  // Atualiza saldo se a função existir na página atual
+  if (typeof carregarDados === "function") carregarDados();
+  else if (typeof carregarResumo === "function") carregarResumo();
+  // Atualiza favicon com alertas
+  atualizarFavicon();
+});
+
+// ════════════════════════════════════════
+// FAVICON DINÂMICO
+// Adiciona ponto vermelho se houver recorrentes vencendo
+// ════════════════════════════════════════
+async function atualizarFavicon() {
+  try {
+    const data = await fetchAPI("/api/recorrentes/vencendo?dias=0");
+    const vencendoHoje = Array.isArray(data) ? data.length : 0;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 32;
+    canvas.height = 32;
+    const ctx = canvas.getContext("2d");
+
+    // Fundo verde arredondado (ícone base)
+    ctx.fillStyle = "#10b981";
+    ctx.beginPath();
+    ctx.roundRect(0, 0, 32, 32, 8);
+    ctx.fill();
+
+    // Letra C
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 20px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("C", 16, 17);
+
+    // Ponto vermelho se tiver alertas
+    if (vencendoHoje > 0) {
+      ctx.fillStyle = "#ef4444";
+      ctx.beginPath();
+      ctx.arc(26, 6, 7, 0, Math.PI * 2);
+      ctx.fill();
+      // Número dentro do ponto
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 9px sans-serif";
+      ctx.fillText(vencendoHoje > 9 ? "9+" : String(vencendoHoje), 26, 6);
+    }
+
+    // Injeta no favicon
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+    link.href = canvas.toDataURL("image/png");
+  } catch {
+    /* silencioso */
+  }
+}
+
+// Chama ao carregar
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(atualizarFavicon, 2000);
+});
+
+// ════════════════════════════════════════
+// COPIAR PIX / CÓDIGO
+// Detecta chave pix ou código em observação
+// ════════════════════════════════════════
+function renderBotaoCopiar(texto, containerId) {
+  if (!texto || texto.trim().length < 5) return "";
+  // Heurística: se parece pix ou código (email, CPF, chave aleatória, copia-e-cola)
+  const parecePix = /[@.\-+/A-Za-z0-9]{8,}/.test(texto.trim());
+  if (!parecePix) return "";
+
+  const id = `copiar-${containerId}`;
+  return `<button id="${id}" onclick="copiarTexto('${texto.replace(/'/g, "\\'")}','${id}')"
+    style="
+      background:rgba(59,130,246,0.12);border:0.5px solid var(--blue);
+      color:var(--blue);border-radius:8px;padding:5px 12px;
+      font-size:12px;font-weight:600;cursor:pointer;
+      display:inline-flex;align-items:center;gap:6px;
+      transition:all 0.2s;margin-top:6px;
+    ">
+    <i class="fa-solid fa-copy"></i> Copiar código
+  </button>`;
+}
+
+async function copiarTexto(texto, btnId) {
+  try {
+    await navigator.clipboard.writeText(texto);
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.innerHTML = `<i class="fa-solid fa-check"></i> Copiado! 🎉`;
+      btn.style.background = "rgba(16,185,129,0.12)";
+      btn.style.borderColor = "var(--green)";
+      btn.style.color = "var(--green)";
+      setTimeout(() => {
+        btn.innerHTML = `<i class="fa-solid fa-copy"></i> Copiar código`;
+        btn.style.background = "rgba(59,130,246,0.12)";
+        btn.style.borderColor = "var(--blue)";
+        btn.style.color = "var(--blue)";
+      }, 2500);
+    }
+    haptic(10);
+  } catch {
+    toast("Não foi possível copiar. Tente manualmente.", "aviso");
+  }
+}
