@@ -235,19 +235,45 @@ function nomeMes(mes) {
   ][mes - 1];
 }
 async function fetchAPI(endpoint, options = {}) {
-  const res = await fetch(`${API}${endpoint}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`,
-      ...(options.headers || {}),
-    },
-  });
-  if (res.status === 401) {
-    logout();
+  try {
+    const res = await fetch(`${API}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+        ...(options.headers || {}),
+      },
+    });
+
+    if (res.status === 401) {
+      logout();
+      return null;
+    }
+
+    // Tenta parse como JSON; se falhar, retorna null com log
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      if (!res.ok) console.error(`[fetchAPI] ${endpoint} → HTTP ${res.status}`);
+      return null;
+    }
+
+    const data = await res.json();
+
+    // Resposta de erro do servidor (4xx/5xx com body JSON)
+    if (!res.ok) {
+      const msg = data?.erro || data?.message || `Erro ${res.status}`;
+      console.error(`[fetchAPI] ${endpoint} → ${msg}`);
+      // Retorna o objeto de erro para que o caller possa inspecionar se quiser
+      return data;
+    }
+
+    return data;
+  } catch (err) {
+    // Erro de rede (offline, timeout, CORS, etc.)
+    if (!navigator.onLine) return null; // silencioso — banner offline já notifica
+    console.error(`[fetchAPI] ${endpoint} → Erro de rede:`, err.message);
     return null;
   }
-  return res.json();
 }
 
 // ════════════════════════════════════════
@@ -878,37 +904,46 @@ function ativarAutoScrollFoco(formSelector) {
 // SMART AUTOCOMPLETE DE DESCRIÇÕES
 // Mostra chips com as descrições mais usadas
 // ════════════════════════════════════════
+let _smartDescCache = null;
+let _smartDescTs = 0;
+const SMART_DESC_TTL = 5 * 60 * 1000; // 5 minutos
+
 async function renderSmartDescricoes(inputDescId, inputCatId, containerId) {
   if (!_mapaCategoria) await construirMapaCategoria();
 
-  // Remove chips anteriores
   document.getElementById(containerId)?.remove();
   const inputDesc = document.getElementById(inputDescId);
   if (!inputDesc) return;
 
-  // Constrói mapa de frequência de descrições
-  const freqDesc = {};
-  const catPorDesc = {};
-  try {
-    const res = await fetchAPI("/api/transacoes?limit=200");
-    const data = Array.isArray(res) ? res : res?.data || [];
-    data.forEach((t) => {
-      if (!t.descricao) return;
-      const key = t.descricao.trim();
-      freqDesc[key] = (freqDesc[key] || 0) + 1;
-      catPorDesc[key] = t.categoria_id; // última categoria usada
-    });
-  } catch {
-    return;
+  // Usa cache se ainda válido
+  let freqDesc = {},
+    catPorDesc = {};
+  const agora = Date.now();
+  if (_smartDescCache && agora - _smartDescTs < SMART_DESC_TTL) {
+    ({ freqDesc, catPorDesc } = _smartDescCache);
+  } else {
+    try {
+      const res = await fetchAPI("/api/transacoes?limit=200");
+      const data = Array.isArray(res) ? res : res?.data || [];
+      data.forEach((t) => {
+        if (!t.descricao) return;
+        const key = t.descricao.trim();
+        freqDesc[key] = (freqDesc[key] || 0) + 1;
+        catPorDesc[key] = t.categoria_id;
+      });
+      _smartDescCache = { freqDesc, catPorDesc };
+      _smartDescTs = agora;
+    } catch {
+      return;
+    }
   }
 
-  // Top 5 mais frequentes
   const tops = Object.entries(freqDesc)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([desc]) => desc);
 
-  if (tops.length === 0) return;
+  if (!tops.length) return;
 
   const wrap = document.createElement("div");
   wrap.id = containerId;
@@ -917,7 +952,6 @@ async function renderSmartDescricoes(inputDescId, inputCatId, containerId) {
     margin-bottom:10px;padding-bottom:2px;
     scrollbar-width:none;-webkit-overflow-scrolling:touch;
   `;
-  wrap.style.setProperty("scrollbar-width", "none");
 
   tops.forEach((desc) => {
     const chip = document.createElement("button");
@@ -939,24 +973,20 @@ async function renderSmartDescricoes(inputDescId, inputCatId, containerId) {
     };
     chip.onclick = () => {
       inputDesc.value = desc;
-      // Preenche categoria automaticamente
       if (catPorDesc[desc] && inputCatId) {
         const sel = document.getElementById(inputCatId);
         if (sel) {
           sel.value = catPorDesc[desc];
-          // Feedback visual
           sel.style.borderColor = "var(--green)";
           setTimeout(() => (sel.style.borderColor = ""), 1200);
         }
       }
       wrap.remove();
-      // Foca no próximo campo
       document.getElementById("f-valor")?.focus?.();
     };
     wrap.appendChild(chip);
   });
 
-  // Insere antes do input de descrição
   inputDesc.parentNode.insertBefore(wrap, inputDesc);
 }
 
@@ -1063,51 +1093,6 @@ function ativarAutoTabbing(selectId, proximoId, delay = 150) {
     }, delay);
   });
 }
-
-// ════════════════════════════════════════
-// NOTIFICAÇÕES LOCAIS (Web Notifications)
-// ════════════════════════════════════════
-async function pedirPermissaoNotificacao() {
-  if (!("Notification" in window)) return false;
-  if (Notification.permission === "granted") return true;
-  if (Notification.permission === "denied") return false;
-  const perm = await Notification.requestPermission();
-  return perm === "granted";
-}
-
-function notificarVencimentos(lista) {
-  if (!("Notification" in window) || Notification.permission !== "granted")
-    return;
-  if (!lista || lista.length === 0) return;
-  const hoje = new Date().toISOString().split("T")[0];
-  const hojeList = lista.filter(
-    (r) => r.proxima_geracao?.split("T")[0] === hoje,
-  );
-  if (hojeList.length === 0) return;
-  const nomes = hojeList.map((r) => r.descricao).join(", ");
-  new Notification("Controlaí — Vencimento hoje!", {
-    body:
-      hojeList.length === 1
-        ? `"${nomes}" vence hoje. Não se esqueça!`
-        : `${hojeList.length} contas vencem hoje: ${nomes}`,
-    tag: "controlai-vencimento",
-  });
-}
-
-async function verificarENotificar() {
-  const ok = await pedirPermissaoNotificacao();
-  if (!ok) return;
-  try {
-    const data = await fetchAPI("/api/recorrentes/vencendo?dias=0");
-    notificarVencimentos(Array.isArray(data) ? data : []);
-  } catch {
-    /* silencioso */
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(verificarENotificar, 3000);
-});
 
 // ════════════════════════════════════════
 // HIGHLIGHT DE BUSCA
@@ -1327,524 +1312,4 @@ function ativarPullToDismiss(modalId, fecharFn) {
       modal.style.opacity = "";
     }
   });
-}
-
-// ════════════════════════════════════════
-// VISIBILIDADE — atualiza ao voltar para a aba
-// ════════════════════════════════════════
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState !== "visible") return;
-  // Atualiza saldo se a função existir na página atual
-  if (typeof carregarDados === "function") carregarDados();
-  else if (typeof carregarResumo === "function") carregarResumo();
-  // Atualiza favicon com alertas
-  atualizarFavicon();
-});
-
-// ════════════════════════════════════════
-// FAVICON DINÂMICO
-// Adiciona ponto vermelho se houver recorrentes vencendo
-// ════════════════════════════════════════
-async function atualizarFavicon() {
-  try {
-    const data = await fetchAPI("/api/recorrentes/vencendo?dias=0");
-    const vencendoHoje = Array.isArray(data) ? data.length : 0;
-
-    const canvas = document.createElement("canvas");
-    canvas.width = 32;
-    canvas.height = 32;
-    const ctx = canvas.getContext("2d");
-
-    // Fundo verde arredondado (ícone base)
-    ctx.fillStyle = "#10b981";
-    ctx.beginPath();
-    ctx.roundRect(0, 0, 32, 32, 8);
-    ctx.fill();
-
-    // Letra C
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 20px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("C", 16, 17);
-
-    // Ponto vermelho se tiver alertas
-    if (vencendoHoje > 0) {
-      ctx.fillStyle = "#ef4444";
-      ctx.beginPath();
-      ctx.arc(26, 6, 7, 0, Math.PI * 2);
-      ctx.fill();
-      // Número dentro do ponto
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 9px sans-serif";
-      ctx.fillText(vencendoHoje > 9 ? "9+" : String(vencendoHoje), 26, 6);
-    }
-
-    // Injeta no favicon
-    let link = document.querySelector("link[rel~='icon']");
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "icon";
-      document.head.appendChild(link);
-    }
-    link.href = canvas.toDataURL("image/png");
-  } catch {
-    /* silencioso */
-  }
-}
-
-// Chama ao carregar
-document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(atualizarFavicon, 2000);
-});
-
-// ════════════════════════════════════════
-// COPIAR PIX / CÓDIGO
-// Detecta chave pix ou código em observação
-// ════════════════════════════════════════
-function renderBotaoCopiar(texto, containerId) {
-  if (!texto || texto.trim().length < 5) return "";
-  // Heurística: se parece pix ou código (email, CPF, chave aleatória, copia-e-cola)
-  const parecePix = /[@.\-+/A-Za-z0-9]{8,}/.test(texto.trim());
-  if (!parecePix) return "";
-
-  const id = `copiar-${containerId}`;
-  return `<button id="${id}" onclick="copiarTexto('${texto.replace(/'/g, "\\'")}','${id}')"
-    style="
-      background:rgba(59,130,246,0.12);border:0.5px solid var(--blue);
-      color:var(--blue);border-radius:8px;padding:5px 12px;
-      font-size:12px;font-weight:600;cursor:pointer;
-      display:inline-flex;align-items:center;gap:6px;
-      transition:all 0.2s;margin-top:6px;
-    ">
-    <i class="fa-solid fa-copy"></i> Copiar código
-  </button>`;
-}
-
-async function copiarTexto(texto, btnId) {
-  try {
-    await navigator.clipboard.writeText(texto);
-    const btn = document.getElementById(btnId);
-    if (btn) {
-      btn.innerHTML = `<i class="fa-solid fa-check"></i> Copiado! 🎉`;
-      btn.style.background = "rgba(16,185,129,0.12)";
-      btn.style.borderColor = "var(--green)";
-      btn.style.color = "var(--green)";
-      setTimeout(() => {
-        btn.innerHTML = `<i class="fa-solid fa-copy"></i> Copiar código`;
-        btn.style.background = "rgba(59,130,246,0.12)";
-        btn.style.borderColor = "var(--blue)";
-        btn.style.color = "var(--blue)";
-      }, 2500);
-    }
-    haptic(10);
-  } catch {
-    toast("Não foi possível copiar. Tente manualmente.", "aviso");
-  }
-}
-// ════════════════════════════════════════
-// RASCUNHO AUTOMÁTICO (Auto-Save Draft)
-// ════════════════════════════════════════
-const DRAFT_KEY = "controlai_draft_lancamento";
-
-function salvarRascunho() {
-  const draft = {
-    tipo: document.getElementById("f-tipo")?.value,
-    valor: document.getElementById("f-valor")?.value,
-    valorRaw: document.getElementById("f-valor")?.dataset.valor,
-    descricao: document.getElementById("f-descricao")?.value,
-    categoria: document.getElementById("f-categoria")?.value,
-    conta: document.getElementById("f-conta")?.value,
-    data: document.getElementById("f-data")?.value,
-    obs: document.getElementById("f-obs")?.value,
-    ts: Date.now(),
-  };
-  // Só salva se tiver algum conteúdo relevante
-  if (draft.valor || draft.descricao) {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-  }
-}
-
-function limparRascunho() {
-  localStorage.removeItem(DRAFT_KEY);
-}
-
-function verificarRascunho() {
-  const raw = localStorage.getItem(DRAFT_KEY);
-  if (!raw) return;
-  try {
-    const draft = JSON.parse(raw);
-    // Ignora rascunhos com mais de 24h
-    if (Date.now() - draft.ts > 86400000) {
-      limparRascunho();
-      return;
-    }
-    if (!draft.valor && !draft.descricao) {
-      limparRascunho();
-      return;
-    }
-
-    // Banner de restauração
-    const banner = document.createElement("div");
-    banner.id = "draft-banner";
-    banner.style.cssText = `
-      position:fixed;bottom:80px;left:16px;right:16px;
-      background:var(--bg-secondary);border:0.5px solid var(--border);
-      border-radius:14px;padding:14px 16px;z-index:9990;
-      display:flex;align-items:center;gap:12px;
-      box-shadow:0 4px 20px rgba(0,0,0,0.25);
-      animation:slideUpMenu 0.3s ease;
-    `;
-    banner.innerHTML = `
-      <i class="fa-solid fa-file-pen" style="color:var(--green);font-size:18px;flex-shrink:0"></i>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600">Rascunho encontrado</div>
-        <div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-          ${draft.descricao || "Valor: " + draft.valor}
-        </div>
-      </div>
-      <button onclick="restaurarRascunho()" style="background:var(--green);border:none;color:#fff;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0">Restaurar</button>
-      <button onclick="document.getElementById('draft-banner')?.remove();limparRascunho();" style="background:transparent;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:4px;flex-shrink:0"><i class="fa-solid fa-xmark"></i></button>
-    `;
-    document.body.appendChild(banner);
-    // Auto-remove após 10s
-    setTimeout(() => banner?.remove(), 10000);
-  } catch {
-    limparRascunho();
-  }
-}
-
-function restaurarRascunho() {
-  const raw = localStorage.getItem(DRAFT_KEY);
-  if (!raw) return;
-  document.getElementById("draft-banner")?.remove();
-  try {
-    const draft = JSON.parse(raw);
-    // Abre o modal e preenche
-    if (typeof abrirModalLancamento === "function") {
-      abrirModalLancamento();
-      setTimeout(() => {
-        if (draft.tipo) {
-          if (typeof selecionarTipoModal === "function")
-            selecionarTipoModal(draft.tipo);
-        }
-        if (draft.valor) {
-          const inp = document.getElementById("f-valor");
-          if (inp) {
-            inp.value = draft.valor;
-            inp.dataset.valor = draft.valorRaw || "";
-          }
-        }
-        if (draft.descricao) {
-          const el = document.getElementById("f-descricao");
-          if (el) el.value = draft.descricao;
-        }
-        if (draft.categoria) {
-          const el = document.getElementById("f-categoria");
-          if (el) el.value = draft.categoria;
-        }
-        if (draft.conta) {
-          const el = document.getElementById("f-conta");
-          if (el) el.value = draft.conta;
-        }
-        if (draft.data) {
-          const el = document.getElementById("f-data");
-          if (el) el.value = draft.data;
-        }
-        if (draft.obs) {
-          const el = document.getElementById("f-obs");
-          if (el) el.value = draft.obs;
-        }
-      }, 300);
-    }
-  } catch {
-    limparRascunho();
-  }
-}
-
-function ativarAutoSaveDraft() {
-  const campos = [
-    "f-valor",
-    "f-descricao",
-    "f-categoria",
-    "f-conta",
-    "f-data",
-    "f-obs",
-  ];
-  campos.forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener("input", salvarRascunho);
-    if (el && el.tagName === "SELECT")
-      el.addEventListener("change", salvarRascunho);
-  });
-}
-
-// Verifica rascunho ao carregar
-document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(verificarRascunho, 1500);
-});
-
-// ════════════════════════════════════════
-// FILA OFFLINE (Sync Queue)
-// ════════════════════════════════════════
-const QUEUE_KEY = "controlai_offline_queue";
-
-function adicionarFilaOffline(endpoint, options, descricao) {
-  const fila = JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
-  fila.push({ endpoint, options, descricao, ts: Date.now() });
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(fila));
-  toast(
-    `"${descricao}" salvo offline. Será enviado quando a internet voltar.`,
-    "aviso",
-  );
-}
-
-async function processarFilaOffline() {
-  const fila = JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
-  if (fila.length === 0) return;
-  const restante = [];
-  let enviados = 0;
-  for (const item of fila) {
-    try {
-      await fetchAPI(item.endpoint, item.options);
-      enviados++;
-    } catch {
-      restante.push(item);
-    }
-  }
-  localStorage.setItem(QUEUE_KEY, JSON.stringify(restante));
-  if (enviados > 0) {
-    toast(`${enviados} lançamento(s) offline sincronizado(s)! ✅`);
-    // Recarrega dados da página atual
-    if (typeof carregarDados === "function") carregarDados();
-    if (typeof carregarTransacoes === "function") carregarTransacoes();
-  }
-}
-
-// Processa fila quando internet volta
-window.addEventListener("online", () => {
-  setTimeout(processarFilaOffline, 1000);
-});
-
-// ════════════════════════════════════════
-// META THEME-COLOR DINÂMICO
-// ════════════════════════════════════════
-function setThemeColor(cor) {
-  let meta = document.querySelector("meta[name='theme-color']");
-  if (!meta) {
-    meta = document.createElement("meta");
-    meta.name = "theme-color";
-    document.head.appendChild(meta);
-  }
-  meta.content = cor;
-}
-
-function themeColorPorTema() {
-  const tema = getTema();
-  if (tema === "claro") setThemeColor("#f8fafc");
-  else setThemeColor("#0f1117");
-}
-
-// Aplica ao carregar e ao trocar tema
-document.addEventListener("DOMContentLoaded", themeColorPorTema);
-const _origAplicarTema = aplicarTema;
-// Override para atualizar theme-color junto com o tema
-if (typeof aplicarTema === "function") {
-  window.aplicarTema = function (tema) {
-    _origAplicarTema(tema);
-    setTimeout(themeColorPorTema, 50);
-  };
-}
-
-// ════════════════════════════════════════
-// LANÇAMENTO POR VOZ (Web Speech API)
-// ════════════════════════════════════════
-function ativarVoz(btnId, descId, valorId) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    btn.style.display = "none"; // esconde se não suportado
-    return;
-  }
-
-  const rec = new SR();
-  rec.lang = "pt-BR";
-  rec.interimResults = false;
-  rec.maxAlternatives = 1;
-
-  let ouvindo = false;
-
-  btn.onclick = () => {
-    if (ouvindo) {
-      rec.stop();
-      return;
-    }
-    ouvindo = true;
-    btn.innerHTML = `<i class="fa-solid fa-circle" style="color:#ef4444;animation:pulseRed 0.8s infinite"></i>`;
-    btn.title = "Ouvindo... clique para parar";
-    haptic(15);
-    rec.start();
-  };
-
-  rec.onresult = (e) => {
-    const texto = e.results[0][0].transcript.toLowerCase().trim();
-    // Extrai valor: procura números (ex: "150 reais", "R$ 50", "cinquenta")
-    const numeros = {
-      um: 1,
-      dois: 2,
-      tres: 3,
-      três: 3,
-      quatro: 4,
-      cinco: 5,
-      seis: 6,
-      sete: 7,
-      oito: 8,
-      nove: 9,
-      dez: 10,
-      vinte: 20,
-      trinta: 30,
-      quarenta: 40,
-      cinquenta: 50,
-      sessenta: 60,
-      setenta: 70,
-      oitenta: 80,
-      noventa: 90,
-      cem: 100,
-      cento: 100,
-      duzentos: 200,
-      trezentos: 300,
-      quatrocentos: 400,
-      quinhentos: 500,
-      mil: 1000,
-    };
-
-    let valor = null;
-    // Tenta número direto primeiro
-    const matchNum = texto.match(/(\d+(?:[,\.]\d{1,2})?)/);
-    if (matchNum) valor = parseFloat(matchNum[1].replace(",", "."));
-
-    // Tenta por extenso
-    if (!valor) {
-      for (const [palavra, num] of Object.entries(numeros)) {
-        if (texto.includes(palavra)) {
-          valor = num;
-          break;
-        }
-      }
-    }
-
-    // Extrai descrição: remove o valor e palavras como "reais", "R$"
-    let descricao = texto
-      .replace(/\d+(?:[,\.]\d{1,2})?/g, "")
-      .replace(/\b(reais?|real|r\$|pagar?|comprei?|gastei?)\b/gi, "")
-      .replace(/\s+/g, " ")
-      .trim();
-    descricao = descricao.charAt(0).toUpperCase() + descricao.slice(1);
-
-    // Preenche os campos
-    if (descricao) {
-      const elDesc = document.getElementById(descId);
-      if (elDesc) {
-        elDesc.value = descricao;
-        elDesc.dispatchEvent(new Event("input")); // dispara categoria inteligente
-      }
-    }
-    if (valor) {
-      const elValor = document.getElementById(valorId);
-      if (elValor) {
-        elValor.value = valor.toLocaleString("pt-BR", {
-          minimumFractionDigits: 2,
-        });
-        elValor.dataset.valor = valor;
-        elValor.dispatchEvent(new Event("input"));
-      }
-    }
-    haptic(20);
-    toast(
-      `🎤 "${texto}" → ${descricao || "—"} ${valor ? formatarMoedaRaw(valor) : ""}`,
-      "sucesso",
-    );
-  };
-
-  rec.onend = () => {
-    ouvindo = false;
-    btn.innerHTML = `<i class="fa-solid fa-microphone"></i>`;
-    btn.title = "Lançar por voz";
-  };
-
-  rec.onerror = (e) => {
-    ouvindo = false;
-    btn.innerHTML = `<i class="fa-solid fa-microphone"></i>`;
-    if (e.error !== "no-speech")
-      toast("Voz não reconhecida. Tente novamente.", "aviso");
-  };
-}
-
-// ════════════════════════════════════════
-// MODO FOCO A LASER
-// Digitar "foco" em qualquer tela
-// ════════════════════════════════════════
-let _focoBuffer = "";
-let _modoFocoAtivo = false;
-
-document.addEventListener("keydown", (e) => {
-  const tag = document.activeElement?.tagName?.toLowerCase();
-  if (["input", "select", "textarea"].includes(tag)) return;
-
-  _focoBuffer += e.key.toLowerCase();
-  if (_focoBuffer.length > 6) _focoBuffer = _focoBuffer.slice(-6);
-
-  if (_focoBuffer.includes("foco")) {
-    _focoBuffer = "";
-    toggleModoFoco();
-  }
-});
-
-function toggleModoFoco() {
-  _modoFocoAtivo = !_modoFocoAtivo;
-
-  if (_modoFocoAtivo) {
-    // Esconde tudo e mostra só o saldo disponível
-    const overlay = document.createElement("div");
-    overlay.id = "modo-foco-overlay";
-    overlay.style.cssText = `
-      position:fixed;inset:0;background:var(--bg-primary);
-      z-index:9997;display:flex;flex-direction:column;
-      align-items:center;justify-content:center;
-      animation:fadeUp 0.3s ease;
-    `;
-    overlay.innerHTML = `
-      <div style="font-size:12px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">
-        Disponível hoje
-      </div>
-      <div id="foco-saldo" style="font-size:clamp(40px,12vw,80px);font-weight:800;letter-spacing:-2px;color:var(--green)">
-        Carregando...
-      </div>
-      <div style="font-size:13px;color:var(--text-muted);margin-top:16px">
-        Pressione <kbd style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:5px;padding:2px 8px;font-size:12px">ESC</kbd> ou clique para sair
-      </div>
-    `;
-    overlay.onclick = toggleModoFoco;
-    document.body.appendChild(overlay);
-    haptic(20);
-
-    // Busca saldo atual
-    const { mes, ano } = getMesAno?.() || {
-      mes: new Date().getMonth() + 1,
-      ano: new Date().getFullYear(),
-    };
-    fetchAPI(`/api/relatorios/resumo?mes=${mes}&ano=${ano}`).then((data) => {
-      const el = document.getElementById("foco-saldo");
-      if (!el || !data) return;
-      const saldo = parseFloat(data.saldo) || 0;
-      el.innerHTML = formatarMoeda(saldo);
-      el.style.color = saldo >= 0 ? "var(--green)" : "var(--red)";
-      aplicarPrivacidade?.();
-    });
-  } else {
-    document.getElementById("modo-foco-overlay")?.remove();
-    _modoFocoAtivo = false;
-  }
 }

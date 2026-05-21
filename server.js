@@ -34,19 +34,23 @@ app.post(`/bot${process.env.TELEGRAM_TOKEN}`, (req, res) => {
 });
 
 // ── Rota raiz ──
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
-});
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "login.html")),
+);
 
-// ── Cron: roda tudo a cada hora ──
+// ── Inicialização: migrations → servidor → cron ──
+const { rodarMigrations } = require("./migration");
 const { rodarTudo } = require("./routes/recorrentes-engine");
-
-setTimeout(() => {
-  rodarTudo();
-  setInterval(rodarTudo, 60 * 60 * 1000);
-}, 5000);
-
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Controlaí rodando em: http://localhost:${PORT}`);
-});
+
+rodarMigrations()
+  .catch((err) => console.error("❌ Migrations com erro:", err.message))
+  .finally(() => {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Controlaí rodando em: http://localhost:${PORT}`);
+    });
+    setTimeout(() => {
+      rodarTudo();
+      setInterval(rodarTudo, 60 * 60 * 1000);
+    }, 5000);
+  });
