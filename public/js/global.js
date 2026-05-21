@@ -1117,7 +1117,13 @@ function renderQuickAmounts(inputId, valores = [10, 50, 100, 200]) {
     wrap.appendChild(chip);
   });
 
-  input.parentNode.appendChild(wrap);
+  // Insere após o form-group pai (não dentro do flex wrapper do input)
+  const formGroup = input.closest(".form-group");
+  if (formGroup) {
+    formGroup.appendChild(wrap);
+  } else {
+    input.parentNode.appendChild(wrap);
+  }
 }
 
 // ════════════════════════════════════════

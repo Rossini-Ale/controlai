@@ -742,7 +742,7 @@
         <input type="hidden" id="f-tipo" value="despesa" />
         <div class="form-group">
           <label>Valor (R$)</label>
-          <div style="display: flex; gap: 8px; align-items: stretch">
+          <div style="display: flex; gap: 8px; align-items: center">
             <input
               type="text"
               inputmode="decimal"
@@ -751,6 +751,7 @@
               tabindex="1"
               style="
                 flex: 1;
+                min-width: 0;
                 font-size: 20px;
                 font-weight: 600;
                 padding: 14px 13px;
@@ -768,11 +769,16 @@
                 border: 0.5px solid var(--border);
                 color: var(--text-secondary);
                 border-radius: 10px;
-                padding: 0 14px;
+                padding: 14px;
                 font-size: 16px;
                 cursor: pointer;
                 transition: all 0.2s;
                 flex-shrink: 0;
+                height: 52px;
+                width: 52px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
               "
             >
               <i class="fa-solid fa-plus-minus"></i>
