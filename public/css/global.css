@@ -68,7 +68,49 @@ tbody td,
   font-variant-numeric: tabular-nums;
 }
 
-/* Transição suave ao trocar de tema */
+.tipo-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tipo-btn {
+  padding: 10px;
+  border-radius: 10px;
+  border: 0.5px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tipo-btn:hover {
+  background: var(--bg-tertiary);
+}
+
+.tipo-btn.active-despesa {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+.tipo-btn.active-receita {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: #10b981;
+  color: #10b981;
+}
+.tipo-btn.active-cartao {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
 body,
 .sidebar,
 .main,
@@ -996,26 +1038,6 @@ tbody td:nth-child(2) {
     font-weight: 600;
     margin-bottom: 16px;
     color: var(--text-primary);
-  }
-
-  .tipo-toggle {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-
-  .tipo-btn {
-    padding: 10px;
-    border-radius: 10px;
-    border: 0.5px solid var(--border);
-    background: var(--bg-primary);
-    color: var(--text-muted);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.15s;
   }
 
   .tipo-btn.active-despesa {
