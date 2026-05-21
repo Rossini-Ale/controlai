@@ -11,8 +11,18 @@ router.get("/", auth, async (req, res) => {
   const offset = (paginaAtual - 1) * porPagina;
 
   try {
-    let where = "WHERE t.usuario_id = ? AND t.deleted_at IS NULL";
+    let where = "WHERE t.usuario_id = ?";
     const params = [req.usuarioId];
+
+    // Adiciona filtro de soft delete se a coluna existir
+    const useSoftDelete = await db
+      .query(
+        "SELECT COUNT(*) as c FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='Transacoes' AND COLUMN_NAME='deleted_at'",
+      )
+      .then(([r]) => r[0].c > 0)
+      .catch(() => false);
+
+    if (useSoftDelete) where += " AND t.deleted_at IS NULL";
 
     if (mes && ano) {
       where += " AND MONTH(t.data) = ? AND YEAR(t.data) = ?";

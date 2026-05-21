@@ -6,10 +6,19 @@ const auth = require("../middleware/auth");
 // Listar categorias (exclui deletadas)
 router.get("/", auth, async (req, res) => {
   try {
-    const [rows] = await db.query(
-      "SELECT * FROM Categorias WHERE usuario_id = ? AND deleted_at IS NULL",
-      [req.usuarioId],
-    );
+    // Tenta com soft delete primeiro, cai para query simples se a coluna não existir
+    let rows;
+    try {
+      [rows] = await db.query(
+        "SELECT * FROM Categorias WHERE usuario_id = ? AND deleted_at IS NULL",
+        [req.usuarioId],
+      );
+    } catch (e) {
+      // Coluna deleted_at ainda não existe — usa query sem ela
+      [rows] = await db.query("SELECT * FROM Categorias WHERE usuario_id = ?", [
+        req.usuarioId,
+      ]);
+    }
     res.json(rows);
   } catch (err) {
     res.status(500).json({ erro: "Erro ao buscar categorias." });
