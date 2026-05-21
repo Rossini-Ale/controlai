@@ -1,3 +1,41 @@
+// ── Feedback háptico ──
+function haptic(ms = 10) {
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
+
+// ── Frases variadas por tipo de ação ──
+const _frases = {
+  salvo: [
+    "Registro salvo! 📝",
+    "Mais um lançamento anotado! ✅",
+    "Organização é tudo. Salvo! 🚀",
+    "Seu bolso agradece o controle. Salvo!",
+    "Anotado com sucesso! 💪",
+  ],
+  deletado: [
+    "Item removido.",
+    "Pronto, sumiu! 🗑️",
+    "Deletado com sucesso.",
+    "Item excluído.",
+  ],
+  atualizado: [
+    "Atualizado! ✏️",
+    "Alterações salvas.",
+    "Tudo certo, atualizado! ✅",
+  ],
+  duplicado: [
+    "Lançamento duplicado para hoje! 📋",
+    "Cópia criada com sucesso!",
+  ],
+};
+
+function toastVariado(acao) {
+  const lista = _frases[acao];
+  if (!lista) return;
+  const msg = lista[Math.floor(Math.random() * lista.length)];
+  toast(msg);
+}
+
 // ── Toast com barra de progresso ──
 function toast(mensagem, tipo = "sucesso") {
   const cores = {

@@ -517,6 +517,7 @@ async function abrirModalRapido() {
   setTimeout(() => {
     inputValor.focus();
     renderQuickAmounts("r-valor", [10, 20, 50, 100, 200]);
+    ativarInputCalculator("r-valor");
     ativarPullToDismiss("modal-rapido", fecharModalRapido);
     construirMapaCategoria();
   }, 100);
@@ -661,6 +662,200 @@ document.addEventListener("keydown", (e) => {
     mudarMes(1);
   }
 });
+
+// ════════════════════════════════════════
+// INPUT CALCULATOR
+// Detecta expressões matemáticas no campo de valor
+// Ex: "15,50 + 4,20" → "19,70"
+// ════════════════════════════════════════
+function ativarInputCalculator(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+
+  input.addEventListener("blur", () => {
+    const raw = input.value.trim();
+    // Só processa se tiver operador matemático
+    if (!/[+\-*/]/.test(raw)) return;
+
+    try {
+      // Converte formato BR para JS: "15,50 + 4,20" → "15.50 + 4.20"
+      const expr = raw
+        .replace(/[^\d.,+\-*/\s()]/g, "") // remove chars inválidos
+        .replace(/,/g, ".") // vírgula → ponto
+        .replace(/\.\./g, "."); // remove pontos duplos
+
+      // Valida que é só números e operadores (sem eval de código)
+      if (!/^[\d\s.+\-*/()]+$/.test(expr)) return;
+
+      // eslint-disable-next-line no-new-func
+      const resultado = Function(`"use strict"; return (${expr})`)();
+      if (!isFinite(resultado) || resultado < 0) return;
+
+      // Aplica o resultado com máscara
+      const arredondado = Math.round(resultado * 100) / 100;
+      input.value = arredondado.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+      });
+      input.dataset.valor = arredondado;
+
+      // Feedback visual sutil
+      input.style.borderColor = "var(--green)";
+      input.style.transition = "border-color 0.3s";
+      setTimeout(() => (input.style.borderColor = ""), 1200);
+    } catch {
+      /* ignora expressões inválidas */
+    }
+  });
+}
+
+// ════════════════════════════════════════
+// OPTIMISTIC UI — remove elemento da tela
+// antes da resposta do servidor
+// ════════════════════════════════════════
+function optimisticDelete(elementId, apiFn, onError) {
+  const el = document.getElementById(elementId);
+  if (!el) {
+    apiFn();
+    return;
+  }
+
+  // Salva snapshot para restaurar se falhar
+  const parent = el.parentNode;
+  const nextSibling = el.nextSibling;
+  const clone = el.cloneNode(true);
+
+  // Remove imediatamente com animação
+  el.style.transition =
+    "max-height 0.3s ease, opacity 0.25s ease, margin 0.3s ease";
+  el.style.maxHeight = el.offsetHeight + "px";
+  el.style.overflow = "hidden";
+  el.style.opacity = "0";
+  requestAnimationFrame(() => {
+    el.style.maxHeight = "0";
+    el.style.marginBottom = "0";
+  });
+
+  setTimeout(async () => {
+    el.remove();
+    try {
+      await apiFn();
+      haptic(8);
+    } catch {
+      // Falhou — restaura o elemento
+      if (nextSibling) parent.insertBefore(clone, nextSibling);
+      else parent.appendChild(clone);
+      clone.style.cssText = "";
+      toast("Não foi possível deletar. Tente novamente.", "erro");
+      onError?.();
+    }
+  }, 280);
+}
+
+// ════════════════════════════════════════
+// LONG-PRESS — menu de ações ao segurar
+// ════════════════════════════════════════
+let _longPressTimer = null;
+let _longPressActive = false;
+
+function ativarLongPress(elementId, acoes) {
+  // acoes = [{ label, icon, cor, fn }, ...]
+  const el = document.getElementById(elementId);
+  if (!el) return;
+
+  const DELAY = 500;
+
+  function iniciar(e) {
+    _longPressActive = false;
+    _longPressTimer = setTimeout(() => {
+      _longPressActive = true;
+      haptic(20);
+      abrirLongPressMenu(acoes, e.touches?.[0] || e);
+    }, DELAY);
+  }
+
+  function cancelar() {
+    clearTimeout(_longPressTimer);
+  }
+
+  el.addEventListener("touchstart", iniciar, { passive: true });
+  el.addEventListener("touchmove", cancelar, { passive: true });
+  el.addEventListener("touchend", cancelar);
+  el.addEventListener("mousedown", iniciar);
+  el.addEventListener("mousemove", cancelar);
+  el.addEventListener("mouseup", cancelar);
+}
+
+function abrirLongPressMenu(acoes, event) {
+  // Remove menu anterior se existir
+  document.getElementById("long-press-menu")?.remove();
+  document.getElementById("long-press-overlay")?.remove();
+
+  const overlay = document.createElement("div");
+  overlay.id = "long-press-overlay";
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9990;
+    animation:backdropIn 0.2s ease;backdrop-filter:blur(2px);
+  `;
+  overlay.onclick = () => {
+    overlay.remove();
+    document.getElementById("long-press-menu")?.remove();
+  };
+
+  const menu = document.createElement("div");
+  menu.id = "long-press-menu";
+  menu.style.cssText = `
+    position:fixed;bottom:0;left:0;right:0;
+    background:var(--bg-secondary);
+    border-radius:20px 20px 0 0;
+    border-top:0.5px solid var(--border);
+    padding:16px 16px 32px;
+    z-index:9991;
+    animation:slideUpMenu 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow:0 -4px 24px rgba(0,0,0,0.2);
+  `;
+
+  // Injetar animação se não existir
+  if (!document.getElementById("lp-style")) {
+    const s = document.createElement("style");
+    s.id = "lp-style";
+    s.textContent = `
+      @keyframes slideUpMenu {
+        from { transform: translateY(100%); opacity:0; }
+        to   { transform: translateY(0);    opacity:1; }
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  // Handle de arrasto
+  menu.innerHTML = `
+    <div style="width:36px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 16px"></div>
+    ${acoes
+      .map(
+        (a) => `
+      <button onclick="(${a.fn.toString()})();document.getElementById('long-press-menu')?.remove();document.getElementById('long-press-overlay')?.remove();"
+        style="
+          width:100%;display:flex;align-items:center;gap:14px;
+          background:transparent;border:none;padding:14px 8px;
+          color:${a.cor || "var(--text-primary)"};font-size:15px;font-weight:500;
+          cursor:pointer;border-radius:10px;transition:background 0.15s;text-align:left;
+        "
+        onmouseenter="this.style.background='var(--bg-tertiary)'"
+        onmouseleave="this.style.background='transparent'"
+      >
+        <div style="width:36px;height:36px;border-radius:50%;background:${a.cor ? a.cor + "22" : "var(--bg-tertiary)"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="fa-solid ${a.icon}" style="font-size:15px"></i>
+        </div>
+        ${a.label}
+      </button>
+    `,
+      )
+      .join("")}
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(menu);
+}
 
 // ════════════════════════════════════════
 // AVISO DE CONEXÃO OFFLINE

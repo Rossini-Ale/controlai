@@ -1270,7 +1270,7 @@
           });
         });
         lista.innerHTML = html;
-        // Ativa swipe em cada card
+        // Ativa swipe e long-press em cada card
         data.forEach((t) => {
           if (t.is_transferencia) return;
           const container = document.getElementById(`sw-wrap-${t.id}`);
@@ -1282,6 +1282,27 @@
               () => deletarLancamento(t.id),
               () => editarLancamento(t.id),
             );
+            // Long-press — menu de ações rápidas
+            ativarLongPress(`sw-card-${t.id}`, [
+              {
+                label: "Editar",
+                icon: "fa-pen",
+                cor: "var(--blue)",
+                fn: () => editarLancamento(t.id),
+              },
+              {
+                label: "Duplicar",
+                icon: "fa-copy",
+                cor: "#f59e0b",
+                fn: () => duplicarLancamento(t.id),
+              },
+              {
+                label: "Deletar",
+                icon: "fa-trash",
+                cor: "var(--red)",
+                fn: () => deletarLancamento(t.id),
+              },
+            ]);
           }
         });
       }
@@ -1643,6 +1664,8 @@
           inputValor.focus();
           // Quick-amounts
           renderQuickAmounts("f-valor", [10, 20, 50, 100, 200]);
+          // Input calculator — detecta expressões matemáticas
+          ativarInputCalculator("f-valor");
           // Pull-to-dismiss (mobile)
           ativarPullToDismiss("modal-lancamento", fecharModalLancamento);
           // Pré-carrega mapa para categoria inteligente
@@ -1763,22 +1786,22 @@
               method: "PUT",
               body: JSON.stringify(body),
             });
-            toast("Lançamento atualizado!");
+            toastVariado("atualizado");
             fecharModalLancamento();
           } else {
             await fetchAPI("/api/transacoes", {
               method: "POST",
               body: JSON.stringify(body),
             });
-            // Registra para detecção de duplicação
             ultimoLancamento = {
               descricao: body.descricao,
               valor: body.valor,
               data: body.data,
               ts: Date.now(),
             };
+            haptic(10);
             if (fecharApos) {
-              toast("Lançamento criado!");
+              toastVariado("salvo");
               fecharModalLancamento();
             } else {
               toast("Salvo! Adicione outro.");
@@ -1808,16 +1831,24 @@
           toast(res.erro, "erro");
           return;
         }
-        toast("Lançamento duplicado para hoje!");
+        haptic(10);
+        toastVariado("duplicado");
         carregarTransacoes();
       }
 
       async function deletarLancamento(id) {
-        const ok = await confirmar("Deseja deletar este lançamento?");
+        const ok = await confirmar(
+          "Deseja mover este lançamento para a lixeira?",
+        );
         if (!ok) return;
-        await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
-        toast("Lançamento deletado!", "info");
-        carregarTransacoes();
+        haptic(15);
+        // Optimistic — remove da tela imediatamente
+        const elId = `sw-wrap-${id}`;
+        optimisticDelete(
+          elId,
+          () => fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" }),
+          () => carregarTransacoes(), // restaura se falhar
+        );
       }
 
       async function deletarTransferencia(tid) {
