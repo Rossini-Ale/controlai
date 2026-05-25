@@ -22,6 +22,7 @@ app.use("/api/faturas", require("./routes/faturas"));
 app.use("/api/recorrentes", require("./routes/recorrentes"));
 app.use("/api/transferencias", require("./routes/transferencias"));
 app.use("/api/orcamentos", require("./routes/orcamentos"));
+app.use("/api/importacao", require("./routes/importacao"));
 
 // ── Telegram webhook ──
 const bot = require("./routes/telegram");

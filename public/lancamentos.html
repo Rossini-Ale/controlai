@@ -471,6 +471,14 @@
         <button class="btn" onclick="abrirModalAtivo()">
           <i class="fa-solid fa-plus"></i> <span id="btn-novo-label">Novo</span>
         </button>
+        <button
+          class="btn-edit"
+          onclick="abrirModalImportacao()"
+          title="Importar CSV"
+          style="padding: 9px 12px"
+        >
+          <i class="fa-solid fa-file-import"></i>
+        </button>
       </div>
 
       <div class="abas">
@@ -1008,6 +1016,198 @@
     </div>
 
     <div id="tabbar"></div>
+
+    <!-- Modal Importação CSV -->
+    <div class="modal-overlay" id="modal-importacao">
+      <div
+        class="modal"
+        style="max-width: 700px; max-height: 90vh; overflow-y: auto"
+      >
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+          "
+        >
+          <h2 style="margin: 0">Importar extrato CSV</h2>
+          <button
+            onclick="fecharModalImportacao()"
+            style="
+              background: none;
+              border: none;
+              color: var(--text-muted);
+              font-size: 20px;
+              cursor: pointer;
+            "
+          >
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- Passo 1: Upload -->
+        <div id="import-step-1">
+          <div
+            style="
+              background: var(--bg-tertiary);
+              border: 2px dashed var(--border);
+              border-radius: 12px;
+              padding: 32px;
+              text-align: center;
+              margin-bottom: 16px;
+              cursor: pointer;
+            "
+            onclick="document.getElementById('csv-file-input').click()"
+            id="csv-dropzone"
+          >
+            <i
+              class="fa-solid fa-file-csv"
+              style="
+                font-size: 32px;
+                color: var(--green);
+                margin-bottom: 12px;
+                display: block;
+              "
+            ></i>
+            <div style="font-size: 15px; font-weight: 600; margin-bottom: 6px">
+              Clique para selecionar o arquivo CSV
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted)">
+              ou arraste e solte aqui · Máx. 5MB
+            </div>
+          </div>
+          <input
+            type="file"
+            id="csv-file-input"
+            accept=".csv,.txt"
+            style="display: none"
+            onchange="lerCSV(this)"
+          />
+
+          <div style="margin-bottom: 14px">
+            <label
+              style="
+                font-size: 12px;
+                color: var(--text-secondary);
+                display: block;
+                margin-bottom: 6px;
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+              "
+              >Mapeamento de colunas</label
+            >
+            <div
+              style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px"
+            >
+              <div class="form-group" style="margin: 0">
+                <label>Coluna Data</label>
+                <select id="map-data" class="filtro-select"></select>
+              </div>
+              <div class="form-group" style="margin: 0">
+                <label>Coluna Descrição</label>
+                <select id="map-desc" class="filtro-select"></select>
+              </div>
+              <div class="form-group" style="margin: 0">
+                <label>Coluna Valor</label>
+                <select id="map-valor" class="filtro-select"></select>
+              </div>
+              <div class="form-group" style="margin: 0">
+                <label>Separador</label>
+                <select id="csv-sep" class="filtro-select">
+                  <option value=";">Ponto e vírgula (;)</option>
+                  <option value=",">Vírgula (,)</option>
+                  <option value="	">Tab</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div
+            style="
+              background: var(--bg-tertiary);
+              border-radius: 8px;
+              padding: 10px 14px;
+              font-size: 12px;
+              color: var(--text-muted);
+              margin-bottom: 14px;
+            "
+          >
+            <i
+              class="fa-solid fa-circle-info"
+              style="margin-right: 6px; color: var(--blue)"
+            ></i>
+            Valores negativos serão classificados como <strong>despesa</strong>,
+            positivos como <strong>receita</strong>.
+          </div>
+          <button
+            class="btn"
+            style="width: 100%; justify-content: center"
+            onclick="processarPreview()"
+            id="btn-preview"
+          >
+            <i class="fa-solid fa-eye"></i> Visualizar preview
+          </button>
+        </div>
+
+        <!-- Passo 2: Preview + edição -->
+        <div id="import-step-2" style="display: none">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 12px;
+            "
+          >
+            <div
+              style="font-size: 13px; color: var(--text-muted)"
+              id="import-count-label"
+            ></div>
+            <div style="display: flex; gap: 8px">
+              <button
+                onclick="marcarTodos(true)"
+                class="btn-edit"
+                style="font-size: 12px; padding: 5px 12px"
+              >
+                ✅ Todos
+              </button>
+              <button
+                onclick="marcarTodos(false)"
+                class="btn-edit"
+                style="font-size: 12px; padding: 5px 12px"
+              >
+                ❌ Nenhum
+              </button>
+              <button
+                onclick="voltarStep1()"
+                class="btn-cancel"
+                style="font-size: 12px; padding: 5px 12px"
+              >
+                ← Voltar
+              </button>
+            </div>
+          </div>
+          <div
+            id="import-preview-lista"
+            style="
+              max-height: 400px;
+              overflow-y: auto;
+              border: 0.5px solid var(--border);
+              border-radius: 10px;
+              margin-bottom: 14px;
+            "
+          ></div>
+          <button
+            class="btn"
+            style="width: 100%; justify-content: center"
+            onclick="confirmarImportacao()"
+            id="btn-confirmar-import"
+          >
+            <i class="fa-solid fa-file-import"></i> Importar selecionados
+          </button>
+        </div>
+      </div>
+    </div>
     <script src="/js/storage.js"></script>
     <script src="/js/voice.js"></script>
     <script src="/js/notifications.js"></script>
@@ -1286,9 +1486,9 @@
         </div>`;
       }
 
-      function renderMobileComSwipe(data) {
+      function renderMobileComSwipe(data, append = false) {
         const lista = document.getElementById("lista-mobile");
-        if (data.length === 0) {
+        if (!append && data.length === 0) {
           lista.innerHTML = emptyState(
             "fa-right-left",
             "Nenhuma transação",
@@ -1321,8 +1521,15 @@
             </div>`;
           });
         });
-        lista.innerHTML = html;
-        // Ativa swipe e long-press em cada card
+
+        if (append) {
+          const sentinel = document.getElementById("scroll-sentinel");
+          if (sentinel) sentinel.remove();
+          lista.insertAdjacentHTML("beforeend", html);
+        } else {
+          lista.innerHTML = html;
+        }
+
         data.forEach((t) => {
           if (t.is_transferencia) return;
           const container = document.getElementById(`sw-wrap-${t.id}`);
@@ -1334,7 +1541,6 @@
               () => deletarLancamento(t.id),
               () => editarLancamento(t.id),
             );
-            // Long-press — menu de ações rápidas
             ativarLongPress(`sw-card-${t.id}`, [
               {
                 label: "Editar",
@@ -1451,20 +1657,27 @@
       // ══════════════════════════════════════
       // LANÇAMENTOS
       // ══════════════════════════════════════
-      async function carregarTransacoes(resetPagina = true) {
-        if (resetPagina) paginaAtual = 1;
+      async function carregarTransacoes(resetPagina = true, append = false) {
+        if (resetPagina) {
+          paginaAtual = 1;
+          window._ultimaPaginacao = null;
+        }
         const m = document.getElementById("filtro-mes").value;
         const a = document.getElementById("filtro-ano").value;
         const tipo = document.getElementById("filtro-tipo").value;
         const catId = document.getElementById("filtro-categoria").value;
 
-        // Persiste filtros na URL
         salvarFiltrosNaURL();
-        if (isMobile())
-          document.getElementById("lista-mobile").innerHTML = skeletonLista(3);
-        else
-          document.getElementById("tabela-transacoes-desktop").innerHTML =
-            `<tr><td colspan="7" style="text-align:center;padding:24px">${skeletonLista(1)}</td></tr>`;
+
+        if (!append) {
+          if (isMobile())
+            document.getElementById("lista-mobile").innerHTML =
+              skeletonLista(3);
+          else
+            document.getElementById("tabela-transacoes-desktop").innerHTML =
+              `<tr><td colspan="7" style="text-align:center;padding:24px">${skeletonLista(1)}</td></tr>`;
+        }
+
         let url = `/api/transacoes?mes=${m}&ano=${a}&page=${paginaAtual}&limit=${POR_PAGINA}`;
         if (tipo === "receita" || tipo === "despesa") url += `&tipo=${tipo}`;
         if (catId) url += `&categoria_id=${catId}`;
@@ -1472,15 +1685,22 @@
         if (!res) return;
         let data = Array.isArray(res) ? res : res.data || [];
         const paginacao = res.paginacao || null;
+        window._ultimaPaginacao = paginacao;
+
         if (tipo === "transferencia")
           data = data.filter((t) => t.is_transferencia);
         else if (tipo === "receita" || tipo === "despesa")
           data = data.filter((t) => !t.is_transferencia);
         if (catId && Array.isArray(res))
           data = data.filter((t) => String(t.categoria_id) === String(catId));
-        if (isMobile()) renderMobileComSwipe(data);
-        else renderDesktop(data);
-        renderPaginacao(paginacao);
+
+        if (isMobile()) {
+          renderMobileComSwipe(data, append);
+          if (!append) setTimeout(ativarScrollInfinito, 300);
+        } else {
+          renderDesktop(data);
+          renderPaginacao(paginacao);
+        }
       }
 
       function renderPaginacao(paginacao) {
@@ -2472,6 +2692,291 @@
         }
         toast("Categoria deletada!", "info");
         carregarCategorias();
+      }
+
+      // ══════════════════════════════════════
+      // IMPORTAÇÃO CSV
+      // ══════════════════════════════════════
+      let csvLinhas = [],
+        csvCabecalho = [],
+        previewData = [],
+        importCats = [],
+        importContas = [];
+
+      function abrirModalImportacao() {
+        document.getElementById("modal-importacao").classList.add("active");
+        document.getElementById("import-step-1").style.display = "block";
+        document.getElementById("import-step-2").style.display = "none";
+        document.getElementById("csv-file-input").value = "";
+        csvLinhas = [];
+        csvCabecalho = [];
+      }
+      function fecharModalImportacao() {
+        document.getElementById("modal-importacao").classList.remove("active");
+      }
+      function voltarStep1() {
+        document.getElementById("import-step-1").style.display = "block";
+        document.getElementById("import-step-2").style.display = "none";
+      }
+
+      function lerCSV(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const sep = document.getElementById("csv-sep").value;
+          const linhas = e.target.result.split(/\r?\n/).filter((l) => l.trim());
+          if (linhas.length < 2) {
+            toast("CSV inválido ou vazio.", "erro");
+            return;
+          }
+          csvCabecalho = linhas[0]
+            .split(sep)
+            .map((h) => h.trim().replace(/"/g, ""));
+          csvLinhas = linhas
+            .slice(1)
+            .map((l) => l.split(sep).map((v) => v.trim().replace(/"/g, "")));
+          // Preenche selects de mapeamento
+          const opts = csvCabecalho
+            .map((h, i) => `<option value="${i}">${h}</option>`)
+            .join("");
+          ["map-data", "map-desc", "map-valor"].forEach((id) => {
+            document.getElementById(id).innerHTML = opts;
+          });
+          // Tenta auto-detectar colunas
+          csvCabecalho.forEach((h, i) => {
+            const hl = h.toLowerCase();
+            if (/data|date/.test(hl))
+              document.getElementById("map-data").value = i;
+            if (/desc|hist|lanc/.test(hl))
+              document.getElementById("map-desc").value = i;
+            if (/valor|value|amount|quantia/.test(hl))
+              document.getElementById("map-valor").value = i;
+          });
+          toast(`${csvLinhas.length} linhas carregadas!`);
+          document.getElementById("csv-dropzone").innerHTML = `
+            <i class="fa-solid fa-check-circle" style="font-size:32px;color:var(--green);margin-bottom:12px;display:block"></i>
+            <div style="font-size:15px;font-weight:600">${file.name}</div>
+            <div style="font-size:12px;color:var(--text-muted)">${csvLinhas.length} linhas encontradas</div>`;
+        };
+        reader.readAsText(file, "UTF-8");
+      }
+
+      // Drag & drop no dropzone
+      document.addEventListener("DOMContentLoaded", () => {
+        const dz = document.getElementById("csv-dropzone");
+        if (!dz) return;
+        dz.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          dz.style.borderColor = "var(--green)";
+        });
+        dz.addEventListener("dragleave", () => {
+          dz.style.borderColor = "var(--border)";
+        });
+        dz.addEventListener("drop", (e) => {
+          e.preventDefault();
+          dz.style.borderColor = "var(--border)";
+          const file = e.dataTransfer.files[0];
+          if (file) {
+            document.getElementById("csv-file-input").files =
+              e.dataTransfer.files;
+            lerCSV(document.getElementById("csv-file-input"));
+          }
+        });
+      });
+
+      function parseDataBR(str) {
+        if (!str) return null;
+        // Formatos: DD/MM/YYYY, YYYY-MM-DD, DD-MM-YYYY
+        str = str.trim();
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+          const [d, m, y] = str.split("/");
+          return `${y}-${m}-${d}`;
+        }
+        if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
+        if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
+          const [d, m, y] = str.split("-");
+          return `${y}-${m}-${d}`;
+        }
+        return null;
+      }
+
+      function parseValorCSV(str) {
+        if (!str) return 0;
+        // Remove R$, espaços, pontos de milhar; troca vírgula decimal por ponto
+        return (
+          parseFloat(
+            str
+              .replace(/[R$\s]/g, "")
+              .replace(/\./g, "")
+              .replace(",", "."),
+          ) || 0
+        );
+      }
+
+      async function processarPreview() {
+        if (csvLinhas.length === 0) {
+          toast("Carregue um arquivo CSV primeiro.", "aviso");
+          return;
+        }
+        const iData = parseInt(document.getElementById("map-data").value);
+        const iDesc = parseInt(document.getElementById("map-desc").value);
+        const iValor = parseInt(document.getElementById("map-valor").value);
+
+        const linhasParaEnviar = csvLinhas
+          .slice(0, 200)
+          .map((l) => ({
+            data: parseDataBR(l[iData]),
+            descricao: l[iDesc],
+            valor: parseValorCSV(l[iValor]),
+          }))
+          .filter((l) => l.data && l.descricao);
+
+        if (linhasParaEnviar.length === 0) {
+          toast(
+            "Nenhuma linha válida encontrada. Verifique o mapeamento.",
+            "erro",
+          );
+          return;
+        }
+
+        const btn = document.getElementById("btn-preview");
+        btn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin"></i> Processando...';
+        btn.disabled = true;
+
+        const res = await fetchAPI("/api/importacao/preview", {
+          method: "POST",
+          body: JSON.stringify({ linhas: linhasParaEnviar }),
+        });
+        btn.innerHTML = '<i class="fa-solid fa-eye"></i> Visualizar preview';
+        btn.disabled = false;
+
+        if (!res?.preview) {
+          toast("Erro ao processar preview.", "erro");
+          return;
+        }
+        previewData = res.preview;
+        importCats = res.categorias;
+        importContas = res.contas;
+
+        renderPreview();
+        document.getElementById("import-step-1").style.display = "none";
+        document.getElementById("import-step-2").style.display = "block";
+      }
+
+      function renderPreview() {
+        const total = previewData.length;
+        const sel = previewData.filter((l) => l.importar).length;
+        document.getElementById("import-count-label").textContent =
+          `${sel} de ${total} selecionados`;
+
+        const catsOpts = importCats
+          .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+          .join("");
+        const contasOpts = importContas
+          .map((c) => `<option value="${c.id}">${c.nome}</option>`)
+          .join("");
+
+        document.getElementById("import-preview-lista").innerHTML = previewData
+          .map(
+            (l, i) => `
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:0.5px solid var(--border);${!l.importar ? "opacity:0.4" : ""}">
+            <input type="checkbox" ${l.importar ? "checked" : ""} onchange="toggleImport(${i}, this.checked)" style="width:16px;height:16px;flex-shrink:0;cursor:pointer">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.descricao}</div>
+              <div style="font-size:11px;color:var(--text-muted)">${l.data}</div>
+            </div>
+            <select onchange="previewData[${i}].tipo=this.value;renderPreview()" style="background:var(--bg-tertiary);border:0.5px solid var(--border);color:var(--text-primary);border-radius:6px;padding:3px 6px;font-size:11px">
+              <option value="despesa" ${l.tipo === "despesa" ? "selected" : ""}>↓ Despesa</option>
+              <option value="receita" ${l.tipo === "receita" ? "selected" : ""}>↑ Receita</option>
+            </select>
+            <select onchange="previewData[${i}].categoria_id=this.value" style="background:var(--bg-tertiary);border:0.5px solid var(--border);color:var(--text-primary);border-radius:6px;padding:3px 6px;font-size:11px;max-width:110px">
+              <option value="">Categoria</option>${catsOpts}
+            </select>
+            <div style="font-size:13px;font-weight:700;color:${l.tipo === "receita" ? "var(--green)" : "var(--red)"};white-space:nowrap;min-width:70px;text-align:right">
+              ${l.tipo === "receita" ? "+" : "-"}${formatarMoedaRaw(l.valor)}
+            </div>
+          </div>`,
+          )
+          .join("");
+
+        // Restaura valores dos selects
+        previewData.forEach((l, i) => {
+          const row = document.getElementById("import-preview-lista").children[
+            i
+          ];
+          if (!row) return;
+          const selects = row.querySelectorAll("select");
+          if (selects[1]) selects[1].value = l.categoria_id || "";
+        });
+      }
+
+      function toggleImport(idx, val) {
+        previewData[idx].importar = val;
+        const sel = previewData.filter((l) => l.importar).length;
+        document.getElementById("import-count-label").textContent =
+          `${sel} de ${previewData.length} selecionados`;
+      }
+
+      function marcarTodos(val) {
+        previewData.forEach((l) => (l.importar = val));
+        renderPreview();
+      }
+
+      async function confirmarImportacao() {
+        const btn = document.getElementById("btn-confirmar-import");
+        btn.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin"></i> Importando...';
+        btn.disabled = true;
+        const res = await fetchAPI("/api/importacao/confirmar", {
+          method: "POST",
+          body: JSON.stringify({ linhas: previewData }),
+        });
+        btn.innerHTML =
+          '<i class="fa-solid fa-file-import"></i> Importar selecionados';
+        btn.disabled = false;
+        if (res?.importados !== undefined) {
+          toast(
+            `${res.importados} lançamento(s) importado(s)!${res.erros > 0 ? ` (${res.erros} erro(s))` : ""}`,
+          );
+          fecharModalImportacao();
+          carregarTransacoes();
+        } else {
+          toast("Erro ao importar.", "erro");
+        }
+      }
+
+      // ══════════════════════════════════════
+      // SCROLL INFINITO MOBILE
+      // ══════════════════════════════════════
+      let _scrollObserver = null;
+      let _carregandoMais = false;
+
+      function ativarScrollInfinito() {
+        if (!isMobile()) return;
+        if (_scrollObserver) _scrollObserver.disconnect();
+
+        const sentinel = document.createElement("div");
+        sentinel.id = "scroll-sentinel";
+        sentinel.style.height = "1px";
+        document.getElementById("lista-mobile").after(sentinel);
+
+        _scrollObserver = new IntersectionObserver(
+          async (entries) => {
+            if (!entries[0].isIntersecting || _carregandoMais) return;
+            const paginacao = window._ultimaPaginacao;
+            if (!paginacao?.tem_proxima) return;
+
+            _carregandoMais = true;
+            paginaAtual++;
+            await carregarTransacoes(false, true); // append mode
+            _carregandoMais = false;
+          },
+          { threshold: 0.1 },
+        );
+
+        _scrollObserver.observe(sentinel);
       }
 
       init();

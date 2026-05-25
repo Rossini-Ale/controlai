@@ -527,17 +527,46 @@ function fecharMais() {}
 let tipoRapido = "despesa",
   categoriasRapido = [],
   contasRapido = [];
+let editandoRapidoId = null;
 
-async function abrirModalRapido() {
+async function abrirModalRapido(editId = null) {
+  editandoRapidoId = editId;
   categoriasRapido = (await fetchAPI("/api/categorias")) || [];
   contasRapido = (await fetchAPI("/api/contas")) || [];
-  selecionarTipo("despesa");
+
   const inputValor = document.getElementById("r-valor");
-  inputValor.value = "";
-  delete inputValor.dataset.valor;
-  document.getElementById("r-descricao").value = "";
+  const titulo = document.querySelector("#modal-rapido .modal-rapido-inner h2");
+
+  if (editId) {
+    if (titulo) titulo.textContent = "Editar lançamento";
+    const res = await fetchAPI("/api/transacoes?limit=200");
+    const data = Array.isArray(res) ? res : res?.data || [];
+    const item = data.find((t) => t.id === editId);
+    if (!item) {
+      toast("Lançamento não encontrado.", "erro");
+      return;
+    }
+    selecionarTipo(item.tipo);
+    inputValor.value = parseFloat(item.valor).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+    });
+    inputValor.dataset.valor = item.valor;
+    document.getElementById("r-descricao").value = item.descricao;
+    setTimeout(() => {
+      const sc = document.getElementById("r-categoria");
+      const sct = document.getElementById("r-conta");
+      if (sc) sc.value = item.categoria_id || "";
+      if (sct) sct.value = item.conta_id || "";
+    }, 60);
+  } else {
+    if (titulo) titulo.textContent = "Novo lançamento";
+    selecionarTipo("despesa");
+    inputValor.value = "";
+    delete inputValor.dataset.valor;
+    document.getElementById("r-descricao").value = "";
+  }
+
   aplicarMascaraMoeda(inputValor);
-  // Remove chips anteriores para não duplicar
   document.getElementById("qa-r-valor")?.remove();
   document.getElementById("modal-rapido").classList.add("active");
   setTimeout(() => {
@@ -547,7 +576,6 @@ async function abrirModalRapido() {
     ativarPullToDismiss("modal-rapido", fecharModalRapido);
     construirMapaCategoria();
   }, 100);
-  // Categoria inteligente
   const inputDesc = document.getElementById("r-descricao");
   if (inputDesc) {
     inputDesc.oninput = (e) => {
@@ -597,7 +625,21 @@ async function salvarRapido() {
     toast("Preencha valor e descrição.", "erro");
     return;
   }
-  if (tipoRapido === "cartao") {
+
+  if (editandoRapidoId) {
+    await fetchAPI(`/api/transacoes/${editandoRapidoId}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        tipo: tipoRapido,
+        descricao,
+        valor,
+        categoria_id: categoria,
+        conta_id: conta,
+        data: hoje,
+      }),
+    });
+    toast("Lançamento atualizado! ✏️");
+  } else if (tipoRapido === "cartao") {
     const cartoes = (await fetchAPI("/api/cartoes")) || [];
     if (cartoes.length === 0) {
       alert("Nenhum cartão cadastrado.");
@@ -613,6 +655,7 @@ async function salvarRapido() {
         parcelas: 1,
       }),
     });
+    toast("Lançado no cartão!");
   } else {
     await fetchAPI("/api/transacoes", {
       method: "POST",
@@ -625,6 +668,7 @@ async function salvarRapido() {
         data: hoje,
       }),
     });
+    toast("Lançamento salvo! 📝");
   }
   fecharModalRapido();
   if (typeof carregarDados === "function") carregarDados();
