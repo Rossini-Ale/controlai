@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f1117" />
+    <meta name="description" content="Controle financeiro pessoal sem complicação. Acompanhe gastos, cartões e metas em um só lugar. Registre lançamentos até pelo Telegram." />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <title>Controlaí — Controle financeiro pessoal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+      :root {
+        --bg: #0f1117;
+        --bg2: #1a1f2e;
+        --bg3: #242938;
+        --border: #2d3748;
+        --green: #10b981;
+        --green-dark: #059669;
+        --text: #ffffff;
+        --muted: #9ca3af;
+        --faint: #6b7280;
+      }
+
+      html { scroll-behavior: smooth; }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", system-ui, sans-serif;
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+
+      /* ── NAV ── */
+      nav {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 32px;
+        background: rgba(15,17,23,0.85);
+        backdrop-filter: blur(12px);
+        border-bottom: 0.5px solid var(--border);
+      }
+
+      .nav-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 18px;
+        font-weight: 700;
+        text-decoration: none;
+        color: var(--text);
+      }
+
+      .nav-logo .logo-icon {
+        width: 32px; height: 32px;
+        background: linear-gradient(135deg, var(--green), var(--green-dark));
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: #fff;
+      }
+
+      .nav-actions { display: flex; align-items: center; gap: 12px; }
+
+      .btn-nav-login {
+        background: transparent;
+        border: 0.5px solid var(--border);
+        color: var(--muted);
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+      }
+      .btn-nav-login:hover { border-color: var(--green); color: var(--text); }
+
+      .btn-nav-cta {
+        background: var(--green);
+        color: #fff;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.2s;
+      }
+      .btn-nav-cta:hover { background: var(--green-dark); }
+
+      /* ── HERO ── */
+      .hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        padding: 120px 32px 80px;
+        max-width: 1140px;
+        margin: 0 auto;
+        gap: 60px;
+      }
+
+      .hero-text { flex: 1; min-width: 0; }
+
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(16,185,129,0.12);
+        border: 0.5px solid rgba(16,185,129,0.3);
+        color: var(--green);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 24px;
+        letter-spacing: 0.3px;
+      }
+
+      .hero h1 {
+        font-size: clamp(32px, 5vw, 52px);
+        font-weight: 800;
+        line-height: 1.15;
+        margin-bottom: 20px;
+        letter-spacing: -0.5px;
+      }
+
+      .hero h1 span {
+        background: linear-gradient(135deg, var(--green), #34d399);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .hero p {
+        font-size: 18px;
+        color: var(--muted);
+        max-width: 460px;
+        margin-bottom: 36px;
+        line-height: 1.7;
+      }
+
+      .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+
+      .btn-primary {
+        background: var(--green);
+        color: #fff;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.2s, transform 0.15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn-primary:hover { background: var(--green-dark); transform: translateY(-1px); }
+
+      .btn-secondary {
+        background: transparent;
+        color: var(--muted);
+        border: 0.5px solid var(--border);
+        padding: 14px 28px;
+        border-radius: 10px;
+        font-size: 16px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn-secondary:hover { color: var(--text); border-color: var(--green); }
+
+      /* ── PHONE MOCKUP ── */
+      .hero-visual {
+        flex: 0 0 320px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .phone {
+        width: 280px;
+        background: var(--bg2);
+        border: 1.5px solid var(--border);
+        border-radius: 32px;
+        padding: 20px 16px;
+        box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .phone::before {
+        content: "";
+        position: absolute;
+        top: -40px; left: 50%;
+        transform: translateX(-50%);
+        width: 200px; height: 200px;
+        background: radial-gradient(circle, rgba(16,185,129,0.15), transparent 70%);
+        pointer-events: none;
+      }
+
+      .phone-notch {
+        width: 60px; height: 6px;
+        background: var(--bg3);
+        border-radius: 3px;
+        margin: 0 auto 16px;
+      }
+
+      .phone-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .phone-logo {
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .phone-logo i { color: var(--green); }
+
+      .phone-month {
+        font-size: 11px;
+        color: var(--muted);
+        background: var(--bg3);
+        padding: 3px 8px;
+        border-radius: 6px;
+      }
+
+      .phone-balance {
+        background: linear-gradient(135deg, #10b981, #047857);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 14px;
+      }
+
+      .phone-balance-label { font-size: 10px; opacity: 0.8; margin-bottom: 4px; }
+      .phone-balance-value { font-size: 22px; font-weight: 800; }
+      .phone-balance-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+        font-size: 10px;
+        opacity: 0.85;
+      }
+
+      .phone-section-title {
+        font-size: 10px;
+        color: var(--muted);
+        font-weight: 600;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .phone-tx {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+        border-bottom: 0.5px solid var(--border);
+      }
+      .phone-tx:last-child { border-bottom: none; }
+
+      .phone-tx-icon {
+        width: 28px; height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        flex-shrink: 0;
+      }
+
+      .phone-tx-info { flex: 1; }
+      .phone-tx-desc { font-size: 11px; font-weight: 500; }
+      .phone-tx-cat { font-size: 10px; color: var(--muted); }
+      .phone-tx-val { font-size: 12px; font-weight: 700; }
+      .phone-tx-val.neg { color: #ef4444; }
+      .phone-tx-val.pos { color: var(--green); }
+
+      .phone-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 5px;
+        height: 44px;
+        margin-top: 12px;
+      }
+
+      .bar {
+        flex: 1;
+        border-radius: 3px 3px 0 0;
+        opacity: 0.7;
+      }
+
+      /* ── STATS ── */
+      .stats {
+        display: flex;
+        justify-content: center;
+        gap: 48px;
+        padding: 40px 32px;
+        border-top: 0.5px solid var(--border);
+        border-bottom: 0.5px solid var(--border);
+        flex-wrap: wrap;
+      }
+
+      .stat { text-align: center; }
+      .stat-value {
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--green);
+        display: block;
+      }
+      .stat-label { font-size: 13px; color: var(--muted); }
+
+      /* ── FEATURES ── */
+      .features {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 80px 32px;
+      }
+
+      .section-header {
+        text-align: center;
+        margin-bottom: 56px;
+      }
+
+      .section-header h2 {
+        font-size: clamp(24px, 4vw, 38px);
+        font-weight: 800;
+        margin-bottom: 12px;
+      }
+
+      .section-header p {
+        font-size: 16px;
+        color: var(--muted);
+        max-width: 480px;
+        margin: 0 auto;
+      }
+
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+
+      .feature-card {
+        background: var(--bg2);
+        border: 0.5px solid var(--border);
+        border-radius: 16px;
+        padding: 28px 24px;
+        transition: border-color 0.2s, transform 0.2s;
+      }
+      .feature-card:hover { border-color: var(--green); transform: translateY(-2px); }
+
+      .feature-icon {
+        width: 44px; height: 44px;
+        background: rgba(16,185,129,0.12);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: var(--green);
+        margin-bottom: 16px;
+      }
+
+      .feature-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+      .feature-card p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+      /* ── TELEGRAM HIGHLIGHT ── */
+      .telegram-section {
+        background: var(--bg2);
+        border-top: 0.5px solid var(--border);
+        border-bottom: 0.5px solid var(--border);
+        padding: 80px 32px;
+      }
+
+      .telegram-inner {
+        max-width: 1140px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 60px;
+      }
+
+      .telegram-text { flex: 1; }
+      .telegram-text .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(34,158,217,0.12);
+        border: 0.5px solid rgba(34,158,217,0.3);
+        color: #229ED9;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 20px;
+      }
+
+      .telegram-text h2 {
+        font-size: clamp(22px, 3vw, 34px);
+        font-weight: 800;
+        margin-bottom: 16px;
+        line-height: 1.25;
+      }
+
+      .telegram-text p {
+        font-size: 16px;
+        color: var(--muted);
+        line-height: 1.7;
+        margin-bottom: 24px;
+        max-width: 440px;
+      }
+
+      .telegram-visual { flex: 0 0 340px; }
+
+      .chat-bubble-wrap {
+        background: var(--bg3);
+        border: 0.5px solid var(--border);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .chat-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 12px;
+        border-bottom: 0.5px solid var(--border);
+        margin-bottom: 4px;
+      }
+
+      .chat-avatar {
+        width: 34px; height: 34px;
+        background: #229ED9;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        color: #fff;
+      }
+
+      .chat-name { font-size: 13px; font-weight: 600; }
+      .chat-status { font-size: 11px; color: var(--green); }
+
+      .bubble {
+        max-width: 85%;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .bubble.user {
+        background: #229ED9;
+        color: #fff;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+      }
+
+      .bubble.bot {
+        background: var(--bg2);
+        color: var(--text);
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+        border: 0.5px solid var(--border);
+      }
+
+      .bubble.bot strong { color: var(--green); }
+
+      /* ── FINAL CTA ── */
+      .final-cta {
+        text-align: center;
+        padding: 100px 32px;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .final-cta h2 {
+        font-size: clamp(26px, 4vw, 40px);
+        font-weight: 800;
+        margin-bottom: 16px;
+      }
+
+      .final-cta p {
+        font-size: 17px;
+        color: var(--muted);
+        margin-bottom: 36px;
+      }
+
+      /* ── FOOTER ── */
+      footer {
+        border-top: 0.5px solid var(--border);
+        padding: 28px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .footer-logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text);
+        text-decoration: none;
+      }
+
+      .footer-logo .logo-icon {
+        width: 26px; height: 26px;
+        background: linear-gradient(135deg, var(--green), var(--green-dark));
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        color: #fff;
+      }
+
+      footer p { font-size: 13px; color: var(--faint); }
+
+      /* ── RESPONSIVE ── */
+      @media (max-width: 768px) {
+        nav { padding: 14px 20px; }
+        .btn-nav-login { display: none; }
+
+        .hero {
+          flex-direction: column;
+          padding: 100px 20px 60px;
+          gap: 40px;
+          text-align: center;
+        }
+        .hero p { max-width: 100%; }
+        .hero-btns { justify-content: center; }
+        .hero-visual { flex: none; }
+        .phone { width: 240px; }
+
+        .stats { gap: 28px; }
+
+        .features { padding: 60px 20px; }
+        .features-grid {
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+        }
+
+        .telegram-section { padding: 60px 20px; }
+        .telegram-inner { flex-direction: column; gap: 36px; }
+        .telegram-visual { flex: none; width: 100%; }
+
+        .final-cta { padding: 70px 20px; }
+
+        footer { justify-content: center; text-align: center; }
+      }
+
+      @media (max-width: 480px) {
+        .features-grid { grid-template-columns: 1fr; }
+      }
+
+      /* ── FADE IN ── */
+      .fade-in {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+      }
+      .fade-in.visible { opacity: 1; transform: none; }
+    </style>
+  </head>
+  <body>
+
+    <!-- NAV -->
+    <nav>
+      <a href="/" class="nav-logo">
+        <div class="logo-icon"><i class="fa-solid fa-chart-pie"></i></div>
+        controlaí
+      </a>
+      <div class="nav-actions">
+        <a href="/login.html" class="btn-nav-login">Entrar</a>
+        <a href="/login.html#cadastro" class="btn-nav-cta">Criar conta grátis</a>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-text fade-in">
+        <div class="hero-badge">
+          <i class="fa-solid fa-circle" style="font-size:7px"></i>
+          Controle financeiro pessoal
+        </div>
+        <h1>Suas finanças,<br /><span>finalmente organizadas</span></h1>
+        <p>
+          Acompanhe gastos, cartões e metas em um só lugar.
+          Registre lançamentos até pelo Telegram, sem abrir o app.
+        </p>
+        <div class="hero-btns">
+          <a href="/login.html#cadastro" class="btn-primary">
+            <i class="fa-solid fa-rocket"></i> Começar grátis
+          </a>
+          <a href="#funcionalidades" class="btn-secondary">
+            <i class="fa-solid fa-play"></i> Ver como funciona
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-visual fade-in" style="transition-delay:0.15s">
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-header">
+            <div class="phone-logo"><i class="fa-solid fa-chart-pie"></i> controlaí</div>
+            <div class="phone-month">Jun 2026</div>
+          </div>
+          <div class="phone-balance">
+            <div class="phone-balance-label">Saldo total</div>
+            <div class="phone-balance-value">R$ 4.250,00</div>
+            <div class="phone-balance-row">
+              <span><i class="fa-solid fa-arrow-down"></i> R$ 5.000 receitas</span>
+              <span><i class="fa-solid fa-arrow-up"></i> R$ 750 gastos</span>
+            </div>
+          </div>
+          <div class="phone-section-title">Últimos lançamentos</div>
+          <div class="phone-tx">
+            <div class="phone-tx-icon" style="background:rgba(239,68,68,0.15);color:#ef4444">
+              <i class="fa-solid fa-basket-shopping"></i>
+            </div>
+            <div class="phone-tx-info">
+              <div class="phone-tx-desc">Supermercado</div>
+              <div class="phone-tx-cat">Alimentação</div>
+            </div>
+            <div class="phone-tx-val neg">−R$ 320</div>
+          </div>
+          <div class="phone-tx">
+            <div class="phone-tx-icon" style="background:rgba(16,185,129,0.15);color:#10b981">
+              <i class="fa-solid fa-briefcase"></i>
+            </div>
+            <div class="phone-tx-info">
+              <div class="phone-tx-desc">Salário</div>
+              <div class="phone-tx-cat">Receita</div>
+            </div>
+            <div class="phone-tx-val pos">+R$ 5.000</div>
+          </div>
+          <div class="phone-tx">
+            <div class="phone-tx-icon" style="background:rgba(59,130,246,0.15);color:#3b82f6">
+              <i class="fa-solid fa-tv"></i>
+            </div>
+            <div class="phone-tx-info">
+              <div class="phone-tx-desc">Netflix</div>
+              <div class="phone-tx-cat">Assinaturas</div>
+            </div>
+            <div class="phone-tx-val neg">−R$ 45</div>
+          </div>
+          <div class="phone-bars">
+            <div class="bar" style="height:30%;background:#10b981"></div>
+            <div class="bar" style="height:55%;background:#10b981"></div>
+            <div class="bar" style="height:40%;background:#10b981"></div>
+            <div class="bar" style="height:80%;background:#10b981"></div>
+            <div class="bar" style="height:65%;background:#10b981"></div>
+            <div class="bar" style="height:90%;background:#10b981;opacity:1"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <div class="stats fade-in">
+      <div class="stat">
+        <span class="stat-value">100%</span>
+        <span class="stat-label">Gratuito para começar</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">PWA</span>
+        <span class="stat-label">Instala no celular</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">
+          <i class="fa-brands fa-telegram" style="font-size:28px;color:#229ED9"></i>
+        </span>
+        <span class="stat-label">Integração Telegram</span>
+      </div>
+      <div class="stat">
+        <span class="stat-value">0</span>
+        <span class="stat-label">Dados enviados a terceiros</span>
+      </div>
+    </div>
+
+    <!-- FEATURES -->
+    <section class="features" id="funcionalidades">
+      <div class="section-header fade-in">
+        <h2>Tudo que você precisa</h2>
+        <p>Funcionalidades pensadas para quem quer controle sem complicação.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card fade-in">
+          <div class="feature-icon"><i class="fa-solid fa-right-left"></i></div>
+          <h3>Lançamentos rápidos</h3>
+          <p>Registre receitas e despesas em segundos, com categorias, contas e observações.</p>
+        </div>
+        <div class="feature-card fade-in" style="transition-delay:0.05s">
+          <div class="feature-icon"><i class="fa-solid fa-credit-card"></i></div>
+          <h3>Cartões e faturas</h3>
+          <p>Acompanhe suas faturas de crédito, vencimentos e parcelas. Nunca pague juros de esquecimento.</p>
+        </div>
+        <div class="feature-card fade-in" style="transition-delay:0.1s">
+          <div class="feature-icon"><i class="fa-solid fa-rotate"></i></div>
+          <h3>Recorrentes automáticos</h3>
+          <p>Salário, aluguel, assinaturas. Configure uma vez e o app lança automaticamente todo mês.</p>
+        </div>
+        <div class="feature-card fade-in" style="transition-delay:0.15s">
+          <div class="feature-icon"><i class="fa-solid fa-chart-bar"></i></div>
+          <h3>Relatórios completos</h3>
+          <p>Veja por categoria, fluxo de caixa projetado e evolução do seu patrimônio ao longo do tempo.</p>
+        </div>
+        <div class="feature-card fade-in" style="transition-delay:0.2s">
+          <div class="feature-icon"><i class="fa-solid fa-bullseye"></i></div>
+          <h3>Metas financeiras</h3>
+          <p>Defina metas de economia ou compra e acompanhe o progresso mês a mês.</p>
+        </div>
+        <div class="feature-card fade-in" style="transition-delay:0.25s">
+          <div class="feature-icon"><i class="fa-solid fa-mobile-screen"></i></div>
+          <h3>App nativo no celular</h3>
+          <p>Instala direto do navegador, sem loja. Abre como app, funciona offline. Android e iOS.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TELEGRAM HIGHLIGHT -->
+    <section class="telegram-section">
+      <div class="telegram-inner">
+        <div class="telegram-text fade-in">
+          <div class="badge">
+            <i class="fa-brands fa-telegram"></i> Integração exclusiva
+          </div>
+          <h2>Registre gastos pelo Telegram sem abrir o app</h2>
+          <p>
+            Saiu do mercado? Manda uma mensagem pro bot e o lançamento já cai
+            no seu histórico. Sem tela de carregamento, sem login, sem fricção.
+          </p>
+          <a href="/login.html#cadastro" class="btn-primary">
+            <i class="fa-solid fa-rocket"></i> Experimentar grátis
+          </a>
+        </div>
+        <div class="telegram-visual fade-in" style="transition-delay:0.1s">
+          <div class="chat-bubble-wrap">
+            <div class="chat-header">
+              <div class="chat-avatar"><i class="fa-solid fa-chart-pie"></i></div>
+              <div>
+                <div class="chat-name">Controlaí Bot</div>
+                <div class="chat-status">online</div>
+              </div>
+            </div>
+            <div class="bubble user">mercado 180</div>
+            <div class="bubble bot">
+              ✅ Lançado!<br />
+              <strong>−R$ 180,00</strong> em Alimentação<br />
+              <span style="font-size:11px;opacity:0.7">Conta: Nubank · hoje</span>
+            </div>
+            <div class="bubble user">ifood 35 lazer</div>
+            <div class="bubble bot">
+              ✅ Lançado!<br />
+              <strong>−R$ 35,00</strong> em Lazer<br />
+              <span style="font-size:11px;opacity:0.7">Conta: Nubank · hoje</span>
+            </div>
+            <div class="bubble user">saldo</div>
+            <div class="bubble bot">
+              💰 Saldo atual: <strong>R$ 4.035,00</strong><br />
+              <span style="font-size:11px;opacity:0.7">Mês: −R$ 215 gastos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="final-cta fade-in">
+      <h2>Comece a controlar seu dinheiro hoje</h2>
+      <p>Crie sua conta grátis em menos de um minuto. Sem cartão de crédito.</p>
+      <a href="/login.html#cadastro" class="btn-primary" style="font-size:17px;padding:16px 36px">
+        <i class="fa-solid fa-rocket"></i> Criar conta grátis
+      </a>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <a href="/" class="footer-logo">
+        <div class="logo-icon"><i class="fa-solid fa-chart-pie"></i></div>
+        controlaí
+      </a>
+      <p>Controle financeiro pessoal, simples e rápido.</p>
+    </footer>
+
+    <script>
+      // Fade in on scroll
+      const observer = new IntersectionObserver(
+        (entries) => entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add("visible"); }),
+        { threshold: 0.12 }
+      );
+      document.querySelectorAll(".fade-in").forEach((el) => observer.observe(el));
+
+      // Service worker
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("/sw.js").catch(() => {});
+        });
+      }
+    </script>
+  </body>
+</html>

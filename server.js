@@ -36,7 +36,7 @@ app.post(`/bot${process.env.TELEGRAM_TOKEN}`, (req, res) => {
 
 // ── Rota raiz ──
 app.get("/", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "login.html")),
+  res.sendFile(path.join(__dirname, "public", "index.html")),
 );
 
 // ── Inicialização: migrations → servidor → cron ──
