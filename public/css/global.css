@@ -887,7 +887,7 @@ tbody td:nth-child(2) {
   .main {
     margin-left: 0;
     width: 100%;
-    padding: 72px 16px 82px;
+    padding: 72px 16px calc(82px + env(safe-area-inset-bottom, 0px));
   }
 
   .tab-bar {
@@ -899,8 +899,8 @@ tbody td:nth-child(2) {
     background: var(--bg-secondary);
     border-top: 0.5px solid var(--border);
     z-index: 99;
-    padding: 4px 0 env(safe-area-inset-bottom, 4px);
-    align-items: center;
+    padding: 6px 0 env(safe-area-inset-bottom, 0px);
+    align-items: flex-start;
   }
 
   .tab-item {
