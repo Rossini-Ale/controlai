@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Planos — Controlaí</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script src="/js/global.js"></script>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+      }
+      .layout { display: flex; min-height: 100vh; }
+      .main {
+        flex: 1;
+        padding: 32px 24px;
+        max-width: 900px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 40px;
+        font-size: 15px;
+      }
+
+      .plans-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        max-width: 700px;
+      }
+      @media (max-width: 600px) {
+        .plans-grid { grid-template-columns: 1fr; }
+      }
+
+      .plan-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px 24px;
+        position: relative;
+        transition: transform 0.15s;
+      }
+      .plan-card.pro {
+        border-color: var(--green);
+        box-shadow: 0 0 0 1px var(--green);
+      }
+      .plan-card:hover { transform: translateY(-2px); }
+
+      .plan-badge {
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--green);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 14px;
+        border-radius: 20px;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+
+      .plan-name {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+      .plan-price {
+        font-size: 32px;
+        font-weight: 800;
+        color: var(--green);
+        margin-bottom: 4px;
+      }
+      .plan-price span {
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--text-secondary);
+      }
+      .plan-desc {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 24px;
+      }
+
+      .plan-features {
+        list-style: none;
+        margin-bottom: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .plan-features li {
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .plan-features li .icon {
+        width: 18px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .plan-features li .icon.ok { color: var(--green); }
+      .plan-features li .icon.no { color: var(--text-muted); }
+      .plan-features li.dim { color: var(--text-muted); }
+
+      .btn-plan {
+        width: 100%;
+        padding: 13px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: opacity 0.15s, transform 0.1s;
+      }
+      .btn-plan:active { transform: scale(0.98); }
+      .btn-plan.primary {
+        background: var(--green);
+        color: #fff;
+      }
+      .btn-plan.primary:hover { opacity: 0.9; }
+      .btn-plan.secondary {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        cursor: default;
+      }
+      .btn-plan:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .current-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--green);
+        background: rgba(16,185,129,0.1);
+        padding: 4px 10px;
+        border-radius: 20px;
+        margin-bottom: 16px;
+      }
+
+      .usage-bar-wrap {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+      }
+      .usage-bar-label {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+        display: flex;
+        justify-content: space-between;
+      }
+      .usage-bar-track {
+        height: 6px;
+        background: var(--bg-tertiary);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .usage-bar-fill {
+        height: 100%;
+        border-radius: 99px;
+        background: var(--green);
+        transition: width 0.4s;
+      }
+      .usage-bar-fill.danger { background: #ef4444; }
+
+      .faq {
+        margin-top: 52px;
+        max-width: 700px;
+      }
+      .faq h2 {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 20px;
+      }
+      .faq-item {
+        border-bottom: 1px solid var(--border);
+        padding: 16px 0;
+      }
+      .faq-q {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .faq-a {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        display: none;
+      }
+      .faq-a.open { display: block; }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <div id="sidebar-container"></div>
+      <div class="main">
+        <div id="mobile-header-container"></div>
+        <h1>Planos</h1>
+        <p class="subtitle">Escolha o plano ideal para o seu controle financeiro.</p>
+
+        <div class="plans-grid" id="plans-grid">
+          <!-- renderizado por JS -->
+        </div>
+
+        <div class="faq">
+          <h2>Perguntas frequentes</h2>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+              O que acontece quando atinjo o limite de 30 transações?
+              <i class="fa-solid fa-chevron-down" style="font-size:12px;color:var(--text-muted)"></i>
+            </div>
+            <div class="faq-a">
+              Você não conseguirá adicionar novas transações naquele mês. As transações já registradas continuam intactas. O limite é reiniciado no primeiro dia de cada mês.
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+              Posso cancelar a qualquer momento?
+              <i class="fa-solid fa-chevron-down" style="font-size:12px;color:var(--text-muted)"></i>
+            </div>
+            <div class="faq-a">
+              Sim. Você pode cancelar pelo portal de assinatura sem burocracia. Seu plano Pro continua ativo até o fim do período já pago.
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+              Meus dados ficam seguros se eu cancelar?
+              <i class="fa-solid fa-chevron-down" style="font-size:12px;color:var(--text-muted)"></i>
+            </div>
+            <div class="faq-a">
+              Sim. Todos os seus lançamentos e contas são mantidos. Apenas o limite de novas transações volta a se aplicar.
+            </div>
+          </div>
+          <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+              Como funciona o pagamento?
+              <i class="fa-solid fa-chevron-down" style="font-size:12px;color:var(--text-muted)"></i>
+            </div>
+            <div class="faq-a">
+              O pagamento é processado com segurança pelo Stripe. Aceitamos cartões de crédito e débito das principais bandeiras. Sua assinatura renova automaticamente a cada mês.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.getElementById("sidebar-container").innerHTML = renderSidebar("Planos");
+      document.getElementById("mobile-header-container").innerHTML = renderMobileHeader("Planos");
+
+      let statusPlano = null;
+
+      async function carregarPlanos() {
+        try {
+          statusPlano = await fetchAPI("/api/pagamentos/status");
+        } catch {
+          statusPlano = { plano: "free", transacoes_mes: 0, limite_transacoes: 30 };
+        }
+        renderPlans();
+      }
+
+      function renderPlans() {
+        const { plano, transacoes_mes, limite_transacoes } = statusPlano;
+        const isPro = plano === "pro";
+        const pct = limite_transacoes ? Math.min(100, Math.round((transacoes_mes / limite_transacoes) * 100)) : 0;
+        const danger = pct >= 80;
+
+        document.getElementById("plans-grid").innerHTML = `
+          <!-- Plano Free -->
+          <div class="plan-card">
+            <div class="plan-name">Gratuito</div>
+            <div class="plan-price">R$0 <span>/mês</span></div>
+            <div class="plan-desc">Para conhecer o app</div>
+            <ul class="plan-features">
+              <li><span class="icon ok"><i class="fa-solid fa-check"></i></span> 30 transações por mês</li>
+              <li><span class="icon ok"><i class="fa-solid fa-check"></i></span> Dashboard completo</li>
+              <li><span class="icon ok"><i class="fa-solid fa-check"></i></span> Contas e cartões ilimitados</li>
+              <li class="dim"><span class="icon no"><i class="fa-solid fa-xmark"></i></span> Transações recorrentes</li>
+              <li class="dim"><span class="icon no"><i class="fa-solid fa-xmark"></i></span> Relatórios avançados</li>
+              <li class="dim"><span class="icon no"><i class="fa-solid fa-xmark"></i></span> Exportação de dados</li>
+            </ul>
+            ${!isPro ? `<div class="current-badge"><i class="fa-solid fa-circle-check"></i> Plano atual</div>` : ""}
+            <button class="btn-plan secondary" disabled>Plano atual${isPro ? " (inativo)" : ""}</button>
+            ${!isPro ? `
+            <div class="usage-bar-wrap">
+              <div class="usage-bar-label">
+                <span>Transações este mês</span>
+                <span>${transacoes_mes} / ${limite_transacoes}</span>
+              </div>
+              <div class="usage-bar-track">
+                <div class="usage-bar-fill ${danger ? "danger" : ""}" style="width:${pct}%"></div>
+              </div>
+            </div>` : ""}
+          </div>
+
+          <!-- Plano Pro -->
+          <div class="plan-card pro">
+            <div class="plan-badge">RECOMENDADO</div>
+            <div class="plan-name">Pro</div>
+            <div class="plan-price">R$14,90 <span>/mês</span></div>
+            <div class="plan-desc">Para uso completo e sem limites</div>
+            <ul class="plan-features">
+              <li><span class="icon ok"><i class="fa-solid fa-check"></i></span> Transações ilimitadas</li>
+              <li><span class="icon ok"><i class="fa-solid fa-check"></i></span> Dashboard completo</li>
+              <li><span class="icon ok"><i class="fa-solid fa-check"></i></span> Contas e cartões ilimitados</li>
+              <li><span class="icon ok"><i class="fa-solid fa-check"></i></span> Transações recorrentes</li>
+              <li><span class="icon ok"><i class="fa-solid fa-check"></i></span> Relatórios avançados</li>
+              <li><span class="icon ok"><i class="fa-solid fa-check"></i></span> Exportação de dados</li>
+            </ul>
+            ${isPro ? `<div class="current-badge"><i class="fa-solid fa-circle-check"></i> Plano atual</div>` : ""}
+            ${isPro
+              ? `<button class="btn-plan secondary" onclick="abrirPortal()"><i class="fa-solid fa-gear"></i> Gerenciar assinatura</button>`
+              : `<button class="btn-plan primary" id="btn-assinar" onclick="assinarPro()"><i class="fa-solid fa-bolt"></i> Assinar Pro</button>`
+            }
+          </div>
+        `;
+      }
+
+      async function assinarPro() {
+        const btn = document.getElementById("btn-assinar");
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aguarde...'; }
+        try {
+          const data = await fetchAPI("/api/pagamentos/criar-sessao", { method: "POST" });
+          if (data?.url) window.location.href = data.url;
+          else {
+            mostrarToast("Erro ao iniciar checkout. Tente novamente.", "error");
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Assinar Pro'; }
+          }
+        } catch {
+          mostrarToast("Erro ao conectar. Tente novamente.", "error");
+          if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Assinar Pro'; }
+        }
+      }
+
+      async function abrirPortal() {
+        try {
+          const data = await fetchAPI("/api/pagamentos/portal", { method: "POST" });
+          if (data?.url) window.location.href = data.url;
+          else mostrarToast("Erro ao abrir portal.", "error");
+        } catch {
+          mostrarToast("Erro ao conectar.", "error");
+        }
+      }
+
+      function toggleFaq(el) {
+        const answer = el.nextElementSibling;
+        const icon = el.querySelector("i");
+        answer.classList.toggle("open");
+        icon.style.transform = answer.classList.contains("open") ? "rotate(180deg)" : "";
+      }
+
+      carregarPlanos();
+    </script>
+  </body>
+</html>

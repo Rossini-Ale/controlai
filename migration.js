@@ -32,6 +32,14 @@ const MIGRATIONS = [
       FOREIGN KEY (usuario_id) REFERENCES Usuarios(id) ON DELETE CASCADE
     )`,
   },
+  {
+    id: "006_plano_usuario",
+    sql: "ALTER TABLE Usuarios ADD COLUMN plano VARCHAR(10) NOT NULL DEFAULT 'free'",
+  },
+  {
+    id: "007_stripe_campos",
+    sql: "ALTER TABLE Usuarios ADD COLUMN stripe_customer_id VARCHAR(100) NULL, ADD COLUMN stripe_subscription_id VARCHAR(100) NULL",
+  },
 ];
 
 async function rodarMigrations() {

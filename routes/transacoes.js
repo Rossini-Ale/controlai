@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 const auth = require("../middleware/auth");
+const { verificarLimiteTransacoes } = require("../middleware/plano");
 
 // ── Listar transações (exclui deletadas) ──
 router.get("/", auth, async (req, res) => {
@@ -79,7 +80,7 @@ router.get("/", auth, async (req, res) => {
 });
 
 // ── Criar transação ──
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, verificarLimiteTransacoes, async (req, res) => {
   const { conta_id, categoria_id, tipo, descricao, valor, data, observacao } =
     req.body;
   try {

@@ -294,7 +294,7 @@ function renderSidebar(paginaAtiva) {
     { href: "/contas.html", icon: "fa-wallet", label: "Contas" },
     { href: "/relatorios.html", icon: "fa-chart-bar", label: "Relatórios" },
   ];
-  return `
+  const _sidebarHtml = `
     <div class="sidebar-logo">
       <div class="icon"><i class="fa-solid fa-chart-pie"></i></div>
       <span>controlaí</span>
@@ -335,7 +335,8 @@ function renderSidebar(paginaAtiva) {
           <i class="fa-brands fa-telegram"></i> Telegram
         </a>
       </div>
-      <button class="btn-tema priv-toggle-btn" onclick="togglePrivacidade()" style="margin-top:8px">
+      <div id="sidebar-plan-cta" style="margin-top:8px"></div>
+      <button class="btn-tema priv-toggle-btn" onclick="togglePrivacidade()" style="margin-top:4px">
         <i class="fa-solid fa-eye priv-icon"></i>
         <span class="priv-label">${getPrivacidade() ? "Mostrar valores" : "Ocultar valores"}</span>
       </button>
@@ -347,6 +348,40 @@ function renderSidebar(paginaAtiva) {
         <i class="fa-solid fa-right-from-bracket"></i> Sair
       </button>
     </div>`;
+  setTimeout(carregarPlanoCTA, 0);
+  return _sidebarHtml;
+}
+
+async function carregarPlanoCTA() {
+  if (!getToken()) return;
+  const el = document.getElementById("sidebar-plan-cta");
+  if (!el) return;
+  try {
+    const status = await fetchAPI("/api/pagamentos/status");
+    if (!status) return;
+    if (status.plano === "pro") {
+      el.innerHTML = `
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--green);padding:6px 2px">
+          <i class="fa-solid fa-crown"></i> Plano Pro ativo
+        </div>`;
+    } else {
+      const pct = status.limite_transacoes
+        ? Math.min(100, Math.round((status.transacoes_mes / status.limite_transacoes) * 100))
+        : 0;
+      const danger = pct >= 80;
+      el.innerHTML = `
+        <a href="/planos.html" style="display:block;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:10px 12px;text-decoration:none;color:var(--text-primary)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+            <span style="font-size:12px;font-weight:600">Plano Gratuito</span>
+            <span style="font-size:11px;color:var(--green);font-weight:600">Upgrade →</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px">${status.transacoes_mes}/${status.limite_transacoes} transações este mês</div>
+          <div style="height:4px;background:var(--bg-tertiary);border-radius:99px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${danger ? "#ef4444" : "var(--green)"};border-radius:99px"></div>
+          </div>
+        </a>`;
+    }
+  } catch { /* silently fail */ }
 }
 
 function togglePerfilDesktop() {
