@@ -111,4 +111,95 @@ router.get("/fluxo", auth, async (req, res) => {
   }
 });
 
+// ── Resumo do mês (receitas, despesas, saldo) ──
+router.get("/resumo", auth, async (req, res) => {
+  const mes = parseInt(req.query.mes);
+  const ano = parseInt(req.query.ano);
+  try {
+    const [[row]] = await db.query(
+      `SELECT
+        COALESCE(SUM(CASE WHEN tipo='receita' THEN valor ELSE 0 END), 0) AS total_receitas,
+        COALESCE(SUM(CASE WHEN tipo IN ('despesa','cartao') THEN valor ELSE 0 END), 0) AS total_despesas,
+        COALESCE(SUM(CASE WHEN tipo='receita' THEN valor ELSE -valor END), 0) AS saldo
+       FROM Transacoes
+       WHERE usuario_id=? AND MONTH(data)=? AND YEAR(data)=? AND deleted_at IS NULL`,
+      [req.usuarioId, mes, ano],
+    );
+    res.json(row);
+  } catch (err) {
+    console.error("[Resumo]", err.message);
+    res.status(500).json({ erro: "Erro ao buscar resumo." });
+  }
+});
+
+// ── Gastos/receitas por categoria ──
+router.get("/por-categoria", auth, async (req, res) => {
+  const mes = parseInt(req.query.mes);
+  const ano = parseInt(req.query.ano);
+  const tipo = req.query.tipo || "despesa";
+  try {
+    const [rows] = await db.query(
+      `SELECT c.nome, c.cor, c.icone,
+              COALESCE(SUM(t.valor), 0) AS total
+       FROM Categorias c
+       INNER JOIN Transacoes t
+         ON t.categoria_id = c.id
+         AND MONTH(t.data)=? AND YEAR(t.data)=?
+         AND t.deleted_at IS NULL
+         AND (t.tipo=? OR (? = 'despesa' AND t.tipo='cartao'))
+       WHERE c.usuario_id=? AND c.deleted_at IS NULL
+       GROUP BY c.id, c.nome, c.cor, c.icone
+       ORDER BY total DESC`,
+      [mes, ano, tipo, tipo, req.usuarioId],
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("[PorCategoria]", err.message);
+    res.status(500).json({ erro: "Erro ao buscar categorias." });
+  }
+});
+
+// ── Saldo atual de cada conta ──
+router.get("/saldo-contas", auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT c.id, c.nome, c.cor, c.tipo,
+         c.saldo_inicial + COALESCE((
+           SELECT SUM(CASE WHEN t.tipo='receita' THEN t.valor ELSE -t.valor END)
+           FROM Transacoes t WHERE t.conta_id=c.id AND t.deleted_at IS NULL
+         ), 0) AS saldo_atual
+       FROM Contas c WHERE c.usuario_id=?
+       ORDER BY c.nome`,
+      [req.usuarioId],
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("[SaldoContas]", err.message);
+    res.status(500).json({ erro: "Erro ao buscar saldos." });
+  }
+});
+
+// ── Evolução mensal (últimos 6 meses) ──
+router.get("/evolucao", auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT
+         YEAR(data)  AS ano,
+         MONTH(data) AS mes,
+         SUM(CASE WHEN tipo='receita' THEN valor ELSE 0 END) AS receitas,
+         SUM(CASE WHEN tipo IN ('despesa','cartao') THEN valor ELSE 0 END) AS despesas
+       FROM Transacoes
+       WHERE usuario_id=? AND deleted_at IS NULL
+         AND data >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+       GROUP BY YEAR(data), MONTH(data)
+       ORDER BY ano, mes`,
+      [req.usuarioId],
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("[Evolucao]", err.message);
+    res.status(500).json({ erro: "Erro ao buscar evolução." });
+  }
+});
+
 module.exports = router;

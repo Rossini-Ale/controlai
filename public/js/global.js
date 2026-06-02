@@ -192,8 +192,9 @@ function aplicarPrivacidade() {
 function togglePrivacidade() {
   localStorage.setItem(PRIV_KEY, getPrivacidade() ? "0" : "1");
   aplicarPrivacidade();
-  const label = document.getElementById("priv-label");
-  if (label) label.textContent = getPrivacidade() ? "Ocultos" : "Visíveis";
+  document.querySelectorAll(".priv-label").forEach((el) => {
+    el.textContent = getPrivacidade() ? "Mostrar valores" : "Ocultar valores";
+  });
 }
 
 // Aplica ao carregar + observa mudanças no DOM
@@ -334,7 +335,11 @@ function renderSidebar(paginaAtiva) {
           <i class="fa-brands fa-telegram"></i> Telegram
         </a>
       </div>
-      <button class="btn-tema" onclick="toggleTema()" style="margin-top:8px">
+      <button class="btn-tema priv-toggle-btn" onclick="togglePrivacidade()" style="margin-top:8px">
+        <i class="fa-solid fa-eye priv-icon"></i>
+        <span class="priv-label">${getPrivacidade() ? "Mostrar valores" : "Ocultar valores"}</span>
+      </button>
+      <button class="btn-tema" onclick="toggleTema()" style="margin-top:4px">
         <i class="fa-solid ${temaIcon(getTema())} btn-tema-icon"></i>
         <span class="btn-tema-label">${temaLabel(getTema())}</span>
       </button>
@@ -375,6 +380,9 @@ function renderMobileHeader(paginaAtiva) {
       </button>
       ${titulo}
       <div class="mobile-header-actions">
+        <button class="mobile-icon-btn priv-toggle-btn" onclick="togglePrivacidade()" aria-label="Alternar privacidade" title="Mostrar/ocultar valores">
+          <i class="fa-solid fa-eye priv-icon"></i>
+        </button>
         <button class="mobile-icon-btn" onclick="toggleTema()" aria-label="Alternar tema">
           <i class="fa-solid ${temaIcon(getTema())} btn-tema-icon"></i>
         </button>

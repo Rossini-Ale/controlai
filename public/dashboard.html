@@ -372,7 +372,19 @@
           carregarTransacoes(),
           carregarOrcamento(),
           carregarRecorrentesVencendo(),
+          carregarSaldoTotal(),
         ]);
+      }
+
+      async function carregarSaldoTotal() {
+        const contas = await fetchAPI("/api/relatorios/saldo-contas");
+        if (!Array.isArray(contas)) return;
+        const total = contas.reduce((s, c) => s + parseFloat(c.saldo_atual || 0), 0);
+        const el = document.getElementById("saldo-total-valor");
+        if (!el) return;
+        el.className = "card-value " + (total >= 0 ? "green" : "red");
+        el.innerHTML = formatarMoeda(total);
+        aplicarPrivacidade();
       }
 
       async function carregarResumo() {
@@ -384,13 +396,9 @@
           <div class="card"><div class="card-label">Receitas</div><div class="card-value green">${formatarMoeda(data.total_receitas)}</div></div>
           <div class="card"><div class="card-label">Despesas</div><div class="card-value red">${formatarMoeda(data.total_despesas)}</div></div>
           <div class="card"><div class="card-label">Saldo do mês</div><div class="card-value ${parseFloat(data.saldo) >= 0 ? "green" : "red"}">${formatarMoeda(data.saldo)}</div></div>
-          <div class="card" style="cursor:pointer;user-select:none" onclick="togglePrivacidade()" title="Mostrar/ocultar valores">
-            <div class="card-label" style="display:flex;align-items:center;justify-content:space-between">
-              Privacidade <i class="fa-solid fa-eye priv-icon" style="font-size:13px;color:var(--text-muted)"></i>
-            </div>
-            <div class="card-value" id="priv-label" style="font-size:13px;color:var(--text-muted);margin-top:4px">
-              ${getPrivacidade() ? "Ocultos" : "Visíveis"}
-            </div>
+          <div class="card" id="card-saldo-total">
+            <div class="card-label">Saldo total</div>
+            <div class="card-value" id="saldo-total-valor" style="color:var(--text-muted)">—</div>
           </div>`;
         aplicarPrivacidade();
       }
