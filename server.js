@@ -2,6 +2,7 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 require("./config/db");
 
@@ -9,6 +10,45 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
+
+// ── Rate limiting ──
+const limiterAuth = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { erro: "Muitas tentativas. Aguarde 15 minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const limiterCadastro = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { erro: "Muitos cadastros deste IP. Aguarde 1 hora." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const limiterEsqueci = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { erro: "Muitas solicitações. Aguarde 1 hora." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const limiterApi = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  message: { erro: "Muitas requisições. Tente em alguns minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ── Rate limiters específicos (antes das rotas) ──
+app.post("/api/auth/login", limiterAuth);
+app.post("/api/auth/cadastro", limiterCadastro);
+app.post("/api/auth/esqueci-senha", limiterEsqueci);
+app.use("/api", limiterApi);
 
 // ── Rotas ──
 app.use("/api/auth", require("./routes/auth"));

@@ -89,6 +89,49 @@ router.post("/cadastro", async (req, res) => {
     );
 
     res.status(201).json({ mensagem: "Usuário criado com sucesso!" });
+
+    // Email de boas-vindas (não bloqueia a resposta)
+    if (email) {
+      const appUrl = process.env.APP_URL || "https://controlai.up.railway.app";
+      const from = process.env.RESEND_FROM_EMAIL || "Controlaí <noreply@controlai.up.railway.app>";
+      getResend().emails.send({
+        from,
+        to: email,
+        subject: "Bem-vindo ao Controlaí! 🎉",
+        html: `
+          <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#0f1117;color:#fff;border-radius:16px;padding:40px;border:1px solid #2d3748">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">
+              <div style="width:36px;height:36px;background:linear-gradient(135deg,#10b981,#059669);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px">💹</div>
+              <span style="font-size:18px;font-weight:700">controlaí</span>
+            </div>
+            <h2 style="font-size:22px;font-weight:700;margin-bottom:12px">Bem-vindo, ${nome}! 👋</h2>
+            <p style="color:#9ca3af;margin-bottom:20px;line-height:1.7">
+              Sua conta foi criada com sucesso. Agora você tem tudo que precisa para organizar suas finanças de um jeito simples e rápido.
+            </p>
+            <div style="background:#1a1f2e;border:0.5px solid #2d3748;border-radius:12px;padding:20px;margin-bottom:28px">
+              <p style="font-size:13px;font-weight:600;color:#9ca3af;margin-bottom:14px;text-transform:uppercase;letter-spacing:0.5px">Por onde começar</p>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:10px;font-size:14px">
+                  <span style="color:#10b981">✓</span> Adicione suas contas e saldo inicial
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:14px">
+                  <span style="color:#10b981">✓</span> Registre seus primeiros lançamentos
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:14px">
+                  <span style="color:#10b981">✓</span> Configure transações recorrentes
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;font-size:14px">
+                  <span style="color:#10b981">✓</span> Conecte o bot do Telegram para lançar gastos na hora
+                </div>
+              </div>
+            </div>
+            <a href="${appUrl}/dashboard.html" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px">
+              Ir para o Dashboard →
+            </a>
+          </div>
+        `,
+      }).catch(() => {}); // silencia erro de email para não afetar o cadastro
+    }
   } catch (err) {
     res.status(400).json({ erro: "Email ou username já cadastrado." });
   }
