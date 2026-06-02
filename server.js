@@ -9,14 +9,6 @@ require("./config/db");
 const app = express();
 app.use(cors());
 
-// Webhook Stripe precisa de raw body — registrado antes do express.json()
-const { handleWebhook } = require("./routes/pagamentos");
-app.post(
-  "/api/pagamentos/webhook",
-  express.raw({ type: "application/json" }),
-  handleWebhook,
-);
-
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -72,7 +64,7 @@ app.use("/api/recorrentes", require("./routes/recorrentes"));
 app.use("/api/transferencias", require("./routes/transferencias"));
 app.use("/api/orcamentos", require("./routes/orcamentos"));
 app.use("/api/importacao", require("./routes/importacao"));
-app.use("/api/pagamentos", require("./routes/pagamentos").router);
+// app.use("/api/pagamentos", require("./routes/pagamentos").router); // desativado até configurar Stripe
 
 // ── Telegram webhook ──
 const bot = require("./routes/telegram");
