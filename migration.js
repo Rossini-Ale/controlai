@@ -20,6 +20,18 @@ const MIGRATIONS = [
     id: "004_index_transacoes_usuario_data",
     sql: "ALTER TABLE Transacoes ADD INDEX idx_usuario_data (usuario_id, data)",
   },
+  {
+    id: "005_password_resets",
+    sql: `CREATE TABLE IF NOT EXISTS PasswordResets (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      usuario_id INT NOT NULL,
+      token      VARCHAR(64) NOT NULL UNIQUE,
+      expires_at DATETIME NOT NULL,
+      used       TINYINT(1) DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (usuario_id) REFERENCES Usuarios(id) ON DELETE CASCADE
+    )`,
+  },
 ];
 
 async function rodarMigrations() {

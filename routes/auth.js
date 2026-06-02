@@ -2,8 +2,14 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const { Resend } = require("resend");
 const db = require("../config/db");
 const auth = require("../middleware/auth");
+
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 const CATEGORIAS_PADRAO = [
   {
@@ -187,6 +193,108 @@ router.get("/onboarding", auth, async (req, res) => {
     res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ erro: "Erro ao buscar onboarding." });
+  }
+});
+
+// Solicitar recuperação de senha
+router.post("/esqueci-senha", async (req, res) => {
+  const { email } = req.body;
+  try {
+    const [rows] = await db.query(
+      "SELECT id, nome FROM Usuarios WHERE email = ?",
+      [email],
+    );
+    // Sempre responde com sucesso para não revelar se o email existe
+    if (rows.length === 0) {
+      return res.json({ mensagem: "Se o email existir, você receberá o link." });
+    }
+    const usuario = rows[0];
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+    await db.query(
+      "INSERT INTO PasswordResets (usuario_id, token, expires_at) VALUES (?, ?, ?)",
+      [usuario.id, token, expires],
+    );
+
+    const appUrl = process.env.APP_URL || "https://controlai.up.railway.app";
+    const link = `${appUrl}/redefinir-senha.html?token=${token}`;
+    const from = process.env.RESEND_FROM_EMAIL || "Controlaí <noreply@controlai.up.railway.app>";
+
+    await getResend().emails.send({
+      from,
+      to: email,
+      subject: "Redefinir senha — Controlaí",
+      html: `
+        <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#0f1117;color:#fff;border-radius:16px;padding:40px;border:1px solid #2d3748">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:28px">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,#10b981,#059669);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px">💹</div>
+            <span style="font-size:18px;font-weight:700">controlaí</span>
+          </div>
+          <h2 style="font-size:22px;font-weight:700;margin-bottom:12px">Redefinir sua senha</h2>
+          <p style="color:#9ca3af;margin-bottom:28px;line-height:1.6">
+            Olá, <strong style="color:#fff">${usuario.nome}</strong>!<br />
+            Recebemos uma solicitação para redefinir a senha da sua conta.<br />
+            Clique no botão abaixo para criar uma nova senha. O link expira em <strong style="color:#fff">1 hora</strong>.
+          </p>
+          <a href="${link}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:600;font-size:15px;margin-bottom:28px">
+            Redefinir senha →
+          </a>
+          <p style="color:#6b7280;font-size:12px;line-height:1.6;border-top:1px solid #2d3748;padding-top:20px">
+            Se você não solicitou isso, ignore este email. Sua senha não será alterada.<br />
+            Link direto: <a href="${link}" style="color:#10b981">${link}</a>
+          </p>
+        </div>
+      `,
+    });
+
+    res.json({ mensagem: "Se o email existir, você receberá o link." });
+  } catch (err) {
+    console.error("[EsqueciSenha]", err.message);
+    res.status(500).json({ erro: "Erro ao enviar email." });
+  }
+});
+
+// Validar token
+router.get("/validar-token/:token", async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM PasswordResets WHERE token = ? AND used = 0 AND expires_at > NOW()",
+      [req.params.token],
+    );
+    if (rows.length === 0) {
+      return res.status(400).json({ valido: false });
+    }
+    res.json({ valido: true });
+  } catch (err) {
+    res.status(500).json({ valido: false });
+  }
+});
+
+// Redefinir senha
+router.post("/redefinir-senha", async (req, res) => {
+  const { token, nova_senha } = req.body;
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM PasswordResets WHERE token = ? AND used = 0 AND expires_at > NOW()",
+      [token],
+    );
+    if (rows.length === 0) {
+      return res.status(400).json({ erro: "Link inválido ou expirado." });
+    }
+    const reset = rows[0];
+    const hash = await bcrypt.hash(nova_senha, 10);
+    await db.query("UPDATE Usuarios SET senha = ? WHERE id = ?", [
+      hash,
+      reset.usuario_id,
+    ]);
+    await db.query("UPDATE PasswordResets SET used = 1 WHERE id = ?", [
+      reset.id,
+    ]);
+    res.json({ mensagem: "Senha redefinida com sucesso!" });
+  } catch (err) {
+    console.error("[RedefinirSenha]", err.message);
+    res.status(500).json({ erro: "Erro ao redefinir senha." });
   }
 });
 

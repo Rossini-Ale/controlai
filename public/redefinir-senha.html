@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redefinir senha — Controlaí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        background: #0f1117;
+        color: #fff;
+        font-family: "Segoe UI", sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .card {
+        background: #1a1f2e;
+        border: 0.5px solid #2d3748;
+        border-radius: 20px;
+        padding: 40px 36px;
+        width: 100%;
+        max-width: 380px;
+        margin: 20px;
+      }
+      .logo {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+      .logo-icon {
+        width: 48px; height: 48px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin: 0 auto 12px;
+      }
+      .logo h1 { font-size: 22px; font-weight: 700; }
+      .logo p { color: #9ca3af; font-size: 13px; margin-top: 4px; }
+
+      .form-group { margin-bottom: 16px; }
+      .form-group label {
+        display: block;
+        font-size: 13px;
+        color: #9ca3af;
+        margin-bottom: 6px;
+        font-weight: 500;
+      }
+      .form-group input {
+        width: 100%;
+        background: #242938;
+        border: 0.5px solid #2d3748;
+        border-radius: 10px;
+        padding: 12px 14px;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .form-group input:focus { border-color: #10b981; }
+
+      .btn {
+        width: 100%;
+        background: #10b981;
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        padding: 13px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-top: 4px;
+      }
+      .btn:hover { background: #059669; }
+      .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+      .msg {
+        margin-top: 14px;
+        font-size: 13px;
+        text-align: center;
+        display: none;
+        padding: 10px 14px;
+        border-radius: 8px;
+      }
+      .msg.erro { background: rgba(239,68,68,0.1); color: #ef4444; }
+      .msg.ok { background: rgba(16,185,129,0.1); color: #10b981; }
+
+      .voltar {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 13px;
+        color: #6b7280;
+      }
+      .voltar a { color: #10b981; cursor: pointer; text-decoration: none; }
+      .voltar a:hover { text-decoration: underline; }
+
+      #loading, #invalido, #sucesso { display: none; text-align: center; }
+      #loading { color: #9ca3af; }
+      .spinner { font-size: 28px; color: #10b981; margin-bottom: 12px; animation: spin 1s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .check { font-size: 48px; color: #10b981; margin-bottom: 16px; }
+      .x-icon { font-size: 48px; color: #ef4444; margin-bottom: 16px; }
+      #invalido p, #sucesso p { color: #9ca3af; font-size: 14px; line-height: 1.6; }
+      #invalido h2, #sucesso h2 { font-size: 18px; margin-bottom: 8px; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="logo">
+        <div class="logo-icon"><i class="fa-solid fa-chart-pie"></i></div>
+        <h1>controlaí</h1>
+        <p>Redefinir senha</p>
+      </div>
+
+      <!-- Verificando token -->
+      <div id="loading">
+        <div class="spinner"><i class="fa-solid fa-circle-notch fa-spin"></i></div>
+        <p style="color:#9ca3af">Verificando link...</p>
+      </div>
+
+      <!-- Token inválido -->
+      <div id="invalido">
+        <div class="x-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+        <h2>Link inválido</h2>
+        <p>Este link já foi usado ou expirou.<br />Solicite um novo link.</p>
+        <a href="/login.html" class="btn" style="display:inline-block;margin-top:20px;text-decoration:none;text-align:center">
+          Voltar ao login
+        </a>
+      </div>
+
+      <!-- Formulário -->
+      <div id="form-redefinir">
+        <div class="form-group">
+          <label>Nova senha</label>
+          <input type="password" id="nova-senha" placeholder="••••••••" />
+        </div>
+        <div class="form-group">
+          <label>Confirmar nova senha</label>
+          <input type="password" id="confirmar-senha" placeholder="••••••••" />
+        </div>
+        <button class="btn" id="btn-redefinir" onclick="redefinir()">Salvar nova senha</button>
+        <div class="msg erro" id="msg-erro"></div>
+      </div>
+
+      <!-- Sucesso -->
+      <div id="sucesso">
+        <div class="check"><i class="fa-solid fa-circle-check"></i></div>
+        <h2>Senha redefinida!</h2>
+        <p>Sua senha foi alterada com sucesso.<br />Faça login com a nova senha.</p>
+        <a href="/login.html" class="btn" style="display:inline-block;margin-top:20px;text-decoration:none;text-align:center">
+          Ir para o login
+        </a>
+      </div>
+    </div>
+
+    <script>
+      const token = new URLSearchParams(window.location.search).get("token");
+
+      function show(id) {
+        ["loading", "invalido", "form-redefinir", "sucesso"].forEach((s) => {
+          document.getElementById(s).style.display = s === id ? "block" : "none";
+        });
+      }
+
+      async function verificarToken() {
+        if (!token) { show("invalido"); return; }
+        show("loading");
+        try {
+          const res = await fetch(`/api/auth/validar-token/${token}`);
+          const data = await res.json();
+          show(data.valido ? "form-redefinir" : "invalido");
+        } catch {
+          show("invalido");
+        }
+      }
+
+      async function redefinir() {
+        const nova = document.getElementById("nova-senha").value;
+        const confirmar = document.getElementById("confirmar-senha").value;
+        const erro = document.getElementById("msg-erro");
+        const btn = document.getElementById("btn-redefinir");
+
+        erro.style.display = "none";
+
+        if (nova.length < 6) {
+          erro.style.display = "block";
+          erro.textContent = "A senha deve ter pelo menos 6 caracteres.";
+          return;
+        }
+        if (nova !== confirmar) {
+          erro.style.display = "block";
+          erro.textContent = "As senhas não coincidem.";
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "Salvando...";
+
+        try {
+          const res = await fetch("/api/auth/redefinir-senha", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token, nova_senha: nova }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            erro.style.display = "block";
+            erro.textContent = data.erro;
+            btn.disabled = false;
+            btn.textContent = "Salvar nova senha";
+            return;
+          }
+          show("sucesso");
+        } catch {
+          erro.style.display = "block";
+          erro.textContent = "Erro ao conectar ao servidor.";
+          btn.disabled = false;
+          btn.textContent = "Salvar nova senha";
+        }
+      }
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") redefinir();
+      });
+
+      verificarToken();
+    </script>
+  </body>
+</html>
