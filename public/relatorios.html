@@ -485,6 +485,9 @@
         <button class="aba-btn" id="aba-fluxo-btn" onclick="trocarAba('fluxo')">
           <i class="fa-solid fa-water"></i> Fluxo
         </button>
+        <button class="aba-btn" id="aba-anual-btn" onclick="trocarAba('anual')">
+          <i class="fa-solid fa-calendar"></i> Anual
+        </button>
       </div>
 
       <!-- ABA RELATÓRIOS -->
@@ -880,6 +883,19 @@
           <button class="btn" onclick="salvarOrc()">Salvar</button>
         </div>
       </div>
+      <!-- ABA ANUAL -->
+      <div class="aba-conteudo" id="aba-anual">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
+          <select id="anual-ano" class="filtro-select" style="width:120px"></select>
+          <button class="btn" onclick="carregarAnual()"><i class="fa-solid fa-rotate"></i> Atualizar</button>
+        </div>
+        <div id="anual-totais" style="margin-bottom:20px"></div>
+        <div class="chart-card" style="margin-bottom:20px">
+          <h3>Receitas vs Despesas por mês</h3>
+          <canvas id="chart-anual" height="120"></canvas>
+        </div>
+        <div id="anual-tabela"></div>
+      </div>
     </div>
 
     <div id="tabbar"></div>
@@ -935,18 +951,20 @@
           metas: "Metas",
           orcamento: "Orçamento",
           fluxo: "Fluxo de Caixa",
-        }[aba];
+          anual: "Resumo Anual",
+        }[aba] || aba;
         if (aba === "metas") carregarMetas();
         if (aba === "orcamento") carregarOrcamento();
         if (aba === "comparativo") carregarComparativo();
         if (aba === "fluxo") carregarFluxo();
+        if (aba === "anual") carregarAnual();
       }
 
       // Abre aba por URL param
       const abaParam = new URLSearchParams(window.location.search).get("aba");
       if (
         abaParam &&
-        ["relatorios", "comparativo", "metas", "orcamento", "fluxo"].includes(
+        ["relatorios", "comparativo", "metas", "orcamento", "fluxo", "anual"].includes(
           abaParam,
         )
       )
@@ -1990,6 +2008,91 @@
           btn.innerHTML = labelOriginal;
           btn.disabled = false;
         }
+      }
+
+      // ══════════════════════════════════════
+      // RESUMO ANUAL
+      // ══════════════════════════════════════
+      (function initAnualSelect() {
+        const sel = document.getElementById("anual-ano");
+        if (!sel) return;
+        const anoAtual = new Date().getFullYear();
+        for (let a = anoAtual; a >= anoAtual - 4; a--) {
+          const opt = document.createElement("option");
+          opt.value = a; opt.textContent = a;
+          sel.appendChild(opt);
+        }
+      })();
+
+      let chartAnual = null;
+
+      async function carregarAnual() {
+        const ano = document.getElementById("anual-ano")?.value || new Date().getFullYear();
+        const data = await fetchAPI(`/api/relatorios/anual?ano=${ano}`);
+        if (!data) return;
+
+        const nomeMeses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+        const verde = "#10b981", vermelho = "#ef4444";
+
+        // Totais do ano
+        document.getElementById("anual-totais").innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:4px">
+            <div style="background:var(--bg-secondary);border-radius:12px;padding:16px;border:0.5px solid var(--border)">
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Receitas ${ano}</div>
+              <div style="font-size:20px;font-weight:700;color:${verde}">${formatarMoeda(data.totais.receitas)}</div>
+            </div>
+            <div style="background:var(--bg-secondary);border-radius:12px;padding:16px;border:0.5px solid var(--border)">
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Despesas ${ano}</div>
+              <div style="font-size:20px;font-weight:700;color:${vermelho}">${formatarMoeda(data.totais.despesas)}</div>
+            </div>
+            <div style="background:var(--bg-secondary);border-radius:12px;padding:16px;border:0.5px solid var(--border)">
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Saldo ${ano}</div>
+              <div style="font-size:20px;font-weight:700;color:${data.totais.saldo >= 0 ? verde : vermelho}">${formatarMoeda(data.totais.saldo)}</div>
+            </div>
+          </div>`;
+
+        // Gráfico de barras
+        if (chartAnual) chartAnual.destroy();
+        chartAnual = new Chart(document.getElementById("chart-anual"), {
+          type: "bar",
+          data: {
+            labels: nomeMeses,
+            datasets: [
+              { label: "Receitas", data: data.meses.map((m) => m.receitas), backgroundColor: verde + "cc", borderRadius: 4 },
+              { label: "Despesas", data: data.meses.map((m) => m.despesas), backgroundColor: vermelho + "cc", borderRadius: 4 },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { labels: { color: "var(--text-muted)", font: { size: 11 } } } },
+            scales: {
+              x: { ticks: { color: "var(--text-muted)" }, grid: { display: false } },
+              y: { ticks: { color: "var(--text-muted)", callback: (v) => formatarMoedaRaw(v) }, grid: { color: "rgba(255,255,255,0.05)" } },
+            },
+          },
+        });
+
+        // Tabela mensal
+        const mesesComDados = data.meses.filter((m) => m.receitas > 0 || m.despesas > 0);
+        document.getElementById("anual-tabela").innerHTML = `
+          <div style="background:var(--bg-secondary);border-radius:12px;overflow:hidden;border:0.5px solid var(--border)">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;padding:10px 16px;border-bottom:0.5px solid var(--border);font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase">
+              <span>Mês</span><span style="text-align:right">Receitas</span><span style="text-align:right">Despesas</span><span style="text-align:right">Saldo</span>
+            </div>
+            ${data.meses.map((m, i) => `
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;padding:10px 16px;border-bottom:0.5px solid var(--border);font-size:13px;${m.receitas===0&&m.despesas===0?'opacity:0.4':''}">
+                <span style="font-weight:500">${nomeMeses[i]}</span>
+                <span style="text-align:right;color:${verde}">${m.receitas > 0 ? formatarMoeda(m.receitas) : "—"}</span>
+                <span style="text-align:right;color:${vermelho}">${m.despesas > 0 ? formatarMoeda(m.despesas) : "—"}</span>
+                <span style="text-align:right;font-weight:600;color:${m.saldo >= 0 ? verde : vermelho}">${m.receitas > 0 || m.despesas > 0 ? formatarMoeda(m.saldo) : "—"}</span>
+              </div>`).join("")}
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;padding:12px 16px;font-size:13px;font-weight:700">
+              <span>Total</span>
+              <span style="text-align:right;color:${verde}">${formatarMoeda(data.totais.receitas)}</span>
+              <span style="text-align:right;color:${vermelho}">${formatarMoeda(data.totais.despesas)}</span>
+              <span style="text-align:right;color:${data.totais.saldo >= 0 ? verde : vermelho}">${formatarMoeda(data.totais.saldo)}</span>
+            </div>
+          </div>`;
       }
 
       // Init

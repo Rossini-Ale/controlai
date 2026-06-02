@@ -248,4 +248,56 @@ router.delete("/lixeira/esvaziar", auth, async (req, res) => {
   }
 });
 
+// ── Exportar CSV ──
+router.get("/exportar", auth, async (req, res) => {
+  const { mes, ano, tipo, categoria_id, conta_id } = req.query;
+  try {
+    let where = "WHERE t.usuario_id = ? AND t.deleted_at IS NULL";
+    const params = [req.usuarioId];
+    if (mes && ano) {
+      where += " AND MONTH(t.data)=? AND YEAR(t.data)=?";
+      params.push(mes, ano);
+    }
+    if (tipo) { where += " AND t.tipo=?"; params.push(tipo); }
+    if (categoria_id) { where += " AND t.categoria_id=?"; params.push(categoria_id); }
+    if (conta_id) { where += " AND t.conta_id=?"; params.push(conta_id); }
+
+    const [rows] = await db.query(
+      `SELECT t.data, t.tipo, t.descricao, t.valor, t.observacao,
+              c.nome AS categoria_nome, ct.nome AS conta_nome
+       FROM Transacoes t
+       LEFT JOIN Categorias c  ON t.categoria_id = c.id
+       LEFT JOIN Contas     ct ON t.conta_id = ct.id
+       ${where}
+       ORDER BY t.data DESC, t.created_at DESC`,
+      params,
+    );
+
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const tipoLabel = { receita: "Receita", despesa: "Despesa", cartao: "Cartão" };
+    const header = "Data,Tipo,Descrição,Valor,Categoria,Conta,Observação";
+    const linhas = rows.map((r) => {
+      const data = (r.data instanceof Date ? r.data : new Date(r.data))
+        .toISOString().split("T")[0];
+      return [
+        data,
+        tipoLabel[r.tipo] || r.tipo,
+        esc(r.descricao),
+        String(r.valor).replace(".", ","),
+        esc(r.categoria_nome || ""),
+        esc(r.conta_nome || ""),
+        esc(r.observacao || ""),
+      ].join(",");
+    });
+
+    const csv = "﻿" + header + "\n" + linhas.join("\n");
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="transacoes.csv"');
+    res.send(csv);
+  } catch (err) {
+    console.error("[Exportar CSV]", err.message);
+    res.status(500).json({ erro: "Erro ao exportar." });
+  }
+});
+
 module.exports = router;

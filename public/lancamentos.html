@@ -475,6 +475,14 @@
         </button>
         <button
           class="btn-edit"
+          onclick="exportarCSV()"
+          title="Exportar CSV"
+          style="padding: 9px 12px"
+        >
+          <i class="fa-solid fa-file-export"></i>
+        </button>
+        <button
+          class="btn-edit"
           onclick="abrirModalImportacao()"
           title="Importar CSV"
           style="padding: 9px 12px"
@@ -2704,6 +2712,23 @@
         previewData = [],
         importCats = [],
         importContas = [];
+
+      function exportarCSV() {
+        const m = document.getElementById("filtro-mes")?.value || "";
+        const a = document.getElementById("filtro-ano")?.value || "";
+        const tipo = document.getElementById("filtro-tipo")?.value || "";
+        const params = new URLSearchParams();
+        if (m) params.set("mes", m);
+        if (a) params.set("ano", a);
+        if (tipo) params.set("tipo", tipo);
+        const url = `/api/transacoes/exportar?${params.toString()}`;
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "transacoes.csv");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
 
       function abrirModalImportacao() {
         document.getElementById("modal-importacao").classList.add("active");

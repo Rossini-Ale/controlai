@@ -139,7 +139,7 @@ router.get("/por-categoria", auth, async (req, res) => {
   const tipo = req.query.tipo || "despesa";
   try {
     const [rows] = await db.query(
-      `SELECT c.nome, c.cor, c.icone,
+      `SELECT c.id, c.nome, c.cor, c.icone,
               COALESCE(SUM(t.valor), 0) AS total
        FROM Categorias c
        INNER JOIN Transacoes t
@@ -199,6 +199,46 @@ router.get("/evolucao", auth, async (req, res) => {
   } catch (err) {
     console.error("[Evolucao]", err.message);
     res.status(500).json({ erro: "Erro ao buscar evolução." });
+  }
+});
+
+// ── Resumo anual (12 meses de um ano) ──
+router.get("/anual", auth, async (req, res) => {
+  const ano = parseInt(req.query.ano) || new Date().getFullYear();
+  try {
+    const [rows] = await db.query(
+      `SELECT
+         MONTH(data) AS mes,
+         SUM(CASE WHEN tipo='receita' THEN valor ELSE 0 END)                   AS receitas,
+         SUM(CASE WHEN tipo IN ('despesa','cartao') THEN valor ELSE 0 END)     AS despesas
+       FROM Transacoes
+       WHERE usuario_id=? AND YEAR(data)=? AND deleted_at IS NULL
+       GROUP BY MONTH(data)
+       ORDER BY mes`,
+      [req.usuarioId, ano],
+    );
+    // Preenche meses sem dados com zero
+    const meses = Array.from({ length: 12 }, (_, i) => {
+      const found = rows.find((r) => r.mes === i + 1);
+      return {
+        mes: i + 1,
+        receitas: parseFloat(found?.receitas || 0),
+        despesas: parseFloat(found?.despesas || 0),
+        saldo: parseFloat(found?.receitas || 0) - parseFloat(found?.despesas || 0),
+      };
+    });
+    const totais = meses.reduce(
+      (acc, m) => ({
+        receitas: acc.receitas + m.receitas,
+        despesas: acc.despesas + m.despesas,
+        saldo: acc.saldo + m.saldo,
+      }),
+      { receitas: 0, despesas: 0, saldo: 0 },
+    );
+    res.json({ ano, meses, totais });
+  } catch (err) {
+    console.error("[Anual]", err.message);
+    res.status(500).json({ erro: "Erro ao buscar resumo anual." });
   }
 });
 
