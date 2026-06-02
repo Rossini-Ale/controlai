@@ -513,7 +513,8 @@ function renderTabBar(paginaAtiva) {
       </div>`;
       return `
       <a href="${t.href}" class="tab-item ${paginaAtiva === t.page ? "active" : ""}">
-        <i class="fa-solid ${t.icon}"></i>${t.label}
+        <i class="fa-solid ${t.icon}"></i>
+        <span class="tab-label">${t.label}</span>
       </a>`;
     })
     .join("");
@@ -1399,6 +1400,63 @@ function ativarPullToDismiss(modalId, fecharFn) {
       modal.style.opacity = "";
     }
   });
+}
+
+// ── Pull-to-refresh ──
+function initPullToRefresh(onRefresh) {
+  if (window.innerWidth > 768) return;
+  const main = document.querySelector(".main");
+  if (!main) return;
+
+  let startY = 0, pulling = false, indicator = null, triggered = false;
+  const THRESHOLD = 65;
+
+  function getIndicator() {
+    if (!indicator) {
+      indicator = document.createElement("div");
+      indicator.className = "ptr-indicator";
+      indicator.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i><span>Solte para atualizar</span>';
+      document.body.appendChild(indicator);
+    }
+    return indicator;
+  }
+
+  main.addEventListener("touchstart", (e) => {
+    if (main.scrollTop > 4) return;
+    startY = e.touches[0].clientY;
+    pulling = true;
+    triggered = false;
+  }, { passive: true });
+
+  main.addEventListener("touchmove", (e) => {
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy <= 0) { pulling = false; return; }
+    const pct = Math.min(1, dy / THRESHOLD);
+    const ind = getIndicator();
+    ind.classList.add("visible");
+    ind.style.opacity = String(pct);
+    if (dy >= THRESHOLD && !triggered) {
+      triggered = true;
+      ind.querySelector("span").textContent = "Solte para atualizar";
+    }
+  }, { passive: true });
+
+  main.addEventListener("touchend", (e) => {
+    if (!pulling) return;
+    pulling = false;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy >= THRESHOLD && indicator) {
+      indicator.querySelector("span").textContent = "Atualizando...";
+      indicator.querySelector("i").className = "fa-solid fa-spinner fa-spin";
+      setTimeout(() => {
+        indicator?.remove(); indicator = null;
+        if (onRefresh) onRefresh(); else window.location.reload();
+      }, 500);
+    } else {
+      indicator?.remove(); indicator = null;
+    }
+  }, { passive: true });
 }
 
 // ── PWA: service worker ──

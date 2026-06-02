@@ -524,21 +524,10 @@
 
       <!-- ABA LANÇAMENTOS -->
       <div class="aba-conteudo active" id="aba-lancamentos">
-        <div
-          style="
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 16px;
-          "
-        >
-          <!-- Linha 1: Mês + Ano -->
-          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px">
-            <select
-              id="filtro-mes"
-              onchange="carregarTransacoes()"
-              class="filtro-select"
-            >
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+          <!-- Linha 1: Mês + Ano + botão filtros -->
+          <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:8px;align-items:center">
+            <select id="filtro-mes" onchange="carregarTransacoes()" class="filtro-select">
               <option value="1">Janeiro</option>
               <option value="2">Fevereiro</option>
               <option value="3">Março</option>
@@ -552,29 +541,21 @@
               <option value="11">Novembro</option>
               <option value="12">Dezembro</option>
             </select>
-            <select
-              id="filtro-ano"
-              onchange="carregarTransacoes()"
-              class="filtro-select"
-            ></select>
+            <select id="filtro-ano" onchange="carregarTransacoes()" class="filtro-select"></select>
+            <button id="btn-filtros-extra" onclick="toggleFiltrosExtra()" class="btn-edit" style="padding:9px 12px;position:relative" title="Filtros">
+              <i class="fa-solid fa-sliders"></i>
+              <span id="filtros-badge" style="display:none;position:absolute;top:4px;right:4px;width:7px;height:7px;background:var(--green);border-radius:50%"></span>
+            </button>
           </div>
-          <!-- Linha 2: Tipo + Categoria -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
-            <select
-              id="filtro-tipo"
-              onchange="carregarTransacoes()"
-              class="filtro-select"
-            >
-              <option value="">Todos</option>
+          <!-- Linha 2: Tipo + Categoria (colapsável) -->
+          <div id="filtros-extra" style="display:none;grid-template-columns:1fr 1fr;gap:8px">
+            <select id="filtro-tipo" onchange="carregarTransacoes();atualizarFiltrosBadge()" class="filtro-select">
+              <option value="">Todos tipos</option>
               <option value="receita">Receitas</option>
               <option value="despesa">Despesas</option>
               <option value="transferencia">Transferências</option>
             </select>
-            <select
-              id="filtro-categoria"
-              onchange="carregarTransacoes()"
-              class="filtro-select"
-            >
+            <select id="filtro-categoria" onchange="carregarTransacoes();atualizarFiltrosBadge()" class="filtro-select">
               <option value="">Todas categorias</option>
             </select>
           </div>
@@ -1605,6 +1586,22 @@
         carregarTransacoes();
       }
 
+      // ── Filtros colapsáveis ──
+      function toggleFiltrosExtra() {
+        const el = document.getElementById("filtros-extra");
+        const open = el.style.display === "grid";
+        el.style.display = open ? "none" : "grid";
+        const btn = document.getElementById("btn-filtros-extra");
+        if (btn) btn.style.background = open ? "" : "rgba(16,185,129,0.1)";
+      }
+
+      function atualizarFiltrosBadge() {
+        const tipo = document.getElementById("filtro-tipo")?.value;
+        const cat = document.getElementById("filtro-categoria")?.value;
+        const badge = document.getElementById("filtros-badge");
+        if (badge) badge.style.display = (tipo || cat) ? "block" : "none";
+      }
+
       // ── Abas ──
       function trocarAba(aba) {
         abaAtiva = aba;
@@ -2228,6 +2225,7 @@
         ajustarLayout();
         if (abaAtiva === "lancamentos") carregarTransacoes();
       });
+      initPullToRefresh(() => carregarTransacoes());
 
       // ══════════════════════════════════════
       // RECORRENTES
