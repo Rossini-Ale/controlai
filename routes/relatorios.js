@@ -1,4 +1,7 @@
-// Fluxo de caixa projetado — próximos N dias
+const express = require("express");
+const router = express.Router();
+const auth = require("../middleware/auth");
+const db = require("../config/db");
 const { calcularProximaData, toDateStr } = require("./recorrentes-engine");
 
 router.get("/fluxo", auth, async (req, res) => {
@@ -107,3 +110,5 @@ router.get("/fluxo", auth, async (req, res) => {
     res.status(500).json({ erro: "Erro ao calcular fluxo de caixa." });
   }
 });
+
+module.exports = router;
