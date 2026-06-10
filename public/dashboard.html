@@ -410,8 +410,8 @@
         const el = document.getElementById("saldo-total-valor");
         if (!el) return;
         el.className = "card-value " + (total >= 0 ? "green" : "red");
-        el.innerHTML = formatarMoeda(total);
         aplicarPrivacidade();
+        countUp(el, total);
       }
 
       async function carregarResumo() {
@@ -436,17 +436,17 @@
         document.getElementById("cards-resumo").innerHTML = `
           <div class="card">
             <div class="card-label">Receitas</div>
-            <div class="card-value green">${formatarMoeda(data.total_receitas)}</div>
+            <div class="card-value green" id="cv-receitas">—</div>
             ${ant ? cmp(data.total_receitas, ant.total_receitas) : ""}
           </div>
           <div class="card">
             <div class="card-label">Despesas</div>
-            <div class="card-value red">${formatarMoeda(data.total_despesas)}</div>
+            <div class="card-value red" id="cv-despesas">—</div>
             ${ant ? cmp(data.total_despesas, ant.total_despesas, true) : ""}
           </div>
           <div class="card">
             <div class="card-label">Saldo do mês</div>
-            <div class="card-value ${parseFloat(data.saldo) >= 0 ? "green" : "red"}">${formatarMoeda(data.saldo)}</div>
+            <div class="card-value ${parseFloat(data.saldo) >= 0 ? "green" : "red"}" id="cv-saldo">—</div>
             ${ant ? cmp(data.saldo, ant.saldo) : ""}
           </div>
           <div class="card" id="card-saldo-total">
@@ -454,6 +454,11 @@
             <div class="card-value" id="saldo-total-valor" style="color:var(--text-muted)">—</div>
           </div>`;
         aplicarPrivacidade();
+        requestAnimationFrame(() => {
+          countUp(document.getElementById("cv-receitas"), parseFloat(data.total_receitas) || 0);
+          countUp(document.getElementById("cv-despesas"), parseFloat(data.total_despesas) || 0);
+          countUp(document.getElementById("cv-saldo"), parseFloat(data.saldo) || 0);
+        });
       }
 
       async function carregarTransacoes() {
@@ -1317,5 +1322,20 @@
         </div>
       </div>
     </div>
+
+    <!-- FAB — Novo lançamento rápido -->
+    <a href="/lancamentos.html?novo=1" id="fab-novo" style="
+      display:flex;align-items:center;justify-content:center;
+      position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 80px);right:20px;
+      width:52px;height:52px;border-radius:50%;
+      background:linear-gradient(135deg,#10b981,#059669);
+      box-shadow:0 4px 18px rgba(16,185,129,0.45);
+      color:#fff;font-size:22px;text-decoration:none;
+      z-index:900;transition:transform 0.15s ease,box-shadow 0.15s ease"
+      onmouseenter="this.style.transform='scale(1.08)'"
+      onmouseleave="this.style.transform='scale(1)'"
+      title="Novo lançamento">
+      <i class="fa-solid fa-plus"></i>
+    </a>
   </body>
 </html>

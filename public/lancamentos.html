@@ -548,6 +548,9 @@
             <button onclick="navegarMes(1)" class="btn-edit" style="padding:9px 11px" title="Próximo mês">
               <i class="fa-solid fa-chevron-right"></i>
             </button>
+            <button id="btn-busca-lanc" onclick="toggleBuscaLanc()" class="btn-edit" style="padding:9px 12px" title="Buscar">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
             <button id="btn-filtros-extra" onclick="toggleFiltrosExtra()" class="btn-edit" style="padding:9px 12px;position:relative" title="Filtros">
               <i class="fa-solid fa-sliders"></i>
               <span id="filtros-badge" style="display:none;position:absolute;top:4px;right:4px;width:7px;height:7px;background:var(--green);border-radius:50%"></span>
@@ -566,6 +569,17 @@
             </select>
           </div>
         </div>
+        <!-- Busca inline -->
+        <div id="busca-lanc-wrap" style="position:relative;margin-bottom:10px;display:none">
+          <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;pointer-events:none"></i>
+          <input id="busca-lanc-input" type="text" placeholder="Buscar por descrição, categoria..."
+            style="width:100%;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px;padding:9px 34px 9px 32px;color:var(--text-primary);font-size:13px;box-sizing:border-box"
+            oninput="onBuscaLanc(this.value)">
+          <button id="busca-lanc-clear" onclick="fecharBuscaLanc()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;padding:2px 4px;display:none">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div id="busca-lanc-resultado" style="display:none;margin-bottom:12px"></div>
         <div id="resumo-periodo" style="display:none;margin-bottom:14px"></div>
         <div class="table-wrap desktop-only">
           <table>
@@ -1619,6 +1633,66 @@
       }
 
       // ── Filtros colapsáveis ──
+      // ── Busca inline na aba de lançamentos ──
+      let _buscaTimer = null;
+
+      function toggleBuscaLanc() {
+        const wrap = document.getElementById("busca-lanc-wrap");
+        const aberta = wrap.style.display === "block";
+        if (aberta) {
+          fecharBuscaLanc();
+        } else {
+          wrap.style.display = "block";
+          document.getElementById("busca-lanc-input").focus();
+          document.getElementById("btn-busca-lanc").style.background = "rgba(16,185,129,0.1)";
+        }
+      }
+
+      function fecharBuscaLanc() {
+        document.getElementById("busca-lanc-wrap").style.display = "none";
+        document.getElementById("busca-lanc-resultado").style.display = "none";
+        document.getElementById("busca-lanc-input").value = "";
+        document.getElementById("busca-lanc-clear").style.display = "none";
+        document.getElementById("btn-busca-lanc").style.background = "";
+      }
+
+      function onBuscaLanc(q) {
+        const clear = document.getElementById("busca-lanc-clear");
+        clear.style.display = q ? "block" : "none";
+        clearTimeout(_buscaTimer);
+        if (q.trim().length < 2) {
+          document.getElementById("busca-lanc-resultado").style.display = "none";
+          return;
+        }
+        _buscaTimer = setTimeout(() => executarBuscaLanc(q.trim()), 350);
+      }
+
+      async function executarBuscaLanc(q) {
+        const res = document.getElementById("busca-lanc-resultado");
+        res.style.display = "block";
+        res.innerHTML = `<div style="padding:10px;text-align:center;color:var(--text-muted);font-size:13px"><i class="fa-solid fa-spinner fa-spin"></i></div>`;
+        const data = await fetchAPI(`/api/transacoes/buscar?q=${encodeURIComponent(q)}`);
+        if (!Array.isArray(data) || !data.length) {
+          res.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:var(--text-muted)">Nenhum resultado para "${q}".</div>`;
+          return;
+        }
+        res.innerHTML = `
+          <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px;overflow:hidden">
+            <div style="padding:8px 12px;font-size:11px;color:var(--text-muted);border-bottom:0.5px solid var(--border)">${data.length} resultado(s)</div>
+            ${data.map((t) => `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:0.5px solid var(--border);cursor:pointer"
+                   onclick="editarLancamento(${t.id})">
+                <div>
+                  <div style="font-size:13px;font-weight:500">${t.descricao || "—"}</div>
+                  <div style="font-size:11px;color:var(--text-muted)">${formatarData(t.data)}${t.categoria_nome ? ` · ${t.categoria_nome}` : ""}</div>
+                </div>
+                <div style="font-size:13px;font-weight:600;color:${t.tipo === "receita" ? "var(--green)" : "var(--red)"}">
+                  ${t.tipo === "receita" ? "+" : "-"}${formatarMoedaRaw(t.valor)}
+                </div>
+              </div>`).join("")}
+          </div>`;
+      }
+
       function toggleFiltrosExtra() {
         const el = document.getElementById("filtros-extra");
         const open = el.style.display === "grid";
@@ -2330,6 +2404,12 @@
       });
       initPullToRefresh(() => carregarTransacoes());
       initSwipeMes(navegarMes);
+
+      // Auto-abrir modal se URL tem ?novo=1
+      if (new URLSearchParams(window.location.search).get("novo") === "1") {
+        history.replaceState(null, "", window.location.pathname);
+        setTimeout(abrirModalLancamento, 300);
+      }
 
       // ══════════════════════════════════════
       // RECORRENTES

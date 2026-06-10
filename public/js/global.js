@@ -123,6 +123,29 @@ function formatarMoedaRaw(valor) {
   }).format(parseFloat(valor) || 0);
 }
 
+// ── Count-up animado ──
+function countUp(el, target, duration = 650) {
+  if (!el) return;
+  const start = parseFloat(el.dataset.countTarget) || 0;
+  const delta = target - start;
+  el.dataset.countTarget = target;
+  if (Math.abs(delta) < 0.01) return;
+  const startTime = performance.now();
+  const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+  function frame(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    const current = start + delta * easeOut(t);
+    el.dataset.displayValue = current;
+    // Só atualiza o texto se privacidade não estiver ativa
+    if (el.style.filter !== "blur(7px)") {
+      el.textContent = formatarMoedaRaw(current);
+    }
+    if (t < 1) requestAnimationFrame(frame);
+    else el.dataset.countTarget = target;
+  }
+  requestAnimationFrame(frame);
+}
+
 // Máscara de moeda em tempo real
 function aplicarMascaraMoeda(input) {
   input.addEventListener("input", (e) => {

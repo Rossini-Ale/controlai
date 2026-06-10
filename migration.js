@@ -50,7 +50,24 @@ const MIGRATIONS = [
     sql: "ALTER TABLE Transacoes ADD INDEX idx_usuario_deleted_data (usuario_id, deleted_at, data)",
   },
   {
-    id: "010_metas",
+    id: "010_orcamentos",
+    sql: `CREATE TABLE IF NOT EXISTS Orcamentos (
+      id           INT AUTO_INCREMENT PRIMARY KEY,
+      usuario_id   INT NOT NULL,
+      categoria_id INT NULL,
+      mes          TINYINT NOT NULL,
+      ano          SMALLINT NOT NULL,
+      limite       DECIMAL(10,2) NOT NULL DEFAULT 0,
+      alerta_80_enviado  TINYINT(1) NOT NULL DEFAULT 0,
+      alerta_100_enviado TINYINT(1) NOT NULL DEFAULT 0,
+      created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_orc (usuario_id, categoria_id, mes, ano),
+      FOREIGN KEY (usuario_id) REFERENCES Usuarios(id) ON DELETE CASCADE,
+      FOREIGN KEY (categoria_id) REFERENCES Categorias(id) ON DELETE CASCADE
+    )`,
+  },
+  {
+    id: "011_metas",
     sql: `CREATE TABLE IF NOT EXISTS Metas (
       id         INT AUTO_INCREMENT PRIMARY KEY,
       usuario_id INT NOT NULL,
