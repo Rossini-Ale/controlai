@@ -46,6 +46,15 @@ router.put("/:id", auth, async (req, res) => {
 // Deletar conta
 router.delete("/:id", auth, async (req, res) => {
   try {
+    const [[{ total }]] = await db.query(
+      "SELECT COUNT(*) AS total FROM Transacoes WHERE conta_id = ? AND deleted_at IS NULL",
+      [req.params.id],
+    );
+    if (total > 0) {
+      return res.status(400).json({
+        erro: `Esta conta possui ${total} transação(ões) vinculada(s). Remova-as antes de excluir a conta.`,
+      });
+    }
     await db.query("DELETE FROM Contas WHERE id=? AND usuario_id=?", [
       req.params.id,
       req.usuarioId,

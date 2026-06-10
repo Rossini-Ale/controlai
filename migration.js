@@ -40,6 +40,10 @@ const MIGRATIONS = [
     id: "007_stripe_campos",
     sql: "ALTER TABLE Usuarios ADD COLUMN stripe_customer_id VARCHAR(100) NULL, ADD COLUMN stripe_subscription_id VARCHAR(100) NULL",
   },
+  {
+    id: "008_fatura_alerta_atraso",
+    sql: "ALTER TABLE FaturasCartao ADD COLUMN alerta_atraso_enviado TINYINT(1) NOT NULL DEFAULT 0",
+  },
 ];
 
 async function rodarMigrations() {

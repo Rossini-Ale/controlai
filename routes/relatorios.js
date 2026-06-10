@@ -122,7 +122,8 @@ router.get("/resumo", auth, async (req, res) => {
         COALESCE(SUM(CASE WHEN tipo IN ('despesa','cartao') THEN valor ELSE 0 END), 0) AS total_despesas,
         COALESCE(SUM(CASE WHEN tipo='receita' THEN valor ELSE -valor END), 0) AS saldo
        FROM Transacoes
-       WHERE usuario_id=? AND MONTH(data)=? AND YEAR(data)=? AND deleted_at IS NULL`,
+       WHERE usuario_id=? AND MONTH(data)=? AND YEAR(data)=?
+         AND deleted_at IS NULL AND IFNULL(is_transferencia, 0) = 0`,
       [req.usuarioId, mes, ano],
     );
     res.json(row);

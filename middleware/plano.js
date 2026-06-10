@@ -23,8 +23,9 @@ async function verificarLimiteTransacoes(req, res, next) {
       });
     }
     next();
-  } catch {
-    next();
+  } catch (err) {
+    console.error("[plano] Erro ao verificar limite:", err.message);
+    return res.status(500).json({ erro: "Erro ao verificar limite do plano." });
   }
 }
 

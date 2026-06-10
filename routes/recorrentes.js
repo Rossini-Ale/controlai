@@ -28,6 +28,37 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
+// ── GET /vencendo — Recorrentes vencendo nos próximos N dias ──
+// IMPORTANTE: deve ficar antes de GET /:id para não ser capturado como param
+router.get("/vencendo", auth, async (req, res) => {
+  const dias = parseInt(req.query.dias) || 7;
+  try {
+    const hoje = new Date().toISOString().split("T")[0];
+    const limite = new Date(Date.now() + dias * 86400000)
+      .toISOString()
+      .split("T")[0];
+    const [rows] = await db.query(
+      `SELECT r.*,
+              c.nome  AS categoria_nome,
+              c.cor   AS categoria_cor,
+              c.icone AS categoria_icone,
+              ct.nome AS conta_nome
+       FROM TransacoesRecorrentes r
+       LEFT JOIN Categorias c  ON r.categoria_id = c.id
+       LEFT JOIN Contas     ct ON r.conta_id     = ct.id
+       WHERE r.usuario_id = ?
+         AND r.ativa = 1
+         AND r.proxima_geracao BETWEEN ? AND ?
+       ORDER BY r.proxima_geracao ASC`,
+      [req.usuarioId, hoje, limite],
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("[Recorrentes /vencendo]", err.message);
+    res.status(500).json({ erro: "Erro ao buscar recorrentes vencendo." });
+  }
+});
+
 // ── GET /:id — Detalhe de uma recorrência ──
 router.get("/:id", auth, async (req, res) => {
   try {
@@ -247,36 +278,6 @@ router.get("/:id/historico", auth, async (req, res) => {
     res.json(rows);
   } catch (err) {
     res.status(500).json({ erro: "Erro ao buscar histórico." });
-  }
-});
-
-// ── GET /vencendo — Recorrentes vencendo nos próximos N dias ──
-router.get("/vencendo", auth, async (req, res) => {
-  const dias = parseInt(req.query.dias) || 7;
-  try {
-    const hoje = new Date().toISOString().split("T")[0];
-    const limite = new Date(Date.now() + dias * 86400000)
-      .toISOString()
-      .split("T")[0];
-    const [rows] = await db.query(
-      `SELECT r.*,
-              c.nome  AS categoria_nome,
-              c.cor   AS categoria_cor,
-              c.icone AS categoria_icone,
-              ct.nome AS conta_nome
-       FROM TransacoesRecorrentes r
-       LEFT JOIN Categorias c  ON r.categoria_id = c.id
-       LEFT JOIN Contas     ct ON r.conta_id     = ct.id
-       WHERE r.usuario_id = ?
-         AND r.ativa = 1
-         AND r.proxima_geracao BETWEEN ? AND ?
-       ORDER BY r.proxima_geracao ASC`,
-      [req.usuarioId, hoje, limite],
-    );
-    res.json(rows);
-  } catch (err) {
-    console.error("[Recorrentes /vencendo]", err.message);
-    res.status(500).json({ erro: "Erro ao buscar recorrentes vencendo." });
   }
 });
 

@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { randomUUID } = require("crypto");
 const db = require("../config/db");
 const auth = require("../middleware/auth");
 
@@ -109,9 +110,7 @@ router.post("/:cartao_id/lancar", auth, async (req, res) => {
 
   const totalParcelas = parseInt(parcelas) || 1;
   const valorParcela = parseFloat((valor / totalParcelas).toFixed(2));
-  const parcela_ref = crypto.randomUUID
-    ? crypto.randomUUID()
-    : Date.now().toString();
+  const parcela_ref = randomUUID();
 
   try {
     // Busca o dia de fechamento real do cartão

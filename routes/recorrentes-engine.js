@@ -261,11 +261,15 @@ async function verificarFaturas() {
                 WHERE t.cartao_id = c.id AND f.mes = ? AND f.ano = ? AND f.status != 'paga'
               ), 0) AS valor_fatura,
               (SELECT f.status FROM FaturasCartao f
-               WHERE f.cartao_id = c.id AND f.mes = ? AND f.ano = ? LIMIT 1) AS status_fatura
+               WHERE f.cartao_id = c.id AND f.mes = ? AND f.ano = ? LIMIT 1) AS status_fatura,
+              COALESCE((SELECT f.id FROM FaturasCartao f
+               WHERE f.cartao_id = c.id AND f.mes = ? AND f.ano = ? LIMIT 1), NULL) AS fatura_id,
+              COALESCE((SELECT f.alerta_atraso_enviado FROM FaturasCartao f
+               WHERE f.cartao_id = c.id AND f.mes = ? AND f.ano = ? LIMIT 1), 0) AS alerta_atraso_enviado
        FROM Cartoes c
        JOIN Usuarios u ON c.usuario_id = u.id
        WHERE u.telegram_chat_id IS NOT NULL`,
-      [mes, ano, mes, ano],
+      [mes, ano, mes, ano, mes, ano, mes, ano],
     );
 
     for (const c of cartoes) {
@@ -286,11 +290,17 @@ async function verificarFaturas() {
           `📅 *Lembrete de fatura*\n\nCartão: *${c.nome}*\nVencimento: *dia ${c.dia_vencimento}/${mes}*\nValor: *${fmt(valor)}*\n\nFaltam 7 dias para o vencimento.`,
         );
         console.log(`[Fatura] 📅 7 dias: ${c.nome}`);
-      } else if (dataVenc < hoje) {
+      } else if (dataVenc < hoje && !c.alerta_atraso_enviado) {
         await enviarTelegram(
           c.telegram_chat_id,
           `🔴 *Fatura em atraso!*\n\nCartão: *${c.nome}*\nVenceu em: *dia ${c.dia_vencimento}/${mes}*\nValor: *${fmt(valor)}*\n\nRegularize o quanto antes!`,
         );
+        if (c.fatura_id) {
+          await db.query(
+            "UPDATE FaturasCartao SET alerta_atraso_enviado = 1 WHERE id = ?",
+            [c.fatura_id],
+          );
+        }
         console.log(`[Fatura] 🔴 Atraso: ${c.nome}`);
       }
     }
