@@ -368,10 +368,15 @@
 
       async function carregarDados() {
         document.getElementById("cards-resumo").innerHTML = skeletonCards(4);
+        document.getElementById("orc-wrap").innerHTML =
+          `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px">${skeletonCards(1)}</div>`;
+        document.getElementById("saldo-previsto-wrap").innerHTML = skeletonCards(1);
+        document.getElementById("rec-vencendo-wrap").innerHTML =
+          `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">${skeletonLista(2)}</div>`;
         await Promise.all([
           carregarResumo(),
           carregarTransacoes(),
-          carregarOrcamento(),      // já chama _renderAlertasOrcamento internamente
+          carregarOrcamento(),
           carregarRecorrentesVencendo(),
           carregarSaldoTotal(),
         ]);

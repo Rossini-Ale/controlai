@@ -566,6 +566,7 @@
             </select>
           </div>
         </div>
+        <div id="resumo-periodo" style="display:none;margin-bottom:14px"></div>
         <div class="table-wrap desktop-only">
           <table>
             <thead>
@@ -635,11 +636,7 @@
               ></span>
               Despesas
             </h2>
-            <div class="categoria-lista" id="lista-despesas">
-              <p style="color: var(--text-muted); font-size: 13px">
-                Carregando...
-              </p>
-            </div>
+            <div class="categoria-lista" id="lista-despesas"></div>
           </div>
           <div>
             <h2>
@@ -648,11 +645,7 @@
               ></span>
               Receitas
             </h2>
-            <div class="categoria-lista" id="lista-receitas">
-              <p style="color: var(--text-muted); font-size: 13px">
-                Carregando...
-              </p>
-            </div>
+            <div class="categoria-lista" id="lista-receitas"></div>
           </div>
         </div>
       </div>
@@ -1516,8 +1509,12 @@
         const grupos = agruparPorData(data);
         let html = "";
         Object.entries(grupos).forEach(([dia, txs]) => {
+          const lbl = labelData(dia);
+          const ehHoje = lbl === "Hoje";
           html += `<div class="timeline-header">
-            <span class="timeline-label">${labelData(dia)}</span>
+            <span class="timeline-label" style="${ehHoje ? "color:var(--green)" : ""}">
+              ${ehHoje ? `<span style="display:inline-block;width:7px;height:7px;background:var(--green);border-radius:50%;margin-right:6px;vertical-align:middle"></span>` : ""}${lbl}
+            </span>
             <span class="timeline-date">${new Date(dia + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span>
           </div>`;
           txs.forEach((t) => {
@@ -1712,11 +1709,17 @@
         let url = `/api/transacoes?mes=${m}&ano=${a}&page=${paginaAtual}&limit=${POR_PAGINA}`;
         if (tipo) url += `&tipo=${tipo}`;
         if (catId) url += `&categoria_id=${catId}`;
-        const res = await fetchAPI(url);
+
+        const [res, resumo] = await Promise.all([
+          fetchAPI(url),
+          append ? Promise.resolve(null) : fetchAPI(`/api/relatorios/resumo?mes=${m}&ano=${a}`),
+        ]);
         if (!res) return;
         let data = Array.isArray(res) ? res : res.data || [];
         const paginacao = res.paginacao || null;
         window._ultimaPaginacao = paginacao;
+
+        if (!append) _renderResumoPeriodo(resumo, tipo, catId);
 
         if (isMobile()) {
           renderMobileComSwipe(data, append);
@@ -1725,6 +1728,35 @@
           renderDesktop(data);
           renderPaginacao(paginacao);
         }
+      }
+
+      function _renderResumoPeriodo(resumo, tipo, catId) {
+        const wrap = document.getElementById("resumo-periodo");
+        if (!resumo || (!resumo.total_receitas && !resumo.total_despesas)) {
+          wrap.style.display = "none";
+          return;
+        }
+        const receitas = parseFloat(resumo.total_receitas) || 0;
+        const despesas = parseFloat(resumo.total_despesas) || 0;
+        const saldo = parseFloat(resumo.saldo) || 0;
+        const corSaldo = saldo >= 0 ? "var(--green)" : "var(--red)";
+        const filtrado = tipo || catId;
+        wrap.style.display = "block";
+        wrap.innerHTML = `
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div style="flex:1;min-width:80px;background:rgba(16,185,129,0.08);border:0.5px solid rgba(16,185,129,0.25);border-radius:10px;padding:10px 12px">
+              <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Receitas</div>
+              <div style="font-size:15px;font-weight:700;color:var(--green)">+${formatarMoeda(receitas)}</div>
+            </div>
+            <div style="flex:1;min-width:80px;background:rgba(239,68,68,0.08);border:0.5px solid rgba(239,68,68,0.25);border-radius:10px;padding:10px 12px">
+              <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Despesas</div>
+              <div style="font-size:15px;font-weight:700;color:var(--red)">-${formatarMoeda(despesas)}</div>
+            </div>
+            <div style="flex:1;min-width:80px;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px;padding:10px 12px">
+              <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Saldo${filtrado ? " (mês)" : ""}</div>
+              <div style="font-size:15px;font-weight:700;color:${corSaldo}">${formatarMoeda(saldo)}</div>
+            </div>
+          </div>`;
       }
 
       function renderPaginacao(paginacao) {
@@ -1856,10 +1888,13 @@
         let html = "";
 
         Object.entries(grupos).forEach(([dia, transacoes]) => {
-          // Cabeçalho sticky do dia
+          const lbl = labelData(dia);
+          const ehHoje = lbl === "Hoje";
           html += `
             <div class="timeline-header">
-              <span class="timeline-label">${labelData(dia)}</span>
+              <span class="timeline-label" style="${ehHoje ? "color:var(--green)" : ""}">
+                ${ehHoje ? `<span style="display:inline-block;width:7px;height:7px;background:var(--green);border-radius:50%;margin-right:6px;vertical-align:middle"></span>` : ""}${lbl}
+              </span>
               <span class="timeline-date">${new Date(dia + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span>
             </div>`;
 
@@ -2626,23 +2661,34 @@
       }
 
       async function carregarCategorias() {
+        document.getElementById("lista-despesas").innerHTML = skeletonLista(3);
+        document.getElementById("lista-receitas").innerHTML = skeletonLista(3);
         const data = (await fetchAPI("/api/categorias")) || [];
         renderListaCat(
           "lista-despesas",
           data.filter((c) => c.tipo === "despesa"),
+          "despesa",
         );
         renderListaCat(
           "lista-receitas",
           data.filter((c) => c.tipo === "receita"),
+          "receita",
         );
         categorias = data;
         preencherFiltroCategorias();
       }
 
-      function renderListaCat(id, lista) {
+      function renderListaCat(id, lista, tipo) {
         const el = document.getElementById(id);
         if (lista.length === 0) {
-          el.innerHTML = `<p style="color:var(--text-muted);font-size:13px;padding:16px;text-align:center;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px">Nenhuma categoria.</p>`;
+          const label = tipo === "despesa" ? "despesa" : "receita";
+          el.innerHTML = emptyState(
+            "fa-tag",
+            `Nenhuma categoria de ${label}`,
+            `Crie categorias para organizar seus lançamentos de ${label}.`,
+            "Nova categoria",
+            "abrirModalCategoria()",
+          );
           return;
         }
         el.innerHTML = lista
