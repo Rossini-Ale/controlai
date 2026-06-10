@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
 * {
   margin: 0;
   padding: 0;
@@ -207,16 +209,17 @@ tbody td:last-child,
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: "Segoe UI", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
   min-height: 100vh;
   display: flex;
+  line-height: 1.5;
 }
 
 .sidebar {
   width: 220px;
   min-height: 100vh;
   background: var(--bg-secondary);
-  border-right: 0.5px solid var(--border);
+  border-right: 1px solid var(--border);
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
   display: flex;
   flex-direction: column;
@@ -653,18 +656,24 @@ tbody td:nth-child(2) {
 .form-group textarea {
   width: 100%;
   background: var(--bg-primary);
-  border: 0.5px solid var(--border);
+  border: 1px solid var(--border);
   border-radius: 9px;
   padding: 10px 13px;
   color: var(--text-primary);
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 .form-group input:focus,
-.form-group select,
+.form-group select:focus,
 .form-group textarea:focus {
   border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+:root.tema-claro .form-group input:focus,
+:root.tema-claro .form-group select:focus,
+:root.tema-claro .form-group textarea:focus {
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
 }
 .form-group select option {
   background: var(--bg-secondary);
@@ -679,7 +688,7 @@ tbody td:nth-child(2) {
 
 .btn-cancel {
   background: transparent;
-  border: 0.5px solid var(--border);
+  border: 1px solid var(--border);
   color: var(--text-secondary);
   border-radius: 9px;
   padding: 9px 18px;
@@ -908,11 +917,17 @@ tbody td:nth-child(2) {
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--bg-secondary);
-    border-top: 0.5px solid var(--border);
+    background: rgba(26, 31, 46, 0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     z-index: 99;
     padding: 6px 0 env(safe-area-inset-bottom, 0px);
     align-items: flex-start;
+  }
+  :root.tema-claro .tab-bar {
+    background: rgba(255, 255, 255, 0.92);
+    border-top-color: rgba(0, 0, 0, 0.08);
   }
 
   .tab-item {
@@ -947,16 +962,17 @@ tbody td:nth-child(2) {
     color: var(--green);
   }
 
-  /* Indicador ativo: linha fina no topo */
-  .tab-item.active::before {
+  /* Indicador ativo: dot embaixo do label */
+  .tab-item.active::after {
     content: "";
     position: absolute;
-    top: 0;
-    left: 20%;
-    right: 20%;
-    height: 2px;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
     background: var(--green);
-    border-radius: 0 0 2px 2px;
+    border-radius: 50%;
   }
 
   .tab-btn-central {
@@ -1373,4 +1389,58 @@ tbody tr:hover {
 /* Card sombra mais suave no tema claro */
 :root.tema-claro .card {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* Tab-bar frosted glass no tema claro via prefers-color-scheme */
+@media (max-width: 768px) and (prefers-color-scheme: light) {
+  :root:not(.tema-escuro):not(.tema-claro) .tab-bar {
+    background: rgba(255, 255, 255, 0.92);
+    border-top-color: rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* ══════════════════════════════════════
+   ANIMAÇÃO DE TROCA DE ABAS
+══════════════════════════════════════ */
+@keyframes fadeInTab {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ══════════════════════════════════════
+   TAP FEEDBACK MOBILE
+══════════════════════════════════════ */
+@media (max-width: 768px) {
+  .tab-item:active {
+    opacity: 0.55;
+    transition: opacity 0.06s;
+  }
+  .btn:active,
+  .btn-primary:active,
+  .btn-success:active {
+    transform: scale(0.97);
+    transition: transform 0.06s;
+  }
+  .card:active {
+    opacity: 0.85;
+    transition: opacity 0.06s;
+  }
+}
+
+/* ══════════════════════════════════════
+   SUBTÍTULO DE PÁGINA
+══════════════════════════════════════ */
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  margin-bottom: 20px;
+  font-weight: 400;
+  line-height: 1.4;
 }
