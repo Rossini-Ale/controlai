@@ -67,7 +67,7 @@ app.use("/api/recorrentes", require("./routes/recorrentes"));
 app.use("/api/transferencias", require("./routes/transferencias"));
 app.use("/api/orcamentos", require("./routes/orcamentos"));
 app.use("/api/importacao", require("./routes/importacao"));
-// app.use("/api/pagamentos", require("./routes/pagamentos").router); // desativado até configurar Stripe
+app.use("/api/pagamentos", require("./routes/pagamentos").router); // GET /status não usa Stripe; POST /criar-sessao e /portal só falham se chamados sem STRIPE_SECRET_KEY
 
 // ── Telegram webhook ──
 const bot = require("./routes/telegram");

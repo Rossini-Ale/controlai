@@ -146,6 +146,34 @@ function countUp(el, target, duration = 650) {
   requestAnimationFrame(frame);
 }
 
+// ── Botão copiar texto para área de transferência ──
+function renderBotaoCopiar(texto, id) {
+  const safe = texto.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, "\\n");
+  return `<button id="copy-btn-${id}" onclick="copiarTexto('${safe}','${id}')"
+    title="Copiar para área de transferência"
+    style="background:transparent;border:0.5px solid var(--border);color:var(--text-muted);border-radius:7px;padding:4px 9px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+    <i class="fa-regular fa-copy"></i> Copiar obs.
+  </button>`;
+}
+
+function copiarTexto(texto, id) {
+  navigator.clipboard.writeText(texto)
+    .then(() => {
+      const btn = document.getElementById(`copy-btn-${id}`);
+      if (btn) {
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copiado!';
+        btn.style.color = "var(--green)";
+        btn.style.borderColor = "var(--green)";
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copiar obs.';
+          btn.style.color = "";
+          btn.style.borderColor = "";
+        }, 1800);
+      }
+    })
+    .catch(() => toast("Não foi possível copiar.", "aviso"));
+}
+
 // Máscara de moeda em tempo real
 function aplicarMascaraMoeda(input) {
   input.addEventListener("input", (e) => {
