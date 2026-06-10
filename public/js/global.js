@@ -1492,3 +1492,37 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js").catch(() => {});
   });
 }
+
+// ── Atalhos de teclado (desktop) ──
+document.addEventListener("keydown", (e) => {
+  const tag = document.activeElement?.tagName;
+  const emInput = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT"
+    || document.activeElement?.isContentEditable;
+  const modalAberto = !!document.querySelector(".modal-overlay.active, .modal-rapido.active, [id$='modal'].active");
+
+  // Esc — fecha modal aberto
+  if (e.key === "Escape" && modalAberto) {
+    const fechar = document.querySelector(".modal-overlay.active .btn-cancel, .modal-overlay.active [onclick*='fechar'], .modal-rapido.active [onclick*='fechar']");
+    fechar?.click();
+    return;
+  }
+
+  if (emInput || modalAberto) return;
+
+  // N — novo lançamento (funciona em lancamentos.html e dashboard)
+  if ((e.key === "n" || e.key === "N") && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    if (typeof abrirModalLancamento === "function") abrirModalLancamento();
+    else if (typeof abrirModalAtivo === "function") abrirModalAtivo();
+    else window.location.href = "/lancamentos.html?novo=1";
+    return;
+  }
+
+  // / — foca busca
+  if (e.key === "/" && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    const busca = document.getElementById("busca-input") || document.getElementById("busca-lanc");
+    if (busca) { busca.focus(); busca.select(); }
+    return;
+  }
+});

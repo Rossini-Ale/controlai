@@ -213,54 +213,62 @@ function validarTransacao(body) {
 
 // ── Criar transação ──
 router.post("/", auth, async (req, res) => {
-  const { conta_id, categoria_id, tipo, descricao, valor, data, observacao } =
+  const { conta_id, categoria_id, tipo, descricao, valor, data, observacao, parcelas, tags } =
     req.body;
   const erroValidacao = validarTransacao(req.body);
   if (erroValidacao) return res.status(400).json({ erro: erroValidacao });
+
+  const qtdParcelas = Math.min(Math.max(parseInt(parcelas) || 1, 1), 60);
+  const tagsStr = tags && typeof tags === "string" ? tags.substring(0, 255) : null;
+
   try {
-    const [result] = await db.query(
-      `INSERT INTO Transacoes (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        req.usuarioId,
-        conta_id,
-        categoria_id,
-        tipo,
-        String(descricao).trim(),
-        parseFloat(valor),
-        data,
-        observacao || null,
-      ],
-    );
-    res
-      .status(201)
-      .json({ id: result.insertId, mensagem: "Transação criada!" });
+    if (qtdParcelas <= 1) {
+      const [result] = await db.query(
+        `INSERT INTO Transacoes (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao, tags)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [req.usuarioId, conta_id, categoria_id, tipo, String(descricao).trim(),
+         parseFloat(valor), data, observacao || null, tagsStr],
+      );
+      return res.status(201).json({ id: result.insertId, mensagem: "Transação criada!" });
+    }
+
+    // Gera todas as parcelas de uma vez
+    const baseData = new Date(data + "T12:00:00");
+    const ids = [];
+    for (let i = 0; i < qtdParcelas; i++) {
+      const d = new Date(baseData);
+      d.setMonth(d.getMonth() + i);
+      const dataParc = d.toISOString().split("T")[0];
+      const descParc = `${String(descricao).trim()} (${i + 1}/${qtdParcelas})`;
+      const [result] = await db.query(
+        `INSERT INTO Transacoes (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao, parcela_atual, parcelas_total, tags)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [req.usuarioId, conta_id, categoria_id, tipo, descParc,
+         parseFloat(valor), dataParc, observacao || null, i + 1, qtdParcelas, tagsStr],
+      );
+      ids.push(result.insertId);
+    }
+    res.status(201).json({ ids, mensagem: `${qtdParcelas} parcelas criadas!` });
   } catch (err) {
+    console.error("[Transacoes POST]", err.message);
     res.status(500).json({ erro: "Erro ao criar transação." });
   }
 });
 
 // ── Editar transação ──
 router.put("/:id", auth, async (req, res) => {
-  const { conta_id, categoria_id, tipo, descricao, valor, data, observacao } =
+  const { conta_id, categoria_id, tipo, descricao, valor, data, observacao, tags } =
     req.body;
   const erroValidacao = validarTransacao(req.body);
   if (erroValidacao) return res.status(400).json({ erro: erroValidacao });
+  const tagsStr = tags && typeof tags === "string" ? tags.substring(0, 255) : null;
   try {
     await db.query(
-      `UPDATE Transacoes SET conta_id=?, categoria_id=?, tipo=?, descricao=?, valor=?, data=?, observacao=?
+      `UPDATE Transacoes SET conta_id=?, categoria_id=?, tipo=?, descricao=?, valor=?, data=?, observacao=?, tags=?
        WHERE id=? AND usuario_id=? AND deleted_at IS NULL`,
-      [
-        conta_id,
-        categoria_id,
-        tipo,
-        String(descricao).trim(),
-        parseFloat(valor),
-        data,
-        observacao,
-        req.params.id,
-        req.usuarioId,
-      ],
+      [conta_id, categoria_id, tipo, String(descricao).trim(),
+       parseFloat(valor), data, observacao, tagsStr,
+       req.params.id, req.usuarioId],
     );
     res.json({ mensagem: "Transação atualizada!" });
   } catch (err) {

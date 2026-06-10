@@ -111,20 +111,26 @@ router.get("/fluxo", auth, async (req, res) => {
   }
 });
 
-// ── Resumo do mês (receitas, despesas, saldo) ──
+// ── Resumo do mês ou período (receitas, despesas, saldo) ──
 router.get("/resumo", auth, async (req, res) => {
-  const mes = parseInt(req.query.mes);
-  const ano = parseInt(req.query.ano);
+  const { mes, ano, data_inicio, data_fim } = req.query;
   try {
+    let where = "WHERE usuario_id=? AND deleted_at IS NULL AND IFNULL(is_transferencia, 0) = 0";
+    let params = [req.usuarioId];
+    if (data_inicio && data_fim) {
+      where += " AND data >= ? AND data <= ?";
+      params.push(data_inicio, data_fim);
+    } else {
+      where += " AND MONTH(data)=? AND YEAR(data)=?";
+      params.push(parseInt(mes), parseInt(ano));
+    }
     const [[row]] = await db.query(
       `SELECT
         COALESCE(SUM(CASE WHEN tipo='receita' THEN valor ELSE 0 END), 0) AS total_receitas,
         COALESCE(SUM(CASE WHEN tipo IN ('despesa','cartao') THEN valor ELSE 0 END), 0) AS total_despesas,
         COALESCE(SUM(CASE WHEN tipo='receita' THEN valor ELSE -valor END), 0) AS saldo
-       FROM Transacoes
-       WHERE usuario_id=? AND MONTH(data)=? AND YEAR(data)=?
-         AND deleted_at IS NULL AND IFNULL(is_transferencia, 0) = 0`,
-      [req.usuarioId, mes, ano],
+       FROM Transacoes ${where}`,
+      params,
     );
     res.json(row);
   } catch (err) {
@@ -135,23 +141,30 @@ router.get("/resumo", auth, async (req, res) => {
 
 // ── Gastos/receitas por categoria ──
 router.get("/por-categoria", auth, async (req, res) => {
-  const mes = parseInt(req.query.mes);
-  const ano = parseInt(req.query.ano);
-  const tipo = req.query.tipo || "despesa";
+  const { mes, ano, tipo: tipoParam, data_inicio, data_fim } = req.query;
+  const tipo = tipoParam || "despesa";
   try {
+    let dateFilter, dateParams;
+    if (data_inicio && data_fim) {
+      dateFilter = "AND t.data >= ? AND t.data <= ?";
+      dateParams = [data_inicio, data_fim];
+    } else {
+      dateFilter = "AND MONTH(t.data)=? AND YEAR(t.data)=?";
+      dateParams = [parseInt(mes), parseInt(ano)];
+    }
     const [rows] = await db.query(
       `SELECT c.id, c.nome, c.cor, c.icone,
               COALESCE(SUM(t.valor), 0) AS total
        FROM Categorias c
        INNER JOIN Transacoes t
          ON t.categoria_id = c.id
-         AND MONTH(t.data)=? AND YEAR(t.data)=?
+         ${dateFilter}
          AND t.deleted_at IS NULL
          AND (t.tipo=? OR (? = 'despesa' AND t.tipo='cartao'))
        WHERE c.usuario_id=? AND c.deleted_at IS NULL
        GROUP BY c.id, c.nome, c.cor, c.icone
        ORDER BY total DESC`,
-      [mes, ano, tipo, tipo, req.usuarioId],
+      [...dateParams, tipo, tipo, req.usuarioId],
     );
     res.json(rows);
   } catch (err) {

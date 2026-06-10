@@ -500,7 +500,19 @@
             margin-bottom: 20px;
           "
         >
-          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px">
+          <!-- Modo de filtro: mês/ano ou período customizado -->
+          <div style="display:flex;gap:6px;margin-bottom:4px">
+            <button id="btn-modo-mes" onclick="setModoFiltro('mes')"
+              style="flex:1;padding:7px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--green);background:rgba(16,185,129,0.12);color:var(--green)">
+              <i class="fa-solid fa-calendar-day"></i> Mês
+            </button>
+            <button id="btn-modo-custom" onclick="setModoFiltro('custom')"
+              style="flex:1;padding:7px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text-secondary)">
+              <i class="fa-solid fa-calendar-range"></i> Período
+            </button>
+          </div>
+          <!-- Filtro por mês/ano -->
+          <div id="filtro-mes-wrap" style="display:grid;grid-template-columns:2fr 1fr;gap:8px">
             <select id="filtro-mes" class="filtro-select">
               <option value="1">Janeiro</option>
               <option value="2">Fevereiro</option>
@@ -516,6 +528,17 @@
               <option value="12">Dezembro</option>
             </select>
             <select id="filtro-ano" class="filtro-select"></select>
+          </div>
+          <!-- Filtro por período customizado -->
+          <div id="filtro-custom-wrap" style="display:none;grid-template-columns:1fr 1fr;gap:8px">
+            <div>
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px">De</label>
+              <input type="date" id="filtro-data-inicio" class="filtro-select" style="padding:9px 10px" />
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px">Até</label>
+              <input type="date" id="filtro-data-fim" class="filtro-select" style="padding:9px 10px" />
+            </div>
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
             <button
@@ -1146,6 +1169,37 @@
         };
       }
 
+      let _modoFiltro = "mes";
+
+      function setModoFiltro(modo) {
+        _modoFiltro = modo;
+        const isMes = modo === "mes";
+        document.getElementById("filtro-mes-wrap").style.display = isMes ? "grid" : "none";
+        document.getElementById("filtro-custom-wrap").style.display = isMes ? "none" : "grid";
+        const btnMes = document.getElementById("btn-modo-mes");
+        const btnCustom = document.getElementById("btn-modo-custom");
+        if (btnMes) {
+          btnMes.style.background = isMes ? "rgba(16,185,129,0.12)" : "transparent";
+          btnMes.style.color = isMes ? "var(--green)" : "var(--text-secondary)";
+          btnMes.style.borderColor = isMes ? "var(--green)" : "var(--border)";
+        }
+        if (btnCustom) {
+          btnCustom.style.background = !isMes ? "rgba(16,185,129,0.12)" : "transparent";
+          btnCustom.style.color = !isMes ? "var(--green)" : "var(--text-secondary)";
+          btnCustom.style.borderColor = !isMes ? "var(--green)" : "var(--border)";
+        }
+      }
+
+      function getFiltroQS() {
+        if (_modoFiltro === "custom") {
+          const di = document.getElementById("filtro-data-inicio")?.value;
+          const df = document.getElementById("filtro-data-fim")?.value;
+          if (di && df) return `data_inicio=${di}&data_fim=${df}`;
+        }
+        const { m, a } = getMF();
+        return `mes=${m}&ano=${a}`;
+      }
+
       // ══════════════════════════════════════
       // FLUXO DE CAIXA PROJETADO
       // ══════════════════════════════════════
@@ -1309,11 +1363,11 @@
       }
 
       async function carregarResumo() {
-        const { m, a } = getMF(),
-          data = await fetchAPI(`/api/relatorios/resumo?mes=${m}&ano=${a}`);
+        const data = await fetchAPI(`/api/relatorios/resumo?${getFiltroQS()}`);
         if (!data) return;
+        const label = _modoFiltro === "custom" ? "Período" : "Saldo do mês";
         document.getElementById("cards-resumo").innerHTML =
-          `<div class="card"><div class="card-label">Receitas</div><div class="card-value green">${formatarMoeda(data.total_receitas)}</div></div><div class="card"><div class="card-label">Despesas</div><div class="card-value red">${formatarMoeda(data.total_despesas)}</div></div><div class="card"><div class="card-label">Saldo do mês</div><div class="card-value ${parseFloat(data.saldo) >= 0 ? "green" : "red"}">${formatarMoeda(data.saldo)}</div></div>`;
+          `<div class="card"><div class="card-label">Receitas</div><div class="card-value green">${formatarMoeda(data.total_receitas)}</div></div><div class="card"><div class="card-label">Despesas</div><div class="card-value red">${formatarMoeda(data.total_despesas)}</div></div><div class="card"><div class="card-label">${label}</div><div class="card-value ${parseFloat(data.saldo) >= 0 ? "green" : "red"}">${formatarMoeda(data.saldo)}</div></div>`;
       }
 
       async function carregarEvolucao() {
@@ -1432,17 +1486,15 @@
 
       async function carregarCategorias() {
         const { m, a } = getMF();
-        document.getElementById("label-mes-cat").textContent =
-          `${nomeMes(parseInt(m))} ${a}`;
-        document.getElementById("label-mes-rec").textContent =
-          `${nomeMes(parseInt(m))} ${a}`;
+        const qs = getFiltroQS();
+        const label = _modoFiltro === "custom"
+          ? (() => { const di = document.getElementById("filtro-data-inicio")?.value; const df = document.getElementById("filtro-data-fim")?.value; return di && df ? `${di} → ${df}` : "Período"; })()
+          : `${nomeMes(parseInt(m))} ${a}`;
+        document.getElementById("label-mes-cat").textContent = label;
+        document.getElementById("label-mes-rec").textContent = label;
         const [desp, rec] = await Promise.all([
-          fetchAPI(
-            `/api/relatorios/por-categoria?mes=${m}&ano=${a}&tipo=despesa`,
-          ).then((d) => d || []),
-          fetchAPI(
-            `/api/relatorios/por-categoria?mes=${m}&ano=${a}&tipo=receita`,
-          ).then((d) => d || []),
+          fetchAPI(`/api/relatorios/por-categoria?${qs}&tipo=despesa`).then((d) => d || []),
+          fetchAPI(`/api/relatorios/por-categoria?${qs}&tipo=receita`).then((d) => d || []),
         ]);
         renderCatLista("cat-lista-desp", desp);
         renderCatLista("cat-lista-rec", rec);

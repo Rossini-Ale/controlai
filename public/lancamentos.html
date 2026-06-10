@@ -581,6 +581,18 @@
           </button>
         </div>
         <div id="busca-lanc-resultado" style="display:none;margin-bottom:12px"></div>
+        <!-- Quick entry mobile -->
+        <div id="quick-entry" class="mobile-only" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:12px;display:flex;gap:8px;align-items:center">
+          <input type="text" id="qe-valor" inputmode="decimal" placeholder="0,00"
+            style="width:90px;flex-shrink:0;background:var(--bg-primary);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text-primary);font-size:16px;font-weight:600;text-align:center"
+            oninput="aplicarMascaraMoeda(this)" />
+          <select id="qe-categoria"
+            style="flex:1;min-width:0;background:var(--bg-primary);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text-primary);font-size:13px"></select>
+          <button onclick="salvarQuickEntry()" title="Salvar rápido"
+            style="flex-shrink:0;background:var(--green);border:none;border-radius:9px;color:#fff;width:38px;height:38px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
         <div id="resumo-periodo" style="display:none;margin-bottom:14px"></div>
         <div class="table-wrap desktop-only">
           <table>
@@ -845,6 +857,33 @@
         <div class="form-group">
           <label>Observação (opcional)</label
           ><input type="text" id="f-obs" tabindex="6" />
+        </div>
+        <div id="grupo-parcelas" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group" style="margin:0">
+            <label>Parcelas</label>
+            <select id="f-parcelas" tabindex="7">
+              <option value="1">À vista</option>
+              <option value="2">2x</option>
+              <option value="3">3x</option>
+              <option value="4">4x</option>
+              <option value="5">5x</option>
+              <option value="6">6x</option>
+              <option value="7">7x</option>
+              <option value="8">8x</option>
+              <option value="9">9x</option>
+              <option value="10">10x</option>
+              <option value="12">12x</option>
+              <option value="18">18x</option>
+              <option value="24">24x</option>
+              <option value="36">36x</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Tags (opcional)</label>
+            <input type="text" id="f-tags" placeholder="Ex: viagem, trabalho" tabindex="8"
+              style="font-size:13px" autocomplete="off" list="tags-datalist" />
+            <datalist id="tags-datalist"></datalist>
+          </div>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 8px">
           <button
@@ -1610,6 +1649,12 @@
         ]);
         filtrarCategorias();
         preencherFiltroCategorias();
+        // Popula quick entry categoria (despesas)
+        const qeCat = document.getElementById("qe-categoria");
+        if (qeCat) {
+          const despesas = categorias.filter((c) => c.tipo === "despesa");
+          qeCat.innerHTML = despesas.map((c) => `<option value="${c.id}">${c.nome}</option>`).join("");
+        }
         document.getElementById("f-conta").innerHTML = contas.length
           ? contas
               .map((c) => `<option value="${c.id}">${c.nome}</option>`)
@@ -2116,6 +2161,10 @@
         inputData.min = minData;
         inputData.max = maxData;
         document.getElementById("f-obs").value = "";
+        const fParcelas = document.getElementById("f-parcelas");
+        if (fParcelas) fParcelas.value = "1";
+        const fTags = document.getElementById("f-tags");
+        if (fTags) fTags.value = "";
         document.getElementById("aviso-duplicado")?.remove();
         selecionarTipoModal("despesa");
         document.getElementById("btn-salvar-continuar").style.display = "flex";
@@ -2138,6 +2187,12 @@
           );
           ativarAutoScrollFoco("#modal-lancamento .modal");
           ativarPullToDismiss("modal-lancamento", fecharModalLancamento);
+          // Autocomplete de tags
+          fetchAPI("/api/tags").then((tags) => {
+            const dl = document.getElementById("tags-datalist");
+            if (dl && Array.isArray(tags))
+              dl.innerHTML = tags.map((t) => `<option value="${t}">`).join("");
+          }).catch(() => {});
           // Voz — preenche descrição e valor falando
           ativarVoz("btn-voz", "f-descricao", "f-valor");
           // Auto-save draft
@@ -2183,6 +2238,10 @@
         inputData.min = `${new Date().getFullYear() - 5}-01-01`;
         inputData.max = `${new Date().getFullYear() + 1}-12-31`;
         document.getElementById("f-obs").value = item.observacao || "";
+        const fTagsEdit = document.getElementById("f-tags");
+        if (fTagsEdit) fTagsEdit.value = item.tags || "";
+        const fParcelasEdit = document.getElementById("f-parcelas");
+        if (fParcelasEdit) fParcelasEdit.value = "1";
         selecionarTipoModal(item.tipo);
         document.getElementById("f-categoria").value = item.categoria_id;
         document.getElementById("f-conta").value = item.conta_id;
@@ -2199,6 +2258,8 @@
           conta_id: document.getElementById("f-conta").value,
           data: document.getElementById("f-data").value,
           observacao: document.getElementById("f-obs").value,
+          parcelas: parseInt(document.getElementById("f-parcelas")?.value) || 1,
+          tags: document.getElementById("f-tags")?.value.trim() || null,
         };
         if (!body.descricao || !body.valor || !body.data) {
           toast("Preencha descrição, valor e data.", "erro");
@@ -2309,6 +2370,37 @@
           carregarTransacoes();
         } finally {
           btn.innerHTML = labelOriginal;
+          btn.disabled = false;
+        }
+      }
+
+      async function salvarQuickEntry() {
+        const valorEl = document.getElementById("qe-valor");
+        const catEl = document.getElementById("qe-categoria");
+        const valor = lerValorMoeda(valorEl);
+        if (!valor || valor <= 0) { toast("Informe o valor.", "erro"); valorEl.focus(); return; }
+        const conta = contas[0];
+        if (!conta) { toast("Cadastre uma conta primeiro.", "erro"); return; }
+        const body = {
+          tipo: "despesa",
+          valor,
+          descricao: catEl.options[catEl.selectedIndex]?.text || "Despesa rápida",
+          categoria_id: catEl.value,
+          conta_id: conta.id,
+          data: new Date().toISOString().split("T")[0],
+        };
+        const btn = document.querySelector('#quick-entry button');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+        try {
+          await fetchAPI("/api/transacoes", { method: "POST", body: JSON.stringify(body) });
+          valorEl.value = "";
+          delete valorEl.dataset.valor;
+          haptic(10);
+          toast("Salvo!");
+          carregarTransacoes();
+        } finally {
+          btn.innerHTML = '<i class="fa-solid fa-plus"></i>';
           btn.disabled = false;
         }
       }

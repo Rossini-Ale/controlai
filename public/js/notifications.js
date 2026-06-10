@@ -114,9 +114,37 @@ async function ativarNotificacoes() {
   if (ok) {
     toast("Notificações ativadas!");
     verificarENotificar();
+    subscribeWebPush();
   } else {
     toast("Permissão negada. Ative nas configurações do navegador.", "aviso");
   }
+}
+
+// ── Web Push: assina para receber notificações mesmo com app fechado ──
+async function subscribeWebPush() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  try {
+    const { publicKey } = await fetchAPI("/api/push/vapid-key").catch(() => ({}));
+    if (!publicKey) return;
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+    await fetchAPI("/api/push/subscribe", {
+      method: "POST",
+      body: JSON.stringify(sub.toJSON()),
+    });
+  } catch (e) {
+    /* silencioso — Web Push não disponível ou bloqueado */
+  }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
 function dispensarNotifCta() {

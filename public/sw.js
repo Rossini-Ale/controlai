@@ -38,6 +38,30 @@ self.addEventListener("activate", (e) => {
   );
 });
 
+// ── Web Push: exibe notificação quando app está fechado ──
+self.addEventListener("push", (e) => {
+  let data = { title: "Controlaí", body: "Nova notificação", url: "/dashboard.html" };
+  try { data = Object.assign(data, JSON.parse(e.data.text())); } catch {}
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      data: { url: data.url },
+      vibrate: [100, 50, 100],
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = e.notification.data?.url || "/dashboard.html";
+  e.waitUntil(clients.matchAll({ type: "window" }).then((cs) => {
+    const c = cs.find((c) => c.url.includes(url) && "focus" in c);
+    return c ? c.focus() : clients.openWindow(url);
+  }));
+});
+
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
 

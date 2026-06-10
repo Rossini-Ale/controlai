@@ -86,6 +86,26 @@ const MIGRATIONS = [
     id: "012_unique_recorrente_data",
     sql: "ALTER TABLE Transacoes ADD UNIQUE KEY uq_recorrente_data (recorrente_id, data)",
   },
+  {
+    id: "013_parcelas",
+    sql: "ALTER TABLE Transacoes ADD COLUMN parcela_atual INT NULL, ADD COLUMN parcelas_total INT NULL",
+  },
+  {
+    id: "014_tags",
+    sql: "ALTER TABLE Transacoes ADD COLUMN tags VARCHAR(255) NULL",
+  },
+  {
+    id: "015_push_subscriptions",
+    sql: `CREATE TABLE IF NOT EXISTS PushSubscriptions (
+      id          INT AUTO_INCREMENT PRIMARY KEY,
+      usuario_id  INT NOT NULL,
+      endpoint    TEXT NOT NULL,
+      auth        VARCHAR(255) NOT NULL,
+      p256dh      VARCHAR(255) NOT NULL,
+      created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (usuario_id) REFERENCES Usuarios(id) ON DELETE CASCADE
+    )`,
+  },
 ];
 
 async function rodarMigrations() {
