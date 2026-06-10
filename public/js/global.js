@@ -351,14 +351,6 @@ function renderSidebar(paginaAtiva) {
       <div class="icon"><i class="fa-solid fa-chart-pie"></i></div>
       <span>controlaí</span>
     </div>
-    ${
-      paginaAtiva === "Dashboard"
-        ? `
-    <div style="padding:12px 20px 4px;font-size:13px;color:var(--text-secondary)">
-      ${getSaudacao()}, <strong style="color:var(--text-primary)">${getPrimeiroNome()}</strong>
-    </div>`
-        : ""
-    }
     <nav>
       ${navItems
         .map(
@@ -422,10 +414,7 @@ function renderMobileHeader(paginaAtiva) {
     .join("")
     .substring(0, 2)
     .toUpperCase();
-  const titulo =
-    paginaAtiva === "Dashboard"
-      ? `<span style="font-size:13px">${getSaudacao()}, <strong>${getPrimeiroNome()}</strong></span>`
-      : `<span class="mobile-header-title">${paginaAtiva}</span>`;
+  const titulo = `<span class="mobile-header-title">${paginaAtiva}</span>`;
   return `
     <header class="mobile-header">
       <button class="mobile-avatar-btn" onclick="togglePerfilMenu()" aria-label="Perfil">
