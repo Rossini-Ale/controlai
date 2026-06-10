@@ -571,12 +571,12 @@
           <table>
             <thead>
               <tr>
-                <th>Data</th>
+                <th onclick="clicarSort('data')" style="cursor:pointer;user-select:none;white-space:nowrap">Data <i id="sort-icon-data" class="fa-solid fa-sort-down" style="font-size:9px;color:var(--green)"></i></th>
                 <th>Descrição</th>
-                <th>Categoria</th>
+                <th onclick="clicarSort('categoria')" style="cursor:pointer;user-select:none;white-space:nowrap">Categoria <i id="sort-icon-categoria" class="fa-solid fa-sort" style="font-size:9px;color:var(--text-muted)"></i></th>
                 <th>Conta</th>
                 <th>Tipo</th>
-                <th>Valor</th>
+                <th onclick="clicarSort('valor')" style="cursor:pointer;user-select:none;white-space:nowrap">Valor <i id="sort-icon-valor" class="fa-solid fa-sort" style="font-size:9px;color:var(--text-muted)"></i></th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -1221,6 +1221,7 @@
         filtroRecAtual = "todos";
       let paginaAtual = 1;
       const POR_PAGINA = 30;
+      let _sortCol = "data", _sortDir = "desc", _ultimosData = [];
       const { mes, ano } = getMesAno();
       const FREQ_LABEL = {
         diaria: "Diária",
@@ -1540,6 +1541,7 @@
           lista.insertAdjacentHTML("beforeend", html);
         } else {
           lista.innerHTML = html;
+          animarEntrada(lista);
         }
 
         data.forEach((t) => {
@@ -1825,13 +1827,39 @@
         return grupos;
       }
 
+      function sortTransacoes(data) {
+        return [...data].sort((a, b) => {
+          let av, bv;
+          if (_sortCol === "data") { av = a.data || ""; bv = b.data || ""; }
+          else if (_sortCol === "valor") { av = parseFloat(a.valor) || 0; bv = parseFloat(b.valor) || 0; }
+          else if (_sortCol === "categoria") { av = (a.categoria_nome || "").toLowerCase(); bv = (b.categoria_nome || "").toLowerCase(); }
+          if (av < bv) return _sortDir === "asc" ? -1 : 1;
+          if (av > bv) return _sortDir === "asc" ? 1 : -1;
+          return 0;
+        });
+      }
+
+      function clicarSort(col) {
+        if (_sortCol === col) { _sortDir = _sortDir === "asc" ? "desc" : "asc"; }
+        else { _sortCol = col; _sortDir = col === "data" ? "desc" : "asc"; }
+        ["data", "categoria", "valor"].forEach((c) => {
+          const el = document.getElementById(`sort-icon-${c}`);
+          if (!el) return;
+          if (c !== _sortCol) { el.className = "fa-solid fa-sort"; el.style.color = "var(--text-muted)"; }
+          else { el.className = `fa-solid fa-sort-${_sortDir === "asc" ? "up" : "down"}`; el.style.color = "var(--green)"; }
+        });
+        if (_ultimosData.length) renderDesktop(_ultimosData);
+      }
+
       function renderDesktop(data) {
+        _ultimosData = data;
+        const sorted = sortTransacoes(data);
         const tbody = document.getElementById("tabela-transacoes-desktop");
-        if (data.length === 0) {
+        if (sorted.length === 0) {
           tbody.innerHTML = `<tr><td colspan="7" style="padding:0"><div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transação", "Nenhuma transação encontrada neste período.", "Novo lançamento", "abrirModalLancamento()")}</div></td></tr>`;
           return;
         }
-        tbody.innerHTML = data
+        tbody.innerHTML = sorted
           .map((t) => {
             const isT = !!t.is_transferencia;
             const label = isT ? "transferencia" : t.tipo;
@@ -1868,6 +1896,7 @@
           </tr>`;
           })
           .join("");
+        animarEntrada(tbody, "tr");
       }
 
       function renderMobile(data) {
@@ -2216,48 +2245,53 @@
         carregarTransacoes();
       }
 
-      async function deletarLancamento(id) {
-        const ok = await confirmar(
-          "Deseja mover este lançamento para a lixeira?",
-        );
-        if (!ok) return;
+      function deletarLancamento(id) {
         haptic(15);
+        const DURACAO = 4000;
 
-        // Mobile — optimistic com swipe
-        const elMobile = document.getElementById(`sw-wrap-${id}`);
-        if (elMobile) {
-          optimisticDelete(
-            `sw-wrap-${id}`,
-            () => fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" }),
-            () => carregarTransacoes(),
-          );
-          return;
+        const elMob = document.getElementById(`sw-wrap-${id}`);
+        const elDesk = document.querySelector(`tr[data-id="${id}"]`);
+
+        // Anima para fora imediatamente
+        if (elMob) {
+          elMob.style.transition = "max-height 0.3s ease,opacity 0.25s ease,margin 0.3s ease";
+          elMob.style.maxHeight = elMob.offsetHeight + "px";
+          elMob.style.overflow = "hidden";
+          requestAnimationFrame(() => {
+            elMob.style.opacity = "0";
+            elMob.style.maxHeight = "0";
+            elMob.style.marginBottom = "0";
+          });
+        }
+        if (elDesk) {
+          elDesk.style.transition = "transform 0.3s ease,opacity 0.3s ease";
+          elDesk.style.transform = "translateX(-40px)";
+          elDesk.style.opacity = "0";
         }
 
-        // Desktop — animação de deslizar para a esquerda
-        const row = document.querySelector(`tr[data-id="${id}"]`);
-        if (row) {
-          row.style.transition = "transform 0.3s ease, opacity 0.3s ease";
-          row.style.transform = "translateX(-100%)";
-          row.style.opacity = "0";
-          setTimeout(async () => {
-            row.style.transition = "max-height 0.25s ease";
-            row.style.maxHeight = row.offsetHeight + "px";
-            row.style.overflow = "hidden";
-            requestAnimationFrame(() => {
-              row.style.maxHeight = "0";
-            });
-            setTimeout(async () => {
-              row.remove();
-              await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
-            }, 250);
-          }, 300);
-          return;
-        }
-
-        // Fallback
-        await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
-        carregarTransacoes();
+        toastComUndo(
+          "Lançamento movido para a lixeira",
+          () => {
+            // Desfazer: restaura elementos
+            if (elMob) {
+              elMob.style.transition = "max-height 0.3s ease,opacity 0.3s ease,margin 0.3s ease";
+              elMob.style.maxHeight = "300px";
+              elMob.style.opacity = "1";
+              elMob.style.marginBottom = "";
+            }
+            if (elDesk) {
+              elDesk.style.transition = "transform 0.3s ease,opacity 0.3s ease";
+              elDesk.style.transform = "";
+              elDesk.style.opacity = "1";
+            }
+          },
+          DURACAO,
+          async () => {
+            elMob?.remove();
+            elDesk?.remove();
+            await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
+          },
+        );
       }
 
       async function deletarTransferencia(tid) {

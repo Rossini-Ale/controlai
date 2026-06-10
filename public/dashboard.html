@@ -285,6 +285,9 @@
       <div id="alertas-orcamento"></div>
       <div class="cards-grid" id="cards-resumo"></div>
 
+      <!-- Insight variação mensal -->
+      <div id="insight-variacao"></div>
+
       <!-- Gráficos -->
       <div class="charts-row" id="charts-row" style="display: none">
         <div class="chart-card">
@@ -296,6 +299,9 @@
           <div id="saldo-previsto-wrap" style="padding-top: 8px"></div>
         </div>
       </div>
+
+      <!-- Gráfico de barras — evolução 6 meses -->
+      <div id="grafico-6meses" style="margin-bottom:20px"></div>
 
       <div id="orc-wrap"></div>
       <div id="rec-vencendo-wrap"></div>
@@ -345,7 +351,8 @@
 
       let { mes, ano } = getMesAno();
       let todasTransacoes = [];
-      let chartCategorias = null;
+      let chartCategorias = null, chart6Meses = null;
+      let _resumoData = null, _evolucaoData = null;
 
       function atualizarLabel() {
         document.getElementById("mes-label").textContent =
@@ -367,7 +374,12 @@
       }
 
       async function carregarDados() {
+        _resumoData = null;
+        _evolucaoData = null;
         document.getElementById("cards-resumo").innerHTML = skeletonCards(4);
+        document.getElementById("insight-variacao").innerHTML = "";
+        document.getElementById("grafico-6meses").innerHTML =
+          `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">${skeletonCards(2)}</div>`;
         document.getElementById("orc-wrap").innerHTML =
           `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px">${skeletonCards(1)}</div>`;
         document.getElementById("saldo-previsto-wrap").innerHTML = skeletonCards(1);
@@ -379,7 +391,9 @@
           carregarOrcamento(),
           carregarRecorrentesVencendo(),
           carregarSaldoTotal(),
+          carregarGrafico6Meses(),
         ]);
+        _renderInsight(_evolucaoData, _resumoData);
       }
 
       async function carregarSaldoTotal() {
@@ -397,6 +411,7 @@
         const data = await fetchAPI(
           `/api/relatorios/resumo?mes=${mes}&ano=${ano}`,
         );
+        _resumoData = data;
         if (!data) return;
         document.getElementById("cards-resumo").innerHTML = `
           <div class="card"><div class="card-label">Receitas</div><div class="card-value green">${formatarMoeda(data.total_receitas)}</div></div>
@@ -613,6 +628,7 @@
           </tr>`,
           )
           .join("");
+        animarEntrada(tbody, "tr");
       }
 
       function renderTransacoesMobile(data) {
@@ -657,6 +673,7 @@
           </div>`;
           })
           .join("");
+        animarEntrada(mob);
       }
 
       // ── Busca global em tempo real (varre histórico completo) ──
@@ -928,6 +945,88 @@
       function fecharChecklist() {
         document.getElementById("checklist-wrap").innerHTML = "";
         localStorage.setItem("controlai_onboarding_checklist", "1");
+      }
+
+      // ── Gráfico de barras — evolução 6 meses ──
+      async function carregarGrafico6Meses() {
+        const data = await fetchAPI("/api/relatorios/evolucao");
+        _evolucaoData = data;
+        const wrap = document.getElementById("grafico-6meses");
+        if (!Array.isArray(data) || data.length < 2) { wrap.innerHTML = ""; return; }
+
+        wrap.innerHTML = `
+          <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px">
+            <h3 style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:12px">
+              <i class="fa-solid fa-chart-bar" style="color:var(--green);margin-right:6px"></i>Evolução dos últimos 6 meses
+            </h3>
+            <canvas id="chart-6meses" height="150"></canvas>
+          </div>`;
+
+        const mutedColor = getComputedStyle(document.documentElement).getPropertyValue("--text-muted").trim() || "#6b7280";
+        const labels = data.map((d) => nomeMes(d.mes).substring(0, 3) + "/" + String(d.ano).substring(2));
+        const receitas = data.map((d) => parseFloat(d.receitas) || 0);
+        const despesas = data.map((d) => parseFloat(d.despesas) || 0);
+
+        if (chart6Meses) chart6Meses.destroy();
+        chart6Meses = new Chart(document.getElementById("chart-6meses"), {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              { label: "Receitas", data: receitas, backgroundColor: "rgba(16,185,129,0.75)", borderRadius: 4, borderWidth: 0 },
+              { label: "Despesas", data: despesas, backgroundColor: "rgba(239,68,68,0.75)", borderRadius: 4, borderWidth: 0 },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: "top", labels: { color: mutedColor, font: { size: 11 }, padding: 10, boxWidth: 10 } },
+              tooltip: { callbacks: { label: (ctx) => ` ${formatarMoedaRaw(ctx.parsed.y)}` } },
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: mutedColor, font: { size: 11 } } },
+              y: {
+                grid: { color: "rgba(107,114,128,0.1)" },
+                ticks: {
+                  color: mutedColor, font: { size: 11 },
+                  callback: (v) => "R$ " + (v >= 1000 ? (v / 1000).toFixed(1) + "k" : v),
+                },
+              },
+            },
+          },
+        });
+      }
+
+      // ── Insight: variação de despesas em relação à média recente ──
+      function _renderInsight(evolucao, resumo) {
+        const wrap = document.getElementById("insight-variacao");
+        if (!wrap || !Array.isArray(evolucao) || !resumo) return;
+
+        const mesAtualKey = `${ano}-${mes}`;
+        const anteriores = evolucao.filter((d) => !(d.mes == mes && d.ano == ano));
+        if (anteriores.length < 2) return;
+
+        const ultimos = anteriores.slice(-3);
+        const avgDespesas = ultimos.reduce((s, d) => s + (parseFloat(d.despesas) || 0), 0) / ultimos.length;
+        const despesasAtual = parseFloat(resumo.total_despesas) || 0;
+        if (avgDespesas <= 0 || despesasAtual <= 0) return;
+
+        const diff = ((despesasAtual - avgDespesas) / avgDespesas) * 100;
+        if (Math.abs(diff) < 5) return;
+
+        const acima = diff > 0;
+        const cor = acima ? "var(--red)" : "var(--green)";
+        const icone = acima ? "fa-arrow-trend-up" : "fa-arrow-trend-down";
+        const pct = Math.abs(diff).toFixed(0);
+        const msg = acima
+          ? `Despesas ${pct}% acima da média dos últimos ${ultimos.length} meses`
+          : `Despesas ${pct}% abaixo da média dos últimos ${ultimos.length} meses`;
+
+        wrap.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;background:${acima ? "rgba(239,68,68,0.07)" : "rgba(16,185,129,0.07)"};border:0.5px solid ${acima ? "rgba(239,68,68,0.25)" : "rgba(16,185,129,0.25)"};border-radius:10px;padding:10px 14px;margin-bottom:16px">
+            <i class="fa-solid ${icone}" style="color:${cor};font-size:14px;flex-shrink:0"></i>
+            <span style="font-size:13px;color:var(--text-secondary)">${msg}</span>
+          </div>`;
       }
 
       atualizarLabel();
