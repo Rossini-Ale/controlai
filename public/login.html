@@ -333,6 +333,19 @@
           loginVisivel ? login() : cadastrar();
         }
       });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const motivo = sessionStorage.getItem("controlai_logout_motivo");
+        if (motivo) {
+          sessionStorage.removeItem("controlai_logout_motivo");
+          const aviso = document.getElementById("login-erro");
+          if (aviso) {
+            aviso.style.display = "block";
+            aviso.style.color = "#f59e0b";
+            aviso.textContent = motivo;
+          }
+        }
+      });
     </script>
     <script>
       if ("serviceWorker" in navigator) {

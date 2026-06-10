@@ -11,18 +11,8 @@ router.get("/", auth, async (req, res) => {
   const offset = (paginaAtual - 1) * porPagina;
 
   try {
-    let where = "WHERE t.usuario_id = ?";
+    let where = "WHERE t.usuario_id = ? AND t.deleted_at IS NULL";
     const params = [req.usuarioId];
-
-    // Adiciona filtro de soft delete se a coluna existir
-    const useSoftDelete = await db
-      .query(
-        "SELECT COUNT(*) as c FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='Transacoes' AND COLUMN_NAME='deleted_at'",
-      )
-      .then(([r]) => r[0].c > 0)
-      .catch(() => false);
-
-    if (useSoftDelete) where += " AND t.deleted_at IS NULL";
 
     if (mes && ano) {
       where += " AND MONTH(t.data) = ? AND YEAR(t.data) = ?";
@@ -207,10 +197,26 @@ router.get("/:id", auth, async (req, res) => {
   }
 });
 
+const TIPOS_VALIDOS = ["receita", "despesa", "cartao"];
+
+function validarTransacao(body) {
+  const { conta_id, tipo, descricao, valor, data } = body;
+  if (!conta_id) return "conta_id é obrigatório.";
+  if (!TIPOS_VALIDOS.includes(tipo)) return `tipo deve ser: ${TIPOS_VALIDOS.join(", ")}.`;
+  if (!descricao || String(descricao).trim().length === 0) return "descricao é obrigatória.";
+  if (String(descricao).length > 255) return "descricao deve ter no máximo 255 caracteres.";
+  const v = parseFloat(valor);
+  if (isNaN(v) || v <= 0) return "valor deve ser um número positivo.";
+  if (!data || isNaN(Date.parse(data))) return "data inválida.";
+  return null;
+}
+
 // ── Criar transação ──
 router.post("/", auth, async (req, res) => {
   const { conta_id, categoria_id, tipo, descricao, valor, data, observacao } =
     req.body;
+  const erroValidacao = validarTransacao(req.body);
+  if (erroValidacao) return res.status(400).json({ erro: erroValidacao });
   try {
     const [result] = await db.query(
       `INSERT INTO Transacoes (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao)
@@ -220,8 +226,8 @@ router.post("/", auth, async (req, res) => {
         conta_id,
         categoria_id,
         tipo,
-        descricao,
-        valor,
+        String(descricao).trim(),
+        parseFloat(valor),
         data,
         observacao || null,
       ],
@@ -238,6 +244,8 @@ router.post("/", auth, async (req, res) => {
 router.put("/:id", auth, async (req, res) => {
   const { conta_id, categoria_id, tipo, descricao, valor, data, observacao } =
     req.body;
+  const erroValidacao = validarTransacao(req.body);
+  if (erroValidacao) return res.status(400).json({ erro: erroValidacao });
   try {
     await db.query(
       `UPDATE Transacoes SET conta_id=?, categoria_id=?, tipo=?, descricao=?, valor=?, data=?, observacao=?
@@ -246,8 +254,8 @@ router.put("/:id", auth, async (req, res) => {
         conta_id,
         categoria_id,
         tipo,
-        descricao,
-        valor,
+        String(descricao).trim(),
+        parseFloat(valor),
         data,
         observacao,
         req.params.id,

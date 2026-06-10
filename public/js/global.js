@@ -86,10 +86,11 @@ function getPrimeiroNome() {
   return getNome().split(" ")[0];
 }
 
-function logout() {
+function logout(motivo) {
   localStorage.removeItem(PREFIX + "token");
   localStorage.removeItem(PREFIX + "nome");
   localStorage.removeItem(PREFIX + "username");
+  if (motivo) sessionStorage.setItem("controlai_logout_motivo", motivo);
   window.location.href = "/login.html";
 }
 function verificarAuth() {
@@ -247,7 +248,7 @@ async function fetchAPI(endpoint, options = {}) {
     });
 
     if (res.status === 401) {
-      logout();
+      logout("Sua sessão expirou. Faça login novamente.");
       return null;
     }
 

@@ -44,6 +44,11 @@ const MIGRATIONS = [
     id: "008_fatura_alerta_atraso",
     sql: "ALTER TABLE FaturasCartao ADD COLUMN alerta_atraso_enviado TINYINT(1) NOT NULL DEFAULT 0",
   },
+  {
+    // Cobre o padrão WHERE usuario_id=? AND deleted_at IS NULL ORDER BY data DESC
+    id: "009_index_transacoes_usuario_deleted_data",
+    sql: "ALTER TABLE Transacoes ADD INDEX idx_usuario_deleted_data (usuario_id, deleted_at, data)",
+  },
 ];
 
 async function rodarMigrations() {

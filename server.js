@@ -1,12 +1,15 @@
 // server.js — Controlaí
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const path = require("path");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 require("./config/db");
 
 const app = express();
+// CSP desativado: app usa scripts inline extensivamente (refatorar para nonces é trabalho futuro)
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 
 app.use(express.json());
