@@ -7,7 +7,9 @@
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="/css/global.css" />
     <script src="/js/global.js"></script>
+    <script src="/js/ui.js"></script>
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
@@ -17,12 +19,8 @@
         min-height: 100vh;
       }
       .layout { display: flex; min-height: 100vh; }
-      .main {
-        flex: 1;
-        padding: 32px 24px;
-        max-width: 900px;
-        margin: 0 auto;
-        width: 100%;
+      .planos-inner {
+        max-width: 860px;
       }
 
       h1 {
@@ -216,11 +214,11 @@
     </style>
   </head>
   <body>
-    <div class="layout">
-      <div id="sidebar-container"></div>
-      <div class="main">
-        <div id="mobile-header-container"></div>
-        <h1>Planos</h1>
+    <div id="mobileheader"></div>
+    <div class="sidebar" id="sidebar"></div>
+    <div class="main">
+      <div class="planos-inner">
+        <h1 class="page-title">Planos</h1>
         <p class="subtitle">Escolha o plano ideal para o seu controle financeiro.</p>
 
         <div class="plans-grid" id="plans-grid">
@@ -270,8 +268,8 @@
     </div>
 
     <script>
-      document.getElementById("sidebar-container").innerHTML = renderSidebar("Planos");
-      document.getElementById("mobile-header-container").innerHTML = renderMobileHeader("Planos");
+      document.getElementById("sidebar").innerHTML = renderSidebar("Planos");
+      document.getElementById("mobileheader").innerHTML = renderMobileHeader("Planos");
 
       let statusPlano = null;
 
@@ -348,11 +346,11 @@
           const data = await fetchAPI("/api/pagamentos/criar-sessao", { method: "POST" });
           if (data?.url) window.location.href = data.url;
           else {
-            mostrarToast("Erro ao iniciar checkout. Tente novamente.", "error");
+            toast("Erro ao iniciar checkout. Tente novamente.", "erro");
             if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Assinar Pro'; }
           }
         } catch {
-          mostrarToast("Erro ao conectar. Tente novamente.", "error");
+          toast("Erro ao conectar. Tente novamente.", "erro");
           if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Assinar Pro'; }
         }
       }
@@ -361,9 +359,9 @@
         try {
           const data = await fetchAPI("/api/pagamentos/portal", { method: "POST" });
           if (data?.url) window.location.href = data.url;
-          else mostrarToast("Erro ao abrir portal.", "error");
+          else toast("Erro ao abrir portal.", "erro");
         } catch {
-          mostrarToast("Erro ao conectar.", "error");
+          toast("Erro ao conectar.", "erro");
         }
       }
 
