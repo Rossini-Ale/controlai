@@ -656,7 +656,6 @@
 
       // ── Busca global em tempo real (varre histórico completo) ──
       let buscaTimer = null;
-      let _todasTransacoesCache = null;
 
       async function buscarTransacoes(q) {
         const clear = document.getElementById("busca-clear");
@@ -671,28 +670,12 @@
 
         buscaTimer = setTimeout(async () => {
           const termo = q.toLowerCase().trim();
-          let fonte = todasTransacoes;
-          if (q.length >= 3) {
-            resultDiv.style.display = "block";
-            resultDiv.innerHTML = `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:12px;padding:16px;text-align:center;color:var(--text-muted);font-size:13px"><i class="fa-solid fa-spinner fa-spin"></i> Buscando em todo o histórico...</div>`;
-            if (
-              !_todasTransacoesCache ||
-              _todasTransacoesCache.ts < Date.now() - 60000
-            ) {
-              const res = await fetchAPI("/api/transacoes?limit=500");
-              _todasTransacoesCache = {
-                data: Array.isArray(res) ? res : res?.data || [],
-                ts: Date.now(),
-              };
-            }
-            fonte = _todasTransacoesCache.data;
-          }
-          const filtradas = fonte.filter(
-            (t) =>
-              (t.descricao || "").toLowerCase().includes(termo) ||
-              (t.categoria_nome || "").toLowerCase().includes(termo) ||
-              (t.conta_nome || "").toLowerCase().includes(termo),
-          );
+          if (q.trim().length < 2) { resultDiv.style.display = "none"; return; }
+
+          resultDiv.style.display = "block";
+          resultDiv.innerHTML = `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:12px;padding:16px;text-align:center;color:var(--text-muted);font-size:13px"><i class="fa-solid fa-spinner fa-spin"></i> Buscando...</div>`;
+
+          const filtradas = await fetchAPI(`/api/transacoes/buscar?q=${encodeURIComponent(q.trim())}`) || [];
 
           resultDiv.style.display = "block";
           if (filtradas.length === 0) {
@@ -708,7 +691,7 @@
             <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:12px;overflow:hidden">
               <div style="padding:10px 14px;border-bottom:0.5px solid var(--border);font-size:12px;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between">
                 <span>${filtradas.length} resultado(s) para "<strong style="color:var(--text-primary)">${q}</strong>"</span>
-                ${q.length >= 3 ? `<span style="font-size:11px;color:var(--blue)"><i class="fa-solid fa-globe" style="margin-right:4px"></i>Histórico completo</span>` : ""}
+                <span style="font-size:11px;color:var(--blue)"><i class="fa-solid fa-globe" style="margin-right:4px"></i>Histórico completo</span>
               </div>
               ${filtradas
                 .slice(0, 10)
@@ -741,7 +724,6 @@
         document.getElementById("busca-input").value = "";
         document.getElementById("busca-clear").style.display = "none";
         document.getElementById("busca-resultado").style.display = "none";
-        _todasTransacoesCache = null;
       }
 
       async function carregarRecorrentesVencendo() {

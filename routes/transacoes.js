@@ -80,6 +80,133 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
+// ── Buscar por texto ──
+router.get("/buscar", auth, async (req, res) => {
+  const { q } = req.query;
+  if (!q || q.trim().length < 2)
+    return res.status(400).json({ erro: "Termo de busca muito curto." });
+  try {
+    const termo = `%${q.trim()}%`;
+    const [rows] = await db.query(
+      `SELECT t.*,
+              c.nome  AS categoria_nome,
+              c.cor   AS categoria_cor,
+              c.icone AS categoria_icone,
+              ct.nome AS conta_nome
+       FROM Transacoes t
+       LEFT JOIN Categorias c  ON t.categoria_id = c.id
+       LEFT JOIN Contas     ct ON t.conta_id     = ct.id
+       WHERE t.usuario_id = ? AND t.deleted_at IS NULL
+         AND (t.descricao LIKE ? OR t.observacao LIKE ? OR c.nome LIKE ?)
+       ORDER BY t.data DESC, t.created_at DESC
+       LIMIT 50`,
+      [req.usuarioId, termo, termo, termo],
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("[Transacoes /buscar]", err.message);
+    res.status(500).json({ erro: "Erro ao buscar." });
+  }
+});
+
+// ── Listar lixeira ── (deve vir antes de /:id)
+router.get("/lixeira", auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT t.*,
+              c.nome  AS categoria_nome,
+              c.cor   AS categoria_cor,
+              c.icone AS categoria_icone,
+              ct.nome AS conta_nome
+       FROM Transacoes t
+       LEFT JOIN Categorias c  ON t.categoria_id = c.id
+       LEFT JOIN Contas     ct ON t.conta_id     = ct.id
+       WHERE t.usuario_id = ? AND t.deleted_at IS NOT NULL
+       ORDER BY t.deleted_at DESC
+       LIMIT 100`,
+      [req.usuarioId],
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao buscar lixeira." });
+  }
+});
+
+// ── Exportar CSV ── (deve vir antes de /:id)
+router.get("/exportar", auth, async (req, res) => {
+  const { mes, ano, tipo, categoria_id, conta_id } = req.query;
+  try {
+    let where = "WHERE t.usuario_id = ? AND t.deleted_at IS NULL";
+    const params = [req.usuarioId];
+    if (mes && ano) {
+      where += " AND MONTH(t.data)=? AND YEAR(t.data)=?";
+      params.push(mes, ano);
+    }
+    if (tipo) { where += " AND t.tipo=?"; params.push(tipo); }
+    if (categoria_id) { where += " AND t.categoria_id=?"; params.push(categoria_id); }
+    if (conta_id) { where += " AND t.conta_id=?"; params.push(conta_id); }
+
+    const [rows] = await db.query(
+      `SELECT t.data, t.tipo, t.descricao, t.valor, t.observacao,
+              c.nome AS categoria_nome, ct.nome AS conta_nome
+       FROM Transacoes t
+       LEFT JOIN Categorias c  ON t.categoria_id = c.id
+       LEFT JOIN Contas     ct ON t.conta_id = ct.id
+       ${where}
+       ORDER BY t.data DESC, t.created_at DESC`,
+      params,
+    );
+
+    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const tipoLabel = { receita: "Receita", despesa: "Despesa", cartao: "Cartão" };
+    const header = "Data,Tipo,Descrição,Valor,Categoria,Conta,Observação";
+    const linhas = rows.map((r) => {
+      const data = (r.data instanceof Date ? r.data : new Date(r.data))
+        .toISOString().split("T")[0];
+      return [
+        data,
+        tipoLabel[r.tipo] || r.tipo,
+        esc(r.descricao),
+        String(r.valor).replace(".", ","),
+        esc(r.categoria_nome || ""),
+        esc(r.conta_nome || ""),
+        esc(r.observacao || ""),
+      ].join(",");
+    });
+
+    const csv = "﻿" + header + "\n" + linhas.join("\n");
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="transacoes.csv"');
+    res.send(csv);
+  } catch (err) {
+    console.error("[Exportar CSV]", err.message);
+    res.status(500).json({ erro: "Erro ao exportar." });
+  }
+});
+
+// ── Buscar uma transação por ID ──
+router.get("/:id", auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT t.*,
+              c.nome  AS categoria_nome,
+              c.cor   AS categoria_cor,
+              c.icone AS categoria_icone,
+              ct.nome AS conta_nome
+       FROM Transacoes t
+       LEFT JOIN Categorias c  ON t.categoria_id = c.id
+       LEFT JOIN Contas     ct ON t.conta_id     = ct.id
+       WHERE t.id = ? AND t.usuario_id = ? AND t.deleted_at IS NULL`,
+      [req.params.id, req.usuarioId],
+    );
+    if (rows.length === 0)
+      return res.status(404).json({ erro: "Transação não encontrada." });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao buscar transação." });
+  }
+});
+
 // ── Criar transação ──
 router.post("/", auth, async (req, res) => {
   const { conta_id, categoria_id, tipo, descricao, valor, data, observacao } =
@@ -133,6 +260,22 @@ router.put("/:id", auth, async (req, res) => {
   }
 });
 
+// ── Esvaziar lixeira ── (deve vir antes de DELETE /:id)
+router.delete("/lixeira/esvaziar", auth, async (req, res) => {
+  try {
+    const [result] = await db.query(
+      "DELETE FROM Transacoes WHERE usuario_id=? AND deleted_at IS NOT NULL",
+      [req.usuarioId],
+    );
+    res.json({
+      mensagem: "Lixeira esvaziada!",
+      deletados: result.affectedRows,
+    });
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao esvaziar lixeira." });
+  }
+});
+
 // ── Soft delete — manda para lixeira ──
 router.delete("/:id", auth, async (req, res) => {
   try {
@@ -143,6 +286,32 @@ router.delete("/:id", auth, async (req, res) => {
     res.json({ mensagem: "Transação movida para a lixeira." });
   } catch (err) {
     res.status(500).json({ erro: "Erro ao deletar transação." });
+  }
+});
+
+// ── Restaurar da lixeira ──
+router.patch("/:id/restaurar", auth, async (req, res) => {
+  try {
+    await db.query(
+      "UPDATE Transacoes SET deleted_at = NULL WHERE id=? AND usuario_id=?",
+      [req.params.id, req.usuarioId],
+    );
+    res.json({ mensagem: "Transação restaurada!" });
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao restaurar transação." });
+  }
+});
+
+// ── Deletar permanentemente da lixeira ──
+router.delete("/:id/permanente", auth, async (req, res) => {
+  try {
+    await db.query(
+      "DELETE FROM Transacoes WHERE id=? AND usuario_id=? AND deleted_at IS NOT NULL",
+      [req.params.id, req.usuarioId],
+    );
+    res.json({ mensagem: "Transação deletada permanentemente." });
+  } catch (err) {
+    res.status(500).json({ erro: "Erro ao deletar permanentemente." });
   }
 });
 
@@ -178,127 +347,6 @@ router.post("/:id/duplicar", auth, async (req, res) => {
   } catch (err) {
     console.error("[Transacoes /duplicar]", err.message);
     res.status(500).json({ erro: "Erro ao duplicar transação." });
-  }
-});
-
-// ════════════════════════════════════════
-// LIXEIRA
-// ════════════════════════════════════════
-
-// Listar transações deletadas
-router.get("/lixeira", auth, async (req, res) => {
-  try {
-    const [rows] = await db.query(
-      `SELECT t.*,
-              c.nome  AS categoria_nome,
-              c.cor   AS categoria_cor,
-              c.icone AS categoria_icone,
-              ct.nome AS conta_nome
-       FROM Transacoes t
-       LEFT JOIN Categorias c  ON t.categoria_id = c.id
-       LEFT JOIN Contas     ct ON t.conta_id     = ct.id
-       WHERE t.usuario_id = ? AND t.deleted_at IS NOT NULL
-       ORDER BY t.deleted_at DESC
-       LIMIT 100`,
-      [req.usuarioId],
-    );
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ erro: "Erro ao buscar lixeira." });
-  }
-});
-
-// Restaurar transação da lixeira
-router.patch("/:id/restaurar", auth, async (req, res) => {
-  try {
-    await db.query(
-      "UPDATE Transacoes SET deleted_at = NULL WHERE id=? AND usuario_id=?",
-      [req.params.id, req.usuarioId],
-    );
-    res.json({ mensagem: "Transação restaurada!" });
-  } catch (err) {
-    res.status(500).json({ erro: "Erro ao restaurar transação." });
-  }
-});
-
-// Deletar permanentemente da lixeira
-router.delete("/:id/permanente", auth, async (req, res) => {
-  try {
-    await db.query(
-      "DELETE FROM Transacoes WHERE id=? AND usuario_id=? AND deleted_at IS NOT NULL",
-      [req.params.id, req.usuarioId],
-    );
-    res.json({ mensagem: "Transação deletada permanentemente." });
-  } catch (err) {
-    res.status(500).json({ erro: "Erro ao deletar permanentemente." });
-  }
-});
-
-// Esvaziar lixeira (deleta tudo permanentemente)
-router.delete("/lixeira/esvaziar", auth, async (req, res) => {
-  try {
-    const [result] = await db.query(
-      "DELETE FROM Transacoes WHERE usuario_id=? AND deleted_at IS NOT NULL",
-      [req.usuarioId],
-    );
-    res.json({
-      mensagem: "Lixeira esvaziada!",
-      deletados: result.affectedRows,
-    });
-  } catch (err) {
-    res.status(500).json({ erro: "Erro ao esvaziar lixeira." });
-  }
-});
-
-// ── Exportar CSV ──
-router.get("/exportar", auth, async (req, res) => {
-  const { mes, ano, tipo, categoria_id, conta_id } = req.query;
-  try {
-    let where = "WHERE t.usuario_id = ? AND t.deleted_at IS NULL";
-    const params = [req.usuarioId];
-    if (mes && ano) {
-      where += " AND MONTH(t.data)=? AND YEAR(t.data)=?";
-      params.push(mes, ano);
-    }
-    if (tipo) { where += " AND t.tipo=?"; params.push(tipo); }
-    if (categoria_id) { where += " AND t.categoria_id=?"; params.push(categoria_id); }
-    if (conta_id) { where += " AND t.conta_id=?"; params.push(conta_id); }
-
-    const [rows] = await db.query(
-      `SELECT t.data, t.tipo, t.descricao, t.valor, t.observacao,
-              c.nome AS categoria_nome, ct.nome AS conta_nome
-       FROM Transacoes t
-       LEFT JOIN Categorias c  ON t.categoria_id = c.id
-       LEFT JOIN Contas     ct ON t.conta_id = ct.id
-       ${where}
-       ORDER BY t.data DESC, t.created_at DESC`,
-      params,
-    );
-
-    const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const tipoLabel = { receita: "Receita", despesa: "Despesa", cartao: "Cartão" };
-    const header = "Data,Tipo,Descrição,Valor,Categoria,Conta,Observação";
-    const linhas = rows.map((r) => {
-      const data = (r.data instanceof Date ? r.data : new Date(r.data))
-        .toISOString().split("T")[0];
-      return [
-        data,
-        tipoLabel[r.tipo] || r.tipo,
-        esc(r.descricao),
-        String(r.valor).replace(".", ","),
-        esc(r.categoria_nome || ""),
-        esc(r.conta_nome || ""),
-        esc(r.observacao || ""),
-      ].join(",");
-    });
-
-    const csv = "﻿" + header + "\n" + linhas.join("\n");
-    res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="transacoes.csv"');
-    res.send(csv);
-  } catch (err) {
-    console.error("[Exportar CSV]", err.message);
-    res.status(500).json({ erro: "Erro ao exportar." });
   }
 });
 

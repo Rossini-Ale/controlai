@@ -2018,9 +2018,8 @@
       }
 
       async function editarLancamento(id) {
-        const todos = (await fetchAPI("/api/transacoes")) || [];
-        const item = todos.find((x) => x.id === id);
-        if (!item) return;
+        const item = await fetchAPI(`/api/transacoes/${id}`);
+        if (!item || item.erro) return;
         editandoLancId = id;
         document.getElementById("modal-titulo").textContent =
           "Editar lançamento";

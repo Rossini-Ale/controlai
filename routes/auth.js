@@ -3,9 +3,34 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const rateLimit = require("express-rate-limit");
 const { Resend } = require("resend");
 const db = require("../config/db");
 const auth = require("../middleware/auth");
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { erro: "Muitas tentativas de login. Tente novamente em 15 minutos." },
+});
+
+const cadastroLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { erro: "Muitas contas criadas neste IP. Tente novamente em 1 hora." },
+});
+
+const esqueciLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { erro: "Muitas solicitações de recuperação. Tente novamente em 15 minutos." },
+});
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
@@ -66,7 +91,7 @@ const CATEGORIAS_PADRAO = [
 ];
 
 // Cadastro
-router.post("/cadastro", async (req, res) => {
+router.post("/cadastro", cadastroLimiter, async (req, res) => {
   const { nome, email, username, senha } = req.body;
   try {
     const hash = await bcrypt.hash(senha, 10);
@@ -138,7 +163,7 @@ router.post("/cadastro", async (req, res) => {
 });
 
 // Login
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
   const { username, senha } = req.body;
   try {
     const [rows] = await db.query("SELECT * FROM Usuarios WHERE username = ?", [
@@ -240,7 +265,7 @@ router.get("/onboarding", auth, async (req, res) => {
 });
 
 // Solicitar recuperação de senha
-router.post("/esqueci-senha", async (req, res) => {
+router.post("/esqueci-senha", esqueciLimiter, async (req, res) => {
   const { email } = req.body;
   try {
     const [rows] = await db.query(

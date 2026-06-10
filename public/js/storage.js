@@ -186,6 +186,11 @@ async function processarFilaOffline() {
 
 window.addEventListener("online", () => setTimeout(processarFilaOffline, 1000));
 
-document.addEventListener("DOMContentLoaded", () =>
-  setTimeout(verificarRascunho, 1500),
-);
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(verificarRascunho, 1500);
+  if (navigator.onLine) {
+    let fila;
+    try { fila = JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]"); } catch { fila = []; }
+    if (fila.length > 0) setTimeout(processarFilaOffline, 2000);
+  }
+});
