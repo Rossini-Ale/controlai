@@ -1512,11 +1512,20 @@
         Object.entries(grupos).forEach(([dia, txs]) => {
           const lbl = labelData(dia);
           const ehHoje = lbl === "Hoje";
+          const subtotalDia = txs.filter(t => !t.is_transferencia).reduce((acc, t) => {
+            if (t.tipo === "receita") return acc + parseFloat(t.valor);
+            return acc - parseFloat(t.valor);
+          }, 0);
+          const subCor = subtotalDia >= 0 ? "var(--green)" : "var(--red)";
+          const subSinal = subtotalDia >= 0 ? "+" : "";
           html += `<div class="timeline-header">
             <span class="timeline-label" style="${ehHoje ? "color:var(--green)" : ""}">
               ${ehHoje ? `<span style="display:inline-block;width:7px;height:7px;background:var(--green);border-radius:50%;margin-right:6px;vertical-align:middle"></span>` : ""}${lbl}
             </span>
-            <span class="timeline-date">${new Date(dia + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:11px;font-weight:600;color:${subCor}">${subSinal}${formatarMoedaRaw(Math.abs(subtotalDia))}</span>
+              <span class="timeline-date">${new Date(dia + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}</span>
+            </div>
           </div>`;
           txs.forEach((t) => {
             html += `<div id="sw-wrap-${t.id}" class="swipe-container">
@@ -2320,6 +2329,7 @@
         if (abaAtiva === "lancamentos") carregarTransacoes();
       });
       initPullToRefresh(() => carregarTransacoes());
+      initSwipeMes(navegarMes);
 
       // ══════════════════════════════════════
       // RECORRENTES

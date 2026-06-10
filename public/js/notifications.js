@@ -73,13 +73,55 @@ function notificarVencimentos(lista) {
 }
 
 async function verificarENotificar() {
-  if (!(await pedirPermissaoNotificacao())) return;
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
   try {
     const data = await fetchAPI("/api/recorrentes/vencendo?dias=0");
     notificarVencimentos(Array.isArray(data) ? data : []);
-  } catch {
-    /* silencioso */
+  } catch { /* silencioso */ }
+}
+
+// ── CTA: convida o usuário a ativar notificações ──
+function mostrarCtaNotificacao() {
+  if (!("Notification" in window)) return;
+  if (Notification.permission !== "default") return;
+  if (localStorage.getItem("controlai_notif_dispensado")) return;
+
+  const CTA_ID = "notif-cta-banner";
+  if (document.getElementById(CTA_ID)) return;
+
+  const banner = document.createElement("div");
+  banner.id = CTA_ID;
+  banner.style.cssText = `
+    display:flex;align-items:center;gap:10px;
+    background:rgba(59,130,246,0.08);border:0.5px solid rgba(59,130,246,0.3);
+    border-radius:10px;padding:10px 14px;margin-bottom:16px;
+    animation:fadeInUp 0.3s ease both;
+  `;
+  banner.innerHTML = `
+    <i class="fa-solid fa-bell" style="color:#3b82f6;font-size:14px;flex-shrink:0"></i>
+    <span style="font-size:13px;color:var(--text-secondary);flex:1">Ative notificações para ser alertado sobre vencimentos</span>
+    <button onclick="ativarNotificacoes()" style="background:#3b82f6;border:none;color:#fff;border-radius:7px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Ativar</button>
+    <button onclick="dispensarNotifCta()" style="background:transparent;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;padding:0 2px;line-height:1">×</button>
+  `;
+
+  const alvo = document.getElementById("checklist-wrap") || document.getElementById("cards-resumo");
+  alvo?.parentNode.insertBefore(banner, alvo);
+}
+
+async function ativarNotificacoes() {
+  const ok = await pedirPermissaoNotificacao();
+  document.getElementById("notif-cta-banner")?.remove();
+  if (ok) {
+    toast("Notificações ativadas!");
+    verificarENotificar();
+  } else {
+    toast("Permissão negada. Ative nas configurações do navegador.", "aviso");
   }
+}
+
+function dispensarNotifCta() {
+  document.getElementById("notif-cta-banner")?.remove();
+  localStorage.setItem("controlai_notif_dispensado", "1");
 }
 
 // ── Visibilidade: atualiza ao voltar para a aba ──
@@ -93,4 +135,5 @@ document.addEventListener("visibilitychange", () => {
 document.addEventListener("DOMContentLoaded", () => {
   setTimeout(atualizarFavicon, 2000);
   setTimeout(verificarENotificar, 3000);
+  setTimeout(mostrarCtaNotificacao, 4000);
 });

@@ -1460,6 +1460,26 @@ function initPullToRefresh(onRefresh) {
   }, { passive: true });
 }
 
+// ── Swipe horizontal para trocar de mês (mobile) ──
+function initSwipeMes(callback) {
+  if (window.innerWidth > 768) return;
+  const el = document.querySelector(".main");
+  if (!el) return;
+  let sx = 0, sy = 0;
+  el.addEventListener("touchstart", (e) => {
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+  }, { passive: true });
+  el.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - sx;
+    const dy = Math.abs(e.changedTouches[0].clientY - sy);
+    if (Math.abs(dx) < 70 || dy > 60) return;
+    if (document.querySelector(".modal-overlay.active, .modal-rapido.active")) return;
+    haptic(8);
+    callback(dx < 0 ? 1 : -1);
+  }, { passive: true });
+}
+
 // ── PWA: service worker ──
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {

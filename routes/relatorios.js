@@ -243,4 +243,35 @@ router.get("/anual", auth, async (req, res) => {
   }
 });
 
+// ── Saldo acumulado dia a dia no mês ──
+router.get("/saldo-diario", auth, async (req, res) => {
+  const mes = parseInt(req.query.mes);
+  const ano = parseInt(req.query.ano);
+  if (!mes || !ano) return res.status(400).json({ erro: "mes e ano são obrigatórios." });
+  try {
+    const [rows] = await db.query(
+      `SELECT DAY(data) AS dia,
+         COALESCE(SUM(CASE WHEN tipo='receita' THEN valor ELSE 0 END), 0) AS receitas,
+         COALESCE(SUM(CASE WHEN tipo IN ('despesa','cartao') THEN valor ELSE 0 END), 0) AS despesas
+       FROM Transacoes
+       WHERE usuario_id=? AND MONTH(data)=? AND YEAR(data)=? AND deleted_at IS NULL
+       GROUP BY DAY(data)
+       ORDER BY dia`,
+      [req.usuarioId, mes, ano],
+    );
+    const diasNoMes = new Date(ano, mes, 0).getDate();
+    let acumulado = 0;
+    const resultado = [];
+    for (let d = 1; d <= diasNoMes; d++) {
+      const row = rows.find((r) => r.dia === d);
+      acumulado += parseFloat(row?.receitas || 0) - parseFloat(row?.despesas || 0);
+      resultado.push({ dia: d, saldo: Math.round(acumulado * 100) / 100 });
+    }
+    res.json(resultado);
+  } catch (err) {
+    console.error("[SaldoDiario]", err.message);
+    res.status(500).json({ erro: "Erro ao calcular saldo diário." });
+  }
+});
+
 module.exports = router;

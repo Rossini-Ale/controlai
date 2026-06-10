@@ -49,6 +49,20 @@ const MIGRATIONS = [
     id: "009_index_transacoes_usuario_deleted_data",
     sql: "ALTER TABLE Transacoes ADD INDEX idx_usuario_deleted_data (usuario_id, deleted_at, data)",
   },
+  {
+    id: "010_metas",
+    sql: `CREATE TABLE IF NOT EXISTS Metas (
+      id         INT AUTO_INCREMENT PRIMARY KEY,
+      usuario_id INT NOT NULL,
+      nome       VARCHAR(255) NOT NULL,
+      valor_alvo DECIMAL(10,2) NOT NULL DEFAULT 0,
+      valor_atual DECIMAL(10,2) NOT NULL DEFAULT 0,
+      prazo      DATE NULL,
+      status     VARCHAR(20) NOT NULL DEFAULT 'ativa',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (usuario_id) REFERENCES Usuarios(id) ON DELETE CASCADE
+    )`,
+  },
 ];
 
 async function rodarMigrations() {

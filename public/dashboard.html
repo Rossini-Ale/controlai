@@ -283,6 +283,7 @@
 
       <div id="checklist-wrap"></div>
       <div id="alertas-orcamento"></div>
+      <div id="metas-wrap"></div>
       <div class="cards-grid" id="cards-resumo"></div>
 
       <!-- Insight variação mensal -->
@@ -302,6 +303,9 @@
 
       <!-- Gráfico de barras — evolução 6 meses -->
       <div id="grafico-6meses" style="margin-bottom:20px"></div>
+
+      <!-- Gráfico de linha — saldo dia a dia -->
+      <div id="saldo-diario-wrap"></div>
 
       <div id="orc-wrap"></div>
       <div id="rec-vencendo-wrap"></div>
@@ -385,6 +389,7 @@
         document.getElementById("saldo-previsto-wrap").innerHTML = skeletonCards(1);
         document.getElementById("rec-vencendo-wrap").innerHTML =
           `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">${skeletonLista(2)}</div>`;
+        document.getElementById("saldo-diario-wrap").innerHTML = "";
         await Promise.all([
           carregarResumo(),
           carregarTransacoes(),
@@ -392,6 +397,8 @@
           carregarRecorrentesVencendo(),
           carregarSaldoTotal(),
           carregarGrafico6Meses(),
+          carregarSaldoDiario(),
+          carregarMetas(),
         ]);
         _renderInsight(_evolucaoData, _resumoData);
       }
@@ -408,15 +415,40 @@
       }
 
       async function carregarResumo() {
-        const data = await fetchAPI(
-          `/api/relatorios/resumo?mes=${mes}&ano=${ano}`,
-        );
+        const mesAnt = mes === 1 ? 12 : mes - 1;
+        const anoAnt = mes === 1 ? ano - 1 : ano;
+        const [data, ant] = await Promise.all([
+          fetchAPI(`/api/relatorios/resumo?mes=${mes}&ano=${ano}`),
+          fetchAPI(`/api/relatorios/resumo?mes=${mesAnt}&ano=${anoAnt}`),
+        ]);
         _resumoData = data;
         if (!data) return;
+
+        function cmp(atual, prev, inverso = false) {
+          const a = parseFloat(atual) || 0, p = parseFloat(prev) || 0;
+          if (!p) return "";
+          const d = ((a - p) / Math.abs(p)) * 100;
+          const positivo = inverso ? d < 0 : d > 0;
+          const cor = positivo ? "var(--green)" : "var(--red)";
+          return `<div style="font-size:10px;color:${cor};margin-top:3px">${d > 0 ? "+" : ""}${d.toFixed(0)}% vs mês ant.</div>`;
+        }
+
         document.getElementById("cards-resumo").innerHTML = `
-          <div class="card"><div class="card-label">Receitas</div><div class="card-value green">${formatarMoeda(data.total_receitas)}</div></div>
-          <div class="card"><div class="card-label">Despesas</div><div class="card-value red">${formatarMoeda(data.total_despesas)}</div></div>
-          <div class="card"><div class="card-label">Saldo do mês</div><div class="card-value ${parseFloat(data.saldo) >= 0 ? "green" : "red"}">${formatarMoeda(data.saldo)}</div></div>
+          <div class="card">
+            <div class="card-label">Receitas</div>
+            <div class="card-value green">${formatarMoeda(data.total_receitas)}</div>
+            ${ant ? cmp(data.total_receitas, ant.total_receitas) : ""}
+          </div>
+          <div class="card">
+            <div class="card-label">Despesas</div>
+            <div class="card-value red">${formatarMoeda(data.total_despesas)}</div>
+            ${ant ? cmp(data.total_despesas, ant.total_despesas, true) : ""}
+          </div>
+          <div class="card">
+            <div class="card-label">Saldo do mês</div>
+            <div class="card-value ${parseFloat(data.saldo) >= 0 ? "green" : "red"}">${formatarMoeda(data.saldo)}</div>
+            ${ant ? cmp(data.saldo, ant.saldo) : ""}
+          </div>
           <div class="card" id="card-saldo-total">
             <div class="card-label">Saldo total</div>
             <div class="card-value" id="saldo-total-valor" style="color:var(--text-muted)">—</div>
@@ -947,6 +979,175 @@
         localStorage.setItem("controlai_onboarding_checklist", "1");
       }
 
+      // ── Saldo acumulado dia a dia ──
+      let chartSaldoDiario = null;
+      async function carregarSaldoDiario() {
+        const wrap = document.getElementById("saldo-diario-wrap");
+        const data = await fetchAPI(`/api/relatorios/saldo-diario?mes=${mes}&ano=${ano}`);
+        if (!Array.isArray(data) || data.every((d) => d.saldo === 0)) { wrap.innerHTML = ""; return; }
+
+        const hoje = new Date();
+        const mesAtual = mes === hoje.getMonth() + 1 && ano === hoje.getFullYear();
+        const corte = mesAtual ? hoje.getDate() : data.length;
+        const dados = data.slice(0, corte);
+        const minVal = Math.min(...dados.map((d) => d.saldo));
+        const cor = minVal >= 0 ? "#10b981" : dados[dados.length - 1].saldo >= 0 ? "#10b981" : "#ef4444";
+
+        wrap.innerHTML = `
+          <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">
+            <h3 style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:12px">
+              <i class="fa-solid fa-chart-line" style="color:#3b82f6;margin-right:6px"></i>Saldo dia a dia — ${nomeMes(mes)}
+            </h3>
+            <canvas id="chart-saldo-diario" height="110"></canvas>
+          </div>`;
+
+        const mutedColor = getComputedStyle(document.documentElement).getPropertyValue("--text-muted").trim() || "#6b7280";
+        if (chartSaldoDiario) chartSaldoDiario.destroy();
+        chartSaldoDiario = new Chart(document.getElementById("chart-saldo-diario"), {
+          type: "line",
+          data: {
+            labels: dados.map((d) => d.dia),
+            datasets: [{
+              data: dados.map((d) => d.saldo),
+              borderColor: cor,
+              backgroundColor: cor + "18",
+              fill: true, tension: 0.35,
+              pointRadius: dados.length > 20 ? 0 : 3,
+              pointHoverRadius: 5,
+              borderWidth: 2,
+            }],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              tooltip: { callbacks: { label: (ctx) => ` ${formatarMoedaRaw(ctx.parsed.y)}` } },
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: mutedColor, font: { size: 10 } } },
+              y: {
+                grid: { color: "rgba(107,114,128,0.1)" },
+                ticks: { color: mutedColor, font: { size: 10 }, callback: (v) => "R$" + (Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + "k" : v) },
+              },
+            },
+          },
+        });
+      }
+
+      // ── Metas de economia ──
+      let _metasAberta = null;
+
+      async function carregarMetas() {
+        const wrap = document.getElementById("metas-wrap");
+        const data = await fetchAPI("/api/metas");
+        if (!Array.isArray(data) || !data.filter((m) => m.status === "ativa").length) {
+          wrap.innerHTML = `
+            <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:8px">
+                <i class="fa-solid fa-bullseye" style="color:#f59e0b"></i>
+                <span style="font-size:13px;color:var(--text-muted)">Sem metas cadastradas</span>
+              </div>
+              <button onclick="abrirModalMeta()" style="background:transparent;border:0.5px solid var(--border);color:var(--text-secondary);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer">+ Nova meta</button>
+            </div>`;
+          return;
+        }
+        const ativas = data.filter((m) => m.status === "ativa");
+        wrap.innerHTML = `
+          <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <i class="fa-solid fa-bullseye" style="color:#f59e0b"></i>
+                <span style="font-size:14px;font-weight:600">Metas de economia</span>
+              </div>
+              <button onclick="abrirModalMeta()" style="background:transparent;border:0.5px solid var(--border);color:var(--text-secondary);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer">+ Nova</button>
+            </div>
+            ${ativas.map((m) => {
+              const pct = m.valor_alvo > 0 ? Math.min(100, (m.valor_atual / m.valor_alvo) * 100) : 0;
+              const cor = pct >= 100 ? "var(--green)" : pct >= 60 ? "#f59e0b" : "#3b82f6";
+              const dias = m.prazo ? Math.ceil((new Date(m.prazo) - new Date()) / 86400000) : null;
+              const concluida = pct >= 100;
+              return `
+                <div style="margin-bottom:12px;cursor:pointer" onclick="abrirModalMeta(${m.id})">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+                    <span style="font-size:13px;font-weight:600">${m.nome}${concluida ? ' <i class="fa-solid fa-check-circle" style="color:var(--green);font-size:11px"></i>' : ""}</span>
+                    <span style="font-size:12px;color:var(--text-muted)">${formatarMoedaRaw(m.valor_atual)} / ${formatarMoedaRaw(m.valor_alvo)}</span>
+                  </div>
+                  <div style="background:var(--bg-tertiary);border-radius:99px;height:7px;overflow:hidden;margin-bottom:4px">
+                    <div style="height:100%;width:${pct}%;background:${cor};border-radius:99px;transition:width 0.6s ease"></div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted)">
+                    <span>${pct.toFixed(0)}%</span>
+                    ${dias !== null ? `<span>${dias > 0 ? dias + "d" : "Vencida"}</span>` : ""}
+                  </div>
+                </div>`;
+            }).join("")}
+          </div>`;
+      }
+
+      function abrirModalMeta(id = null) {
+        _metasAberta = id;
+        const modal = document.getElementById("modal-meta");
+        const titulo = document.getElementById("modal-meta-titulo");
+        titulo.textContent = id ? "Editar meta" : "Nova meta";
+        document.getElementById("meta-nome").value = "";
+        document.getElementById("meta-alvo").value = "";
+        document.getElementById("meta-atual").value = "";
+        document.getElementById("meta-prazo").value = "";
+        document.getElementById("modal-meta-deletar").style.display = "none";
+
+        if (id) {
+          fetchAPI("/api/metas").then((data) => {
+            if (!data) return;
+            const m = data.find((x) => x.id === id);
+            if (!m) return;
+            document.getElementById("meta-nome").value = m.nome;
+            document.getElementById("meta-alvo").value = parseFloat(m.valor_alvo).toFixed(2).replace(".", ",");
+            document.getElementById("meta-atual").value = parseFloat(m.valor_atual).toFixed(2).replace(".", ",");
+            document.getElementById("meta-prazo").value = m.prazo ? m.prazo.split("T")[0] : "";
+            document.getElementById("modal-meta-deletar").style.display = "inline-flex";
+          });
+        }
+        modal.style.display = "flex";
+      }
+
+      async function salvarMeta() {
+        const nome = document.getElementById("meta-nome").value.trim();
+        const valorAlvo = lerValorMoeda(document.getElementById("meta-alvo"));
+        const valorAtual = lerValorMoeda(document.getElementById("meta-atual"));
+        const prazo = document.getElementById("meta-prazo").value || null;
+        if (!nome || !valorAlvo) { toast("Preencha nome e valor alvo.", "erro"); return; }
+
+        if (_metasAberta) {
+          await fetchAPI(`/api/metas/${_metasAberta}`, {
+            method: "PUT",
+            body: JSON.stringify({ nome, valor_alvo: valorAlvo, valor_atual: valorAtual, prazo, status: "ativa" }),
+          });
+          toast("Meta atualizada!");
+        } else {
+          await fetchAPI("/api/metas", {
+            method: "POST",
+            body: JSON.stringify({ nome, valor_alvo: valorAlvo, valor_atual: valorAtual, prazo }),
+          });
+          toast("Meta criada!");
+        }
+        fecharModalMeta();
+        carregarMetas();
+      }
+
+      async function deletarMeta() {
+        if (!_metasAberta) return;
+        const ok = await confirmar("Deletar esta meta?");
+        if (!ok) return;
+        await fetchAPI(`/api/metas/${_metasAberta}`, { method: "DELETE" });
+        toast("Meta deletada.", "info");
+        fecharModalMeta();
+        carregarMetas();
+      }
+
+      function fecharModalMeta() {
+        document.getElementById("modal-meta").style.display = "none";
+      }
+
       // ── Gráfico de barras — evolução 6 meses ──
       async function carregarGrafico6Meses() {
         const data = await fetchAPI("/api/relatorios/evolucao");
@@ -1033,6 +1234,7 @@
       carregarDados();
       carregarChecklist();
       initPullToRefresh(carregarDados);
+      initSwipeMes(mudarMes);
 
       // Saudação dinâmica
       (function () {
@@ -1062,6 +1264,40 @@
           <button onclick="fecharWizard()" style="background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div id="wizard-body" style="padding:24px"></div>
+      </div>
+    </div>
+
+    <!-- Modal metas de economia -->
+    <div id="modal-meta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)fecharModalMeta()">
+      <div style="background:var(--bg-secondary);border-radius:16px;width:100%;max-width:400px;border:0.5px solid var(--border)" onclick="event.stopPropagation()">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:0.5px solid var(--border)">
+          <span id="modal-meta-titulo" style="font-size:15px;font-weight:700"></span>
+          <button onclick="fecharModalMeta()" style="background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Nome da meta</label>
+            <input id="meta-nome" type="text" placeholder="ex: Reserva de emergência" style="width:100%;background:var(--bg-tertiary);border:0.5px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text-primary);font-size:14px;box-sizing:border-box">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Valor alvo (R$)</label>
+              <input id="meta-alvo" type="text" inputmode="decimal" placeholder="0,00" style="width:100%;background:var(--bg-tertiary);border:0.5px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text-primary);font-size:14px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Valor atual (R$)</label>
+              <input id="meta-atual" type="text" inputmode="decimal" placeholder="0,00" style="width:100%;background:var(--bg-tertiary);border:0.5px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text-primary);font-size:14px;box-sizing:border-box">
+            </div>
+          </div>
+          <div>
+            <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Prazo (opcional)</label>
+            <input id="meta-prazo" type="date" style="width:100%;background:var(--bg-tertiary);border:0.5px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text-primary);font-size:14px;box-sizing:border-box">
+          </div>
+        </div>
+        <div style="padding:0 20px 20px;display:flex;gap:8px">
+          <button id="modal-meta-deletar" onclick="deletarMeta()" style="display:none;align-items:center;gap:6px;background:rgba(239,68,68,0.1);border:0.5px solid rgba(239,68,68,0.3);color:#ef4444;border-radius:9px;padding:10px 14px;font-size:13px;cursor:pointer"><i class="fa-solid fa-trash"></i></button>
+          <button onclick="salvarMeta()" style="flex:1;background:var(--green);border:none;color:#fff;border-radius:9px;padding:11px;font-size:14px;font-weight:600;cursor:pointer">Salvar</button>
+        </div>
       </div>
     </div>
 
