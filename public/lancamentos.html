@@ -526,7 +526,10 @@
       <div class="aba-conteudo active" id="aba-lancamentos">
         <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
           <!-- Linha 1: Mês + Ano + botão filtros -->
-          <div style="display:grid;grid-template-columns:2fr 1fr auto;gap:8px;align-items:center">
+          <div style="display:grid;grid-template-columns:auto 1fr auto auto auto;gap:8px;align-items:center">
+            <button onclick="navegarMes(-1)" class="btn-edit" style="padding:9px 11px" title="Mês anterior">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
             <select id="filtro-mes" onchange="carregarTransacoes()" class="filtro-select">
               <option value="1">Janeiro</option>
               <option value="2">Fevereiro</option>
@@ -541,7 +544,10 @@
               <option value="11">Novembro</option>
               <option value="12">Dezembro</option>
             </select>
-            <select id="filtro-ano" onchange="carregarTransacoes()" class="filtro-select"></select>
+            <select id="filtro-ano" onchange="carregarTransacoes()" class="filtro-select" style="width:auto;min-width:80px"></select>
+            <button onclick="navegarMes(1)" class="btn-edit" style="padding:9px 11px" title="Próximo mês">
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
             <button id="btn-filtros-extra" onclick="toggleFiltrosExtra()" class="btn-edit" style="padding:9px 12px;position:relative" title="Filtros">
               <i class="fa-solid fa-sliders"></i>
               <span id="filtros-badge" style="display:none;position:absolute;top:4px;right:4px;width:7px;height:7px;background:var(--green);border-radius:50%"></span>
@@ -1215,6 +1221,7 @@
       let abaAtiva = "lancamentos";
       let editandoLancId = null,
         editandoRecId = null;
+      let _modalDirty = false;
       let categorias = [],
         contas = [],
         todasRec = [],
@@ -1244,6 +1251,23 @@
       document.getElementById("r-inicio").value = new Date()
         .toISOString()
         .split("T")[0];
+
+      // ── Navegação por setas entre meses ──
+      function navegarMes(delta) {
+        const selMes = document.getElementById("filtro-mes");
+        const selAno = document.getElementById("filtro-ano");
+        let m = parseInt(selMes.value) + delta;
+        let a = parseInt(selAno.value);
+        if (m > 12) { m = 1; a++; }
+        if (m < 1)  { m = 12; a--; }
+        selMes.value = m;
+        // Garante que o ano esteja disponível no select
+        if (!Array.from(selAno.options).some(o => parseInt(o.value) === a)) {
+          selAno.insertAdjacentHTML("beforeend", `<option value="${a}">${a}</option>`);
+        }
+        selAno.value = a;
+        carregarTransacoes();
+      }
 
       // ── Persistência de filtros na URL ──
       function lerFiltrosDaURL() {
@@ -1686,20 +1710,13 @@
         }
 
         let url = `/api/transacoes?mes=${m}&ano=${a}&page=${paginaAtual}&limit=${POR_PAGINA}`;
-        if (tipo === "receita" || tipo === "despesa") url += `&tipo=${tipo}`;
+        if (tipo) url += `&tipo=${tipo}`;
         if (catId) url += `&categoria_id=${catId}`;
         const res = await fetchAPI(url);
         if (!res) return;
         let data = Array.isArray(res) ? res : res.data || [];
         const paginacao = res.paginacao || null;
         window._ultimaPaginacao = paginacao;
-
-        if (tipo === "transferencia")
-          data = data.filter((t) => t.is_transferencia);
-        else if (tipo === "receita" || tipo === "despesa")
-          data = data.filter((t) => !t.is_transferencia);
-        if (catId && Array.isArray(res))
-          data = data.filter((t) => String(t.categoria_id) === String(catId));
 
         if (isMobile()) {
           renderMobileComSwipe(data, append);
@@ -1935,6 +1952,7 @@
 
       function abrirModalLancamento() {
         editandoLancId = null;
+        _modalDirty = false;
         document.getElementById("modal-titulo").textContent = "Novo lançamento";
         const inputValor = document.getElementById("f-valor");
         inputValor.value = "";
@@ -1982,11 +2000,18 @@
         // Categoria inteligente — ouve a descrição
         const inputDesc = document.getElementById("f-descricao");
         inputDesc.oninput = (e) => {
+          _modalDirty = true;
           if (e.target.value.length >= 3)
             sugerirCategoria(e.target.value, "f-categoria");
         };
+        document.getElementById("f-valor").addEventListener("input", () => { _modalDirty = true; }, { once: true });
       }
-      function fecharModalLancamento() {
+      async function fecharModalLancamento() {
+        if (_modalDirty && !editandoLancId) {
+          const ok = await confirmar("Descartar lançamento não salvo?");
+          if (!ok) return;
+        }
+        _modalDirty = false;
         document.getElementById("modal-lancamento").classList.remove("active");
         document.getElementById("aviso-duplicado")?.remove();
         limparRascunho();
@@ -2082,6 +2107,7 @@
       }
 
       async function _executarSalvarLancamento(body, fecharApos) {
+        _modalDirty = false;
         const btn = document.getElementById(
           fecharApos ? "btn-salvar" : "btn-salvar-continuar",
         );

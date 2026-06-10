@@ -398,6 +398,22 @@ async function enviarResumosSemanal() {
 }
 
 // ─────────────────────────────────────────
+// LIXEIRA — purga registros com > 30 dias
+// ─────────────────────────────────────────
+async function purgarLixeira() {
+  try {
+    const [result] = await db.query(
+      "DELETE FROM Transacoes WHERE deleted_at IS NOT NULL AND deleted_at < DATE_SUB(NOW(), INTERVAL 30 DAY)",
+    );
+    if (result.affectedRows > 0) {
+      console.log(`[Lixeira] 🗑️ ${result.affectedRows} registro(s) purgado(s).`);
+    }
+  } catch (err) {
+    console.error("[Lixeira] Erro ao purgar:", err.message);
+  }
+}
+
+// ─────────────────────────────────────────
 // RUNNER PRINCIPAL
 // ─────────────────────────────────────────
 async function rodarTudo() {
@@ -406,6 +422,7 @@ async function rodarTudo() {
   await verificarOrcamentos();
   await verificarFaturas();
   await enviarResumosSemanal();
+  await purgarLixeira();
   console.log(`[Cron] Concluído.`);
 }
 
@@ -415,6 +432,7 @@ module.exports = {
   verificarOrcamentos,
   verificarFaturas,
   enviarResumosSemanal,
+  purgarLixeira,
   calcularProximaData,
   calcularPrimeiraData,
   toDateStr,

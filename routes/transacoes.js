@@ -28,8 +28,10 @@ router.get("/", auth, async (req, res) => {
       where += " AND MONTH(t.data) = ? AND YEAR(t.data) = ?";
       params.push(mes, ano);
     }
-    if (tipo) {
-      where += " AND t.tipo = ?";
+    if (tipo === "transferencia") {
+      where += " AND IFNULL(t.is_transferencia, 0) = 1";
+    } else if (tipo) {
+      where += " AND t.tipo = ? AND IFNULL(t.is_transferencia, 0) = 0";
       params.push(tipo);
     }
     if (categoria_id) {

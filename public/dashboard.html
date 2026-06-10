@@ -371,7 +371,7 @@
         await Promise.all([
           carregarResumo(),
           carregarTransacoes(),
-          carregarOrcamento(),
+          carregarOrcamento(),      // já chama _renderAlertasOrcamento internamente
           carregarRecorrentesVencendo(),
           carregarSaldoTotal(),
         ]);
@@ -508,11 +508,7 @@
           </div>`).join("");
       }
 
-      async function carregarAlertasOrcamento() {
-        const d = new Date();
-        const data = await fetchAPI(
-          `/api/orcamentos/resumo?mes=${d.getMonth() + 1}&ano=${d.getFullYear()}`,
-        );
+      function _renderAlertasOrcamento(data) {
         if (!data) return;
         const alertas = [];
         if (data.geral) {
@@ -545,53 +541,39 @@
 
       async function carregarSaldoPrevisto() {
         const wrap = document.getElementById("saldo-previsto-wrap");
-        const recorrentes = await fetchAPI("/api/recorrentes");
-        const lista = Array.isArray(recorrentes)
-          ? recorrentes.filter((r) => r.ativa)
-          : [];
-
         const hoje = new Date();
-        const diasNoMes = new Date(
-          hoje.getFullYear(),
-          hoje.getMonth() + 1,
-          0,
-        ).getDate();
+        const diasNoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
         const diasRestantes = diasNoMes - hoje.getDate();
 
-        const MULT = {
-          diaria: 1,
-          semanal: 1 / 7,
-          quinzenal: 1 / 15,
-          mensal: 1 / 30,
-          bimestral: 1 / 60,
-          trimestral: 1 / 90,
-          semestral: 1 / 180,
-          anual: 1 / 365,
-        };
+        // Usa o endpoint de fluxo que já projeta datas exatas das recorrentes
+        const [fluxo, resumo] = await Promise.all([
+          fetchAPI(`/api/relatorios/fluxo?dias=${diasRestantes}`),
+          fetchAPI(`/api/relatorios/resumo?mes=${mes}&ano=${ano}`),
+        ]);
 
-        let receitasPrevistas = 0,
-          despesasPrevistas = 0;
-        lista.forEach((r) => {
-          const valorDiario = parseFloat(r.valor) * (MULT[r.frequencia] || 0);
-          const total = valorDiario * diasRestantes;
-          if (r.tipo === "receita") receitasPrevistas += total;
-          else despesasPrevistas += total;
+        const saldoAtual = parseFloat(resumo?.saldo) || 0;
+
+        if (!fluxo?.timeline?.length) {
+          wrap.innerHTML = `<div style="text-align:center;padding:16px 0;font-size:13px;color:var(--text-muted)">Sem previsão disponível.</div>`;
+          return;
+        }
+
+        // Soma entradas e saídas projetadas
+        let receitasPrevistas = 0, despesasPrevistas = 0;
+        fluxo.timeline.forEach((d) => {
+          receitasPrevistas += d.entradas || 0;
+          despesasPrevistas += d.saidas || 0;
         });
 
-        // Saldo atual do mês
-        const resumo = await fetchAPI(
-          `/api/relatorios/resumo?mes=${mes}&ano=${ano}`,
-        );
-        const saldoAtual = parseFloat(resumo?.saldo) || 0;
-        const saldoPrevisto =
-          saldoAtual + receitasPrevistas - despesasPrevistas;
+        // Último item da timeline = saldo projetado no fim do mês
+        const saldoPrevisto = fluxo.timeline[fluxo.timeline.length - 1].saldo;
         const cor = saldoPrevisto >= 0 ? "var(--green)" : "var(--red)";
 
         wrap.innerHTML = `
           <div style="text-align:center;padding:8px 0">
             <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Saldo atual</div>
             <div style="font-size:18px;font-weight:700;margin-bottom:12px">${formatarMoeda(saldoAtual)}</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">+ recorrentes (${diasRestantes} dias)</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">+ projeção (${diasRestantes} dias)</div>
             <div style="display:flex;justify-content:center;gap:16px;font-size:12px;margin-bottom:12px">
               <span style="color:var(--green)">+${formatarMoeda(receitasPrevistas)}</span>
               <span style="color:var(--red)">-${formatarMoeda(despesasPrevistas)}</span>
@@ -829,6 +811,8 @@
         const data = await fetchAPI(
           `/api/orcamentos/resumo?mes=${mes}&ano=${ano}`,
         );
+        // Reutiliza os mesmos dados para os alertas (evita request duplicado)
+        _renderAlertasOrcamento(data);
         const wrap = document.getElementById("orc-wrap");
         if (!data || !data.geral) {
           wrap.innerHTML = "";
@@ -962,14 +946,13 @@
       atualizarLabel();
       carregarDados();
       carregarChecklist();
-      carregarAlertasOrcamento();
       initPullToRefresh(carregarDados);
 
       // Saudação dinâmica
       (function () {
         const nome = getNome().split(" ")[0];
         document.getElementById("saudacao-texto").textContent =
-          `${saudacao()}, ${nome}!`;
+          `${getSaudacao()}, ${nome}!`;
         const hoje = new Date();
         const diasNoMes = new Date(
           hoje.getFullYear(),
