@@ -80,6 +80,12 @@ const MIGRATIONS = [
       FOREIGN KEY (usuario_id) REFERENCES Usuarios(id) ON DELETE CASCADE
     )`,
   },
+  {
+    // Impede que a mesma recorrência gere duas transações no mesmo dia
+    // (proteção contra reinicializações do servidor no mesmo dia)
+    id: "012_unique_recorrente_data",
+    sql: "ALTER TABLE Transacoes ADD UNIQUE KEY uq_recorrente_data (recorrente_id, data)",
+  },
 ];
 
 async function rodarMigrations() {

@@ -140,22 +140,38 @@ async function processarRecorrentes() {
 
 async function gerarTransacao(rec, dataGeracao) {
   try {
-    await db.query(
-      `INSERT INTO Transacoes
-         (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao, recorrente_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        rec.usuario_id,
-        rec.conta_id,
-        rec.categoria_id,
-        rec.tipo,
-        rec.descricao,
-        rec.valor,
-        dataGeracao,
-        rec.observacao || null,
-        rec.id,
-      ],
+    // Idempotência: verifica se já existe transação gerada por esta recorrência nesta data
+    const [[existente]] = await db.query(
+      `SELECT id FROM Transacoes
+       WHERE recorrente_id = ? AND data = ? AND deleted_at IS NULL
+       LIMIT 1`,
+      [rec.id, dataGeracao],
     );
+
+    if (existente) {
+      // Transação já existe — só avança proxima_geracao para sair do loop
+      console.log(
+        `[Recorrentes] ⏭️  "${rec.descricao}" → ${dataGeracao} já gerada (id ${existente.id}), avançando data.`,
+      );
+    } else {
+      await db.query(
+        `INSERT INTO Transacoes
+           (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao, recorrente_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          rec.usuario_id,
+          rec.conta_id,
+          rec.categoria_id,
+          rec.tipo,
+          rec.descricao,
+          rec.valor,
+          dataGeracao,
+          rec.observacao || null,
+          rec.id,
+        ],
+      );
+    }
+
     const proxima = calcularProximaData(
       new Date(dataGeracao + "T00:00:00"),
       rec.frequencia,
@@ -167,9 +183,12 @@ async function gerarTransacao(rec, dataGeracao) {
       `UPDATE TransacoesRecorrentes SET ultima_geracao=?, proxima_geracao=?, ativa=? WHERE id=?`,
       [dataGeracao, proximaStr, ativa, rec.id],
     );
-    console.log(
-      `[Recorrentes] ✅ "${rec.descricao}" → ${dataGeracao} | próxima: ${proximaStr}`,
-    );
+
+    if (!existente) {
+      console.log(
+        `[Recorrentes] ✅ "${rec.descricao}" → ${dataGeracao} | próxima: ${proximaStr}`,
+      );
+    }
   } catch (err) {
     console.error(`[Recorrentes] ❌ "${rec.descricao}":`, err.message);
   }
