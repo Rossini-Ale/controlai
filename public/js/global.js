@@ -340,12 +340,22 @@ function renderSidebar(paginaAtiva) {
     .join("")
     .substring(0, 2)
     .toUpperCase();
-  const navItems = [
-    { href: "/dashboard.html", icon: "fa-house", label: "Dashboard" },
-    { href: "/lancamentos.html", icon: "fa-right-left", label: "Lançamentos" },
-    { href: "/contas.html", icon: "fa-wallet", label: "Contas" },
-    { href: "/pets.html", icon: "fa-paw", label: "Pets" },
-    { href: "/relatorios.html", icon: "fa-chart-bar", label: "Relatórios" },
+  const navGroups = [
+    {
+      label: "Finanças",
+      items: [
+        { href: "/dashboard.html", icon: "fa-house", label: "Dashboard" },
+        { href: "/lancamentos.html", icon: "fa-right-left", label: "Lançamentos" },
+        { href: "/contas.html", icon: "fa-wallet", label: "Contas" },
+        { href: "/relatorios.html", icon: "fa-chart-bar", label: "Relatórios" },
+      ],
+    },
+    {
+      label: "Vida",
+      items: [
+        { href: "/pets.html", icon: "fa-paw", label: "Pets" },
+      ],
+    },
   ];
   const _sidebarHtml = `
     <div class="sidebar-logo">
@@ -353,14 +363,13 @@ function renderSidebar(paginaAtiva) {
       <span>controlaí</span>
     </div>
     <nav>
-      ${navItems
-        .map(
-          (item) => `
+      ${navGroups.map((group) => `
+        <div class="nav-section-label">${group.label}</div>
+        ${group.items.map((item) => `
         <a href="${item.href}" class="nav-item ${paginaAtiva === item.label ? "active" : ""}">
           <i class="fa-solid ${item.icon}"></i> ${item.label}
-        </a>`,
-        )
-        .join("")}
+        </a>`).join("")}
+      `).join("")}
     </nav>
     <div class="sidebar-bottom">
       <div class="user-info" style="cursor:pointer" onclick="togglePerfilDesktop()" title="Perfil">
@@ -372,7 +381,7 @@ function renderSidebar(paginaAtiva) {
         <i class="fa-solid fa-chevron-up" id="chevron-perfil" style="color:var(--text-muted);font-size:12px;transition:transform 0.2s"></i>
       </div>
       <!-- Dropdown perfil desktop -->
-      <div id="perfil-desktop-menu" style="display:none;margin-top:8px;background:var(--bg-tertiary);border-radius:10px;overflow:hidden;border:0.5px solid var(--border)">
+      <div id="perfil-desktop-menu" style="display:none;margin-top:8px;background:var(--bg-tertiary);border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--border-subtle)">
         <a href="/configuracoes.html?aba=perfil" class="nav-item" style="padding:10px 14px;font-size:13px">
           <i class="fa-solid fa-pen"></i> Editar perfil
         </a>
@@ -499,10 +508,10 @@ function renderTabBar(paginaAtiva) {
     },
     { central: true },
     {
-      href: "/pets.html",
-      icon: "fa-paw",
-      label: "Pets",
-      page: "Pets",
+      href: "/contas.html",
+      icon: "fa-wallet",
+      label: "Contas",
+      page: "Contas",
     },
     {
       href: "/relatorios.html",
@@ -532,10 +541,9 @@ function renderTabBar(paginaAtiva) {
 
     <div class="modal-rapido" id="modal-rapido">
       <div class="modal-rapido-inner">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <h2 style="margin:0">Novo lançamento</h2>
-          <button onclick="fecharModalRapido()"
-            style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer">
+        <div class="modal-header">
+          <h2 class="modal-title" style="margin:0">Novo lançamento</h2>
+          <button class="modal-close" onclick="fecharModalRapido()">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
@@ -552,8 +560,7 @@ function renderTabBar(paginaAtiva) {
         </div>
         <div class="form-group">
           <label>Valor (R$)</label>
-          <input type="text" inputmode="decimal" id="r-valor" placeholder="0,00"
-            style="font-size:20px;font-weight:600;padding:14px 13px;transition:border-color 0.2s,background 0.2s" />
+          <input type="text" inputmode="decimal" id="r-valor" placeholder="0,00" class="input-valor-rapido" />
         </div>
         <div class="form-group">
           <label>Descrição</label>
