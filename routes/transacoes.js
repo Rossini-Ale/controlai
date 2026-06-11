@@ -174,6 +174,72 @@ router.get("/exportar", auth, async (req, res) => {
   }
 });
 
+// ── Exportar XLSX ──
+router.get("/exportar-xlsx", auth, async (req, res) => {
+  const { mes, ano, tipo, categoria_id, conta_id } = req.query;
+  try {
+    let where = "WHERE t.usuario_id = ? AND t.deleted_at IS NULL";
+    const params = [req.usuarioId];
+    if (mes && ano) {
+      where += " AND MONTH(t.data)=? AND YEAR(t.data)=?";
+      params.push(mes, ano);
+    }
+    if (tipo) { where += " AND t.tipo=?"; params.push(tipo); }
+    if (categoria_id) { where += " AND t.categoria_id=?"; params.push(categoria_id); }
+    if (conta_id) { where += " AND t.conta_id=?"; params.push(conta_id); }
+
+    const [rows] = await db.query(
+      `SELECT t.data, t.tipo, t.descricao, t.valor, t.observacao,
+              c.nome AS categoria_nome, ct.nome AS conta_nome
+       FROM Transacoes t
+       LEFT JOIN Categorias c  ON t.categoria_id = c.id
+       LEFT JOIN Contas     ct ON t.conta_id = ct.id
+       ${where}
+       ORDER BY t.data ASC, t.created_at ASC`,
+      params,
+    );
+
+    const XLSX = require("xlsx");
+    const tipoLabel = { receita: "Receita", despesa: "Despesa", cartao: "Cartão" };
+
+    const sheetData = [
+      ["Data", "Tipo", "Descrição", "Valor (R$)", "Categoria", "Conta", "Observação"],
+      ...rows.map((r) => {
+        const data = (r.data instanceof Date ? r.data : new Date(r.data))
+          .toISOString().split("T")[0];
+        return [
+          data,
+          tipoLabel[r.tipo] || r.tipo,
+          r.descricao || "",
+          parseFloat(r.valor),
+          r.categoria_nome || "",
+          r.conta_nome || "",
+          r.observacao || "",
+        ];
+      }),
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+    // Column widths
+    ws["!cols"] = [{ wch: 12 }, { wch: 10 }, { wch: 36 }, { wch: 14 }, { wch: 18 }, { wch: 18 }, { wch: 30 }];
+
+    const wb = XLSX.utils.book_new();
+    const nomeMes = mes && ano
+      ? new Date(ano, mes - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" })
+      : "Todos";
+    XLSX.utils.book_append_sheet(wb, ws, nomeMes.substring(0, 31));
+
+    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+    const filename = mes && ano ? `transacoes_${ano}-${String(mes).padStart(2,"0")}.xlsx` : "transacoes.xlsx";
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.send(buf);
+  } catch (err) {
+    console.error("[Exportar XLSX]", err.message);
+    res.status(500).json({ erro: "Erro ao exportar." });
+  }
+});
+
 // ── Buscar uma transação por ID ──
 router.get("/:id", auth, async (req, res) => {
   try {
