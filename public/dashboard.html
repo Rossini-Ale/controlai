@@ -23,7 +23,7 @@
       }
       .mes-nav button {
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         color: var(--text-primary);
         border-radius: 8px;
         padding: 6px 12px;
@@ -49,7 +49,7 @@
       .busca-input {
         width: 100%;
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 10px;
         padding: 10px 14px 10px 38px;
         color: var(--text-primary);
@@ -85,7 +85,7 @@
       /* Orçamento */
       .orc-card {
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 14px;
         padding: 18px 20px;
         margin-bottom: 20px;
@@ -135,7 +135,7 @@
       /* Saldo previsto */
       .previsto-card {
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 14px;
         padding: 18px 20px;
         margin-bottom: 20px;
@@ -143,14 +143,14 @@
 
       /* Gráfico rosca */
       .charts-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        display: flex;
+        flex-direction: column;
         gap: 16px;
         margin-bottom: 20px;
       }
       .chart-card {
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 14px;
         padding: 16px;
       }
@@ -176,7 +176,7 @@
       }
       .checklist-item.pendente {
         background: var(--bg-primary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
       }
       .checklist-circulo {
         width: 24px;
@@ -192,7 +192,7 @@
       /* Transações mobile */
       .tx-mobile {
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 12px;
         padding: 14px;
         margin-bottom: 8px;
@@ -227,10 +227,12 @@
         font-weight: 700;
       }
 
-      @media (max-width: 768px) {
-        .charts-row {
-          grid-template-columns: 1fr;
-        }
+      .section-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        margin-bottom: 20px;
       }
     </style>
   </head>
@@ -277,54 +279,51 @@
       <!-- Insight variação mensal -->
       <div id="insight-variacao"></div>
 
-      <!-- Gráficos -->
-      <div class="charts-row" id="charts-row" style="display: none">
-        <div class="chart-card">
-          <h3>Despesas por categoria <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:4px">clique para detalhar</span></h3>
-          <canvas id="chart-categorias" height="180" style="cursor:pointer"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3>Saldo previsto no fim do mês</h3>
-          <div id="saldo-previsto-wrap" style="padding-top: 8px"></div>
-        </div>
-      </div>
-
-      <!-- Gráfico de barras — evolução 6 meses -->
-      <div id="grafico-6meses" style="margin-bottom:20px"></div>
-
-      <!-- Gráfico de linha — saldo dia a dia -->
-      <div id="saldo-diario-wrap"></div>
-
-      <div id="orc-wrap"></div>
-      <div id="rec-vencendo-wrap"></div>
-      <div id="pets-widget"></div>
-
-      <div style="margin-top: 20px">
-        <div class="table-wrap">
-          <div class="table-header">
-            <h2>Últimas transações</h2>
-            <a href="/lancamentos.html" class="btn"
-              ><i class="fa-solid fa-plus"></i> Nova</a
-            >
+      <!-- Dashboard: 2 colunas no desktop -->
+      <div class="dashboard-grid">
+        <!-- Coluna esquerda: gráficos de evolução + transações -->
+        <div>
+          <div id="grafico-6meses"></div>
+          <div id="saldo-diario-wrap"></div>
+          <div class="table-wrap">
+            <div class="table-header">
+              <h2>Últimas transações</h2>
+              <a href="/lancamentos.html" class="btn"
+                ><i class="fa-solid fa-plus"></i> Nova</a
+              >
+            </div>
+            <div id="lista-desktop" class="desktop-only">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Valor</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-transacoes"></tbody>
+              </table>
+            </div>
+            <div id="lista-mobile" class="mobile-only" style="padding: 12px"></div>
           </div>
-          <div id="lista-desktop" class="desktop-only">
-            <table>
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Descrição</th>
-                  <th>Categoria</th>
-                  <th>Valor</th>
-                </tr>
-              </thead>
-              <tbody id="tbody-transacoes"></tbody>
-            </table>
+        </div>
+
+        <!-- Coluna direita: donut + orçamento + recorrentes + pets -->
+        <div>
+          <div class="charts-row" id="charts-row" style="display: none">
+            <div class="chart-card">
+              <h3>Despesas por categoria <span style="font-size:11px;color:var(--text-muted);font-weight:400;margin-left:4px">clique para detalhar</span></h3>
+              <canvas id="chart-categorias" height="180" style="cursor:pointer"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>Saldo previsto no fim do mês</h3>
+              <div id="saldo-previsto-wrap" style="padding-top: 8px"></div>
+            </div>
           </div>
-          <div
-            id="lista-mobile"
-            class="mobile-only"
-            style="padding: 12px"
-          ></div>
+          <div id="orc-wrap"></div>
+          <div id="rec-vencendo-wrap"></div>
+          <div id="pets-widget"></div>
         </div>
       </div>
     </div>
@@ -372,12 +371,12 @@
         document.getElementById("cards-resumo").innerHTML = skeletonCards(4);
         document.getElementById("insight-variacao").innerHTML = "";
         document.getElementById("grafico-6meses").innerHTML =
-          `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">${skeletonCards(2)}</div>`;
+          `<div class="section-card">${skeletonCards(2)}</div>`;
         document.getElementById("orc-wrap").innerHTML =
-          `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px">${skeletonCards(1)}</div>`;
+          `<div class="section-card">${skeletonCards(1)}</div>`;
         document.getElementById("saldo-previsto-wrap").innerHTML = skeletonCards(1);
         document.getElementById("rec-vencendo-wrap").innerHTML =
-          `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">${skeletonLista(2)}</div>`;
+          `<div class="section-card">${skeletonLista(2)}</div>`;
         document.getElementById("saldo-diario-wrap").innerHTML = "";
         await Promise.all([
           carregarResumo(),
@@ -418,8 +417,8 @@
           if (!p) return "";
           const d = ((a - p) / Math.abs(p)) * 100;
           const positivo = inverso ? d < 0 : d > 0;
-          const cor = positivo ? "var(--green)" : "var(--red)";
-          return `<div style="font-size:10px;color:${cor};margin-top:3px">${d > 0 ? "+" : ""}${d.toFixed(0)}% vs mês ant.</div>`;
+          const cls = positivo ? "positive" : "negative";
+          return `<div class="card-delta ${cls}">${d > 0 ? "+" : ""}${d.toFixed(0)}% vs mês ant.</div>`;
         }
 
         document.getElementById("cards-resumo").innerHTML = `
@@ -474,7 +473,7 @@
           document.getElementById("charts-row").style.display = "none";
           return;
         }
-        document.getElementById("charts-row").style.display = "grid";
+        document.getElementById("charts-row").style.display = "flex";
 
         const top5 = data.slice(0, 5);
         const labels = top5.map((d) => d.nome || "Outros");
@@ -545,7 +544,7 @@
           return;
         }
         lista.innerHTML = transacoes.map((t) => `
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-subtle)">
             <div>
               <div style="font-size:13px;font-weight:500">${t.descricao}</div>
               <div style="font-size:11px;color:var(--text-muted)">${new Date(t.data).toLocaleDateString("pt-BR")}</div>
@@ -624,7 +623,7 @@
               <span style="color:var(--green)">+${formatarMoeda(receitasPrevistas)}</span>
               <span style="color:var(--red)">-${formatarMoeda(despesasPrevistas)}</span>
             </div>
-            <div style="border-top:0.5px solid var(--border);padding-top:10px">
+            <div style="border-top:1px solid var(--border-subtle);padding-top:10px">
               <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Previsão fim do mês</div>
               <div style="font-size:22px;font-weight:700;color:${cor}">${formatarMoeda(saldoPrevisto)}</div>
             </div>
@@ -644,10 +643,8 @@
           <tr>
             <td>${formatarData(t.data)}</td>
             <td>${t.is_transferencia ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}${t.descricao}</td>
-            <td><span style="display:inline-flex;align-items:center;gap:6px">
-              <span style="width:24px;height:24px;border-radius:50%;background:${t.categoria_cor ? t.categoria_cor + "22" : "var(--bg-tertiary)"};display:inline-flex;align-items:center;justify-content:center">
-                <i class="fa-solid ${t.categoria_icone || "fa-tag"}" style="font-size:10px;color:${t.categoria_cor || "#6b7280"}"></i>
-              </span>
+            <td><span class="cat-chip">
+              <span class="cat-chip-dot" style="background:${t.categoria_cor || "#6b7280"}"></span>
               ${t.categoria_nome || "—"}
             </span></td>
             <td><span class="badge ${t.is_transferencia ? "transferencia" : t.tipo}">${formatarMoeda(t.valor)}</span></td>
@@ -721,14 +718,14 @@
           if (q.trim().length < 2) { resultDiv.style.display = "none"; return; }
 
           resultDiv.style.display = "block";
-          resultDiv.innerHTML = `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:12px;padding:16px;text-align:center;color:var(--text-muted);font-size:13px"><i class="fa-solid fa-spinner fa-spin"></i> Buscando...</div>`;
+          resultDiv.innerHTML = `<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:12px;padding:16px;text-align:center;color:var(--text-muted);font-size:13px"><i class="fa-solid fa-spinner fa-spin"></i> Buscando...</div>`;
 
           const filtradas = await fetchAPI(`/api/transacoes/buscar?q=${encodeURIComponent(q.trim())}`) || [];
 
           resultDiv.style.display = "block";
           if (filtradas.length === 0) {
             resultDiv.innerHTML = `
-              <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:12px;padding:20px;text-align:center;color:var(--text-muted);font-size:13px">
+              <div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:12px;padding:20px;text-align:center;color:var(--text-muted);font-size:13px">
                 <i class="fa-solid fa-magnifying-glass" style="font-size:20px;margin-bottom:8px;display:block"></i>
                 Nenhum resultado para "${q}"
               </div>`;
@@ -736,8 +733,8 @@
           }
 
           resultDiv.innerHTML = `
-            <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:12px;overflow:hidden">
-              <div style="padding:10px 14px;border-bottom:0.5px solid var(--border);font-size:12px;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between">
+            <div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden">
+              <div style="padding:10px 14px;border-bottom:1px solid var(--border-subtle);font-size:12px;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between">
                 <span>${filtradas.length} resultado(s) para "<strong style="color:var(--text-primary)">${q}</strong>"</span>
                 <span style="font-size:11px;color:var(--blue)"><i class="fa-solid fa-globe" style="margin-right:4px"></i>Histórico completo</span>
               </div>
@@ -754,7 +751,7 @@
                   // Highlight no texto
                   const descHighlight = highlightTermo(t.descricao, termo);
                   const catHighlight = highlightTermo(t.categoria_nome, termo);
-                  return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:0.5px solid var(--border)">
+                  return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border-subtle)">
                   <div>
                     <div style="font-size:14px;font-weight:600;margin-bottom:2px">${descHighlight}</div>
                     <div style="font-size:11px;color:var(--text-muted)">${formatarData(t.data)} · ${catHighlight || "—"}</div>
@@ -794,13 +791,13 @@
         };
         const hoje = new Date().toISOString().split("T")[0];
         wrap.innerHTML = `
-          <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-              <div style="display:flex;align-items:center;gap:8px">
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-header-left">
                 <i class="fa-solid fa-rotate" style="color:#f59e0b"></i>
-                <span style="font-size:14px;font-weight:600">Recorrentes nos próximos 7 dias</span>
+                <span class="section-title">Recorrentes nos próximos 7 dias</span>
               </div>
-              <a href="/lancamentos.html?aba=recorrentes" style="font-size:12px;color:var(--green);text-decoration:none;font-weight:600">Ver todas →</a>
+              <a href="/lancamentos.html?aba=recorrentes" class="section-link">Ver todas →</a>
             </div>
             ${lista
               .map((r) => {
@@ -822,7 +819,7 @@
                 const sinal = r.tipo === "receita" ? "+" : "-";
                 const corValor =
                   r.tipo === "receita" ? "var(--green)" : "var(--red)";
-                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border)">
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-subtle)">
                 <div style="flex:1">
                   <div style="font-size:14px;font-weight:600;margin-bottom:2px">${r.descricao}</div>
                   <div style="font-size:11px;color:var(--text-muted)">${FREQ[r.frequencia] || r.frequencia}${r.categoria_nome ? ` · ${r.categoria_nome}` : ""}</div>
@@ -898,7 +895,7 @@
         const pct = Math.round((feitos / total) * 100);
         const pendentes = itens.filter((i) => !i.feito);
         document.getElementById("checklist-wrap").innerHTML = `
-          <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">
+          <div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:14px;padding:16px;margin-bottom:20px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
               <div>
                 <div style="font-size:14px;font-weight:600;margin-bottom:2px">Configure sua conta</div>
@@ -907,7 +904,7 @@
               <button onclick="fecharChecklist()" style="background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
             </div>
             ${itens.map((item) => `
-              <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border)">
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-subtle)">
                 <div style="width:28px;height:28px;border-radius:50%;background:${item.feito ? "var(--green)" : "var(--bg-tertiary)"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
                   <i class="${item.feito ? "fa-solid fa-check" : "fa-solid " + item.icon}" style="font-size:11px;color:${item.feito ? "#fff" : "var(--text-muted)"}"></i>
                 </div>
@@ -988,8 +985,8 @@
         const cor = minVal >= 0 ? "#10b981" : dados[dados.length - 1].saldo >= 0 ? "#10b981" : "#ef4444";
 
         wrap.innerHTML = `
-          <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">
-            <h3 style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:12px">
+          <div class="section-card">
+            <h3 class="section-title" style="margin-bottom:12px">
               <i class="fa-solid fa-chart-line" style="color:#3b82f6;margin-right:6px"></i>Saldo dia a dia — ${nomeMes(mes)}
             </h3>
             <canvas id="chart-saldo-diario" height="110"></canvas>
@@ -1036,24 +1033,24 @@
         const data = await fetchAPI("/api/metas");
         if (!Array.isArray(data) || !data.filter((m) => m.status === "ativa").length) {
           wrap.innerHTML = `
-            <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
+            <div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between">
               <div style="display:flex;align-items:center;gap:8px">
                 <i class="fa-solid fa-bullseye" style="color:#f59e0b"></i>
                 <span style="font-size:13px;color:var(--text-muted)">Sem metas cadastradas</span>
               </div>
-              <button onclick="abrirModalMeta()" style="background:transparent;border:0.5px solid var(--border);color:var(--text-secondary);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer">+ Nova meta</button>
+              <button onclick="abrirModalMeta()" style="background:transparent;border:1px solid var(--border-subtle);color:var(--text-secondary);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer">+ Nova meta</button>
             </div>`;
           return;
         }
         const ativas = data.filter((m) => m.status === "ativa");
         wrap.innerHTML = `
-          <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-              <div style="display:flex;align-items:center;gap:8px">
+          <div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);padding:16px;margin-bottom:20px">
+            <div class="section-header" style="margin-bottom:14px">
+              <div class="section-header-left">
                 <i class="fa-solid fa-bullseye" style="color:#f59e0b"></i>
-                <span style="font-size:14px;font-weight:600">Metas de economia</span>
+                <span class="section-title">Metas de economia</span>
               </div>
-              <button onclick="abrirModalMeta()" style="background:transparent;border:0.5px solid var(--border);color:var(--text-secondary);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer">+ Nova</button>
+              <button onclick="abrirModalMeta()" style="background:transparent;border:1px solid var(--border-subtle);color:var(--text-secondary);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer">+ Nova</button>
             </div>
             ${ativas.map((m) => {
               const pct = m.valor_alvo > 0 ? Math.min(100, (m.valor_atual / m.valor_alvo) * 100) : 0;
@@ -1150,8 +1147,8 @@
         if (!Array.isArray(data) || data.length < 2) { wrap.innerHTML = ""; return; }
 
         wrap.innerHTML = `
-          <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:16px">
-            <h3 style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:12px">
+          <div class="section-card">
+            <h3 class="section-title" style="margin-bottom:12px">
               <i class="fa-solid fa-chart-bar" style="color:var(--green);margin-right:6px"></i>Evolução dos últimos 6 meses
             </h3>
             <canvas id="chart-6meses" height="150"></canvas>
@@ -1254,7 +1251,7 @@
             <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
               ${data.pets.map((p) => `
                 <a href="/pets.html" style="text-decoration:none;flex-shrink:0">
-                  <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:14px;min-width:110px;text-align:center;transition:border-color 0.2s" onmouseenter="this.style.borderColor='var(--green)'" onmouseleave="this.style.borderColor='var(--border)'">
+                  <div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:14px;padding:14px;min-width:110px;text-align:center;transition:border-color 0.2s" onmouseenter="this.style.borderColor='var(--green)'" onmouseleave="this.style.borderColor='var(--border)'">
                     <div style="font-size:32px;line-height:1;margin-bottom:6px">${p.emoji || "🐾"}</div>
                     <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${p.nome}</div>
                     ${p.gasto_mes > 0 ? `<div style="font-size:11px;color:var(--red);margin-top:3px;font-weight:500" class="valor-privado">${new Intl.NumberFormat("pt-BR",{style:"currency",currency:"BRL"}).format(p.gasto_mes)}</div>` : `<div style="font-size:11px;color:var(--text-muted);margin-top:3px">sem gastos</div>`}
@@ -1277,13 +1274,13 @@
 
     <!-- Modal wizard de onboarding -->
     <div id="modal-wizard" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1001;align-items:center;justify-content:center;padding:16px">
-      <div style="background:var(--bg-secondary);border-radius:20px;width:100%;max-width:380px;border:0.5px solid var(--border);overflow:hidden">
-        <div style="background:linear-gradient(135deg,#0f1117,#1a1f2e);padding:20px 24px 16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="background:var(--bg-secondary);border-radius:20px;width:100%;max-width:380px;border:1px solid var(--border-subtle);overflow:hidden">
+        <div class="modal-header" style="background:linear-gradient(135deg,#0f1117,#1a1f2e);padding:20px 24px 16px;margin-bottom:0">
           <div>
-            <div style="font-size:16px;font-weight:700">Bem-vindo ao Controlaí! 👋</div>
+            <div class="modal-title">Bem-vindo ao Controlaí! 👋</div>
             <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Vamos configurar sua conta em 3 passos</div>
           </div>
-          <button onclick="fecharWizard()" style="background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+          <button class="modal-close" onclick="fecharWizard()"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div id="wizard-body" style="padding:24px"></div>
       </div>
@@ -1291,29 +1288,29 @@
 
     <!-- Modal metas de economia -->
     <div id="modal-meta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)fecharModalMeta()">
-      <div style="background:var(--bg-secondary);border-radius:16px;width:100%;max-width:400px;border:0.5px solid var(--border)" onclick="event.stopPropagation()">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:0.5px solid var(--border)">
-          <span id="modal-meta-titulo" style="font-size:15px;font-weight:700"></span>
-          <button onclick="fecharModalMeta()" style="background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer"><i class="fa-solid fa-xmark"></i></button>
+      <div style="background:var(--bg-secondary);border-radius:16px;width:100%;max-width:400px;border:1px solid var(--border-subtle)" onclick="event.stopPropagation()">
+        <div class="modal-header" style="padding:16px 20px 16px;margin-bottom:0">
+          <span class="modal-title" id="modal-meta-titulo"></span>
+          <button class="modal-close" onclick="fecharModalMeta()"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
           <div>
             <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Nome da meta</label>
-            <input id="meta-nome" type="text" placeholder="ex: Reserva de emergência" style="width:100%;background:var(--bg-tertiary);border:0.5px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text-primary);font-size:14px;box-sizing:border-box">
+            <input id="meta-nome" type="text" placeholder="ex: Reserva de emergência" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:9px;padding:10px 12px;color:var(--text-primary);font-size:14px;box-sizing:border-box">
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div>
               <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Valor alvo (R$)</label>
-              <input id="meta-alvo" type="text" inputmode="decimal" placeholder="0,00" style="width:100%;background:var(--bg-tertiary);border:0.5px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text-primary);font-size:14px;box-sizing:border-box">
+              <input id="meta-alvo" type="text" inputmode="decimal" placeholder="0,00" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:9px;padding:10px 12px;color:var(--text-primary);font-size:14px;box-sizing:border-box">
             </div>
             <div>
               <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Valor atual (R$)</label>
-              <input id="meta-atual" type="text" inputmode="decimal" placeholder="0,00" style="width:100%;background:var(--bg-tertiary);border:0.5px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text-primary);font-size:14px;box-sizing:border-box">
+              <input id="meta-atual" type="text" inputmode="decimal" placeholder="0,00" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:9px;padding:10px 12px;color:var(--text-primary);font-size:14px;box-sizing:border-box">
             </div>
           </div>
           <div>
             <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:5px">Prazo (opcional)</label>
-            <input id="meta-prazo" type="date" style="width:100%;background:var(--bg-tertiary);border:0.5px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text-primary);font-size:14px;box-sizing:border-box">
+            <input id="meta-prazo" type="date" style="width:100%;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:9px;padding:10px 12px;color:var(--text-primary);font-size:14px;box-sizing:border-box">
           </div>
         </div>
         <div style="padding:0 20px 20px;display:flex;gap:8px">
@@ -1325,16 +1322,16 @@
 
     <!-- Modal detalhe de categoria -->
     <div id="modal-categoria" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)this.style.display='none'">
-      <div style="background:var(--bg-secondary);border-radius:16px;width:100%;max-width:440px;max-height:80vh;display:flex;flex-direction:column;border:0.5px solid var(--border)">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:0.5px solid var(--border)">
+      <div style="background:var(--bg-secondary);border-radius:16px;width:100%;max-width:440px;max-height:80vh;display:flex;flex-direction:column;border:1px solid var(--border-subtle)">
+        <div class="modal-header" style="padding:16px 20px 16px;margin-bottom:0">
           <div>
-            <div style="font-size:15px;font-weight:700" id="modal-cat-titulo"></div>
+            <div class="modal-title" id="modal-cat-titulo"></div>
             <div style="font-size:12px;color:var(--text-muted)">Transações do mês</div>
           </div>
-          <button onclick="document.getElementById('modal-categoria').style.display='none'" style="background:transparent;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:4px"><i class="fa-solid fa-xmark"></i></button>
+          <button class="modal-close" onclick="document.getElementById('modal-categoria').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div id="modal-cat-lista" style="overflow-y:auto;padding:0 20px;flex:1"></div>
-        <div style="padding:12px 20px;border-top:0.5px solid var(--border)">
+        <div style="padding:12px 20px;border-top:1px solid var(--border-subtle)">
           <a href="/lancamentos.html" style="font-size:13px;color:var(--green);text-decoration:none">Ver todos os lançamentos →</a>
         </div>
       </div>

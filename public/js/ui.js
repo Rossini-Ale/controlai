@@ -152,35 +152,17 @@ function confirmar(mensagem, titulo = "Confirmar") {
     `;
 
     overlay.innerHTML = `
-      <div style="
-        background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
-        border-radius: 16px;
-        padding: 24px;
-        width: 100%;
-        max-width: 340px;
-        animation: fadeUp 0.2s ease;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-      ">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-          <div style="width:38px;height:38px;background:rgba(239,68,68,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <div class="confirm-dialog">
+        <div class="confirm-dialog-header">
+          <div class="confirm-icon-wrap">
             <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;font-size:16px"></i>
           </div>
-          <h3 style="font-size:15px;font-weight:600;color:var(--text-primary)">${titulo}</h3>
+          <h3>${titulo}</h3>
         </div>
-        <p style="font-size:14px;color:var(--text-secondary);margin-bottom:24px;line-height:1.6">${mensagem}</p>
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button id="confirm-nao" style="
-            background:transparent;border:0.5px solid var(--border);
-            color:var(--text-secondary);border-radius:9px;padding:10px 20px;
-            font-size:14px;cursor:pointer;transition:all 0.2s;
-          ">Cancelar</button>
-          <button id="confirm-sim" style="
-            background:#ef4444;border:none;color:#fff;
-            border-radius:9px;padding:10px 20px;
-            font-size:14px;font-weight:600;cursor:pointer;
-            margin-left:16px;
-          ">Deletar</button>
+        <p>${mensagem}</p>
+        <div class="confirm-dialog-actions">
+          <button id="confirm-nao" class="btn-edit" style="padding:10px 20px">Cancelar</button>
+          <button id="confirm-sim" class="btn-danger" style="padding:10px 20px">Deletar</button>
         </div>
       </div>
     `;
@@ -215,7 +197,7 @@ function skeletonLista(quantidade = 3) {
       .map(
         () => `
     <div style="
-      background:var(--bg-secondary);border:0.5px solid var(--border);
+      background:var(--bg-secondary);border:1px solid var(--border-subtle);
       border-radius:14px;padding:16px;margin-bottom:10px;
     ">
       <div style="display:flex;justify-content:space-between;margin-bottom:10px">
@@ -236,7 +218,7 @@ function skeletonCards(quantidade = 4) {
       .fill(0)
       .map(
         () => `
-    <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:20px">
+    <div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:14px;padding:20px">
       <div class="skel-pulse" style="width:48%;height:11px;background:var(--bg-tertiary);border-radius:6px;margin-bottom:12px"></div>
       <div class="skel-pulse" style="width:68%;height:22px;background:var(--bg-tertiary);border-radius:6px"></div>
     </div>
@@ -267,7 +249,7 @@ function emptyState(icone, titulo, descricao, btnLabel, btnFn) {
   return `
     <div style="
       text-align:center;padding:48px 24px;
-      background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;
+      background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:14px;
     ">
       <div style="
         width:64px;height:64px;background:var(--bg-tertiary);border-radius:50%;
@@ -313,7 +295,7 @@ function toastComUndo(mensagem, onUndo, duracao = 4000, onConfirm) {
     background:var(--bg-secondary);color:var(--text-primary);
     padding:12px 16px;border-radius:12px;font-size:14px;font-weight:500;
     z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,0.4);
-    max-width:320px;border:0.5px solid var(--border);
+    max-width:320px;border:1px solid var(--border-subtle);
     overflow:hidden;animation:toastIn 0.3s ease;
     display:flex;align-items:center;gap:12px;
   `;

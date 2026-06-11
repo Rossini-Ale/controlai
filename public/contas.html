@@ -23,11 +23,15 @@
       }
       .conta-card {
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
-        border-radius: 14px;
-        padding: 20px;
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 24px;
         position: relative;
         overflow: hidden;
+        transition: border-color 0.2s;
+      }
+      .conta-card:hover {
+        border-color: var(--cor, var(--green));
       }
       .conta-card::before {
         content: "";
@@ -56,9 +60,32 @@
         margin-bottom: 4px;
       }
       .conta-saldo {
-        font-size: 22px;
-        font-weight: 700;
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
         margin-bottom: 16px;
+      }
+      .saldo-total-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        margin-bottom: 28px;
+        position: relative;
+        overflow: hidden;
+      }
+      .saldo-total-card::after {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(ellipse at top left, rgba(16,185,129,0.05), transparent 55%);
+        pointer-events: none;
+      }
+      .saldo-total-valor {
+        font-size: 40px;
+        font-weight: 800;
+        letter-spacing: -1.5px;
+        margin: 8px 0 4px;
       }
       .conta-acoes {
         display: flex;
@@ -67,7 +94,7 @@
       }
       .btn-transferir {
         background: rgba(99, 102, 241, 0.15);
-        border: 0.5px solid #6366f1;
+        border: 1px solid #6366f1;
         color: #6366f1;
         border-radius: 7px;
         padding: 6px 12px;
@@ -87,7 +114,7 @@
       }
       .transferencia-item-mobile {
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 14px;
         padding: 14px;
         margin-bottom: 10px;
@@ -105,7 +132,7 @@
         border-radius: 16px;
         padding: 24px;
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         position: relative;
         overflow: hidden;
       }
@@ -196,14 +223,14 @@
       }
       .fatura-wrap {
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 14px;
         overflow: hidden;
         margin-bottom: 24px;
       }
       .fatura-header {
         padding: 16px 20px;
-        border-bottom: 0.5px solid var(--border);
+        border-bottom: 1px solid var(--border-subtle);
       }
       .fatura-titulo-row {
         display: flex;
@@ -223,7 +250,7 @@
       }
       .fatura-nav-btn {
         background: var(--bg-tertiary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         color: var(--text-primary);
         border-radius: 8px;
         padding: 7px 12px;
@@ -267,7 +294,7 @@
         grid-template-columns: repeat(3, 1fr);
         gap: 10px;
         padding: 14px 16px;
-        border-bottom: 0.5px solid var(--border);
+        border-bottom: 1px solid var(--border-subtle);
       }
       .fatura-resumo .card {
         margin: 0;
@@ -364,6 +391,13 @@
             <i class="fa-solid fa-plus"></i> Nova conta
           </button>
         </div>
+      </div>
+
+      <!-- Patrimônio líquido total -->
+      <div id="saldo-total-card" class="saldo-total-card" style="display:none">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted)">Patrimônio líquido</div>
+        <div class="saldo-total-valor valor-privado" id="stc-valor">—</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-top:2px" id="stc-sub"></div>
       </div>
 
       <!-- Contas bancárias -->
@@ -636,6 +670,19 @@
 
         const bancarias = contasCache.filter((c) => c.tipo !== "cartao");
         const cartoes = contasCache.filter((c) => c.tipo === "cartao");
+
+        // Saldo total
+        const totalSaldo = saldos.reduce((s, c) => s + parseFloat(c.saldo_atual || 0), 0);
+        const stCard = document.getElementById("saldo-total-card");
+        const stValor = document.getElementById("stc-valor");
+        const stSub = document.getElementById("stc-sub");
+        if (stCard && (bancarias.length || cartoes.length)) {
+          stCard.style.display = "block";
+          stValor.style.color = totalSaldo >= 0 ? "var(--green)" : "var(--red)";
+          stValor.textContent = formatarMoeda(totalSaldo);
+          stSub.textContent = `${bancarias.length} conta${bancarias.length !== 1 ? "s" : ""}${cartoes.length ? ` · ${cartoes.length} cartão${cartoes.length !== 1 ? "ões" : ""}` : ""}`;
+          aplicarPrivacidade();
+        }
 
         // Renderiza contas bancárias
         const gridB = document.getElementById("contas-grid");

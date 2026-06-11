@@ -55,7 +55,7 @@
         z-index: 1;
         transition: transform 0.2s ease;
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 14px;
         padding: 14px 14px 10px;
       }
@@ -96,7 +96,7 @@
         font-size: 11px;
         color: var(--text-muted);
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 20px;
         padding: 2px 8px;
       }
@@ -109,7 +109,7 @@
       }
       .rec-card {
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 14px;
         padding: 18px 20px;
         position: relative;
@@ -214,7 +214,7 @@
       }
       .btn-toggle {
         background: transparent;
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         color: var(--text-secondary);
         border-radius: 7px;
         padding: 6px 12px;
@@ -231,7 +231,7 @@
       }
       .btn-historico {
         background: transparent;
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         color: var(--text-secondary);
         border-radius: 7px;
         padding: 6px 12px;
@@ -260,7 +260,7 @@
       }
       .filtro-btn {
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         color: var(--text-secondary);
         border-radius: 9px;
         padding: 7px 14px;
@@ -278,7 +278,7 @@
         justify-content: space-between;
         align-items: center;
         padding: 10px 0;
-        border-bottom: 0.5px solid var(--border);
+        border-bottom: 1px solid var(--border-subtle);
         font-size: 13px;
       }
       .historico-item:last-child {
@@ -307,7 +307,7 @@
       }
       .categoria-item {
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 10px;
         padding: 12px 16px;
         display: flex;
@@ -333,7 +333,7 @@
         align-items: center;
         justify-content: center;
         background: var(--bg-primary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 8px;
         cursor: pointer;
         font-size: 16px;
@@ -364,7 +364,7 @@
         align-items: center;
         justify-content: center;
         background: var(--bg-primary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         border-radius: 8px;
       }
 
@@ -398,10 +398,45 @@
           grid-template-columns: 1fr;
         }
       }
+      /* Overflow menu de abas */
+      .aba-overflow {
+        position: relative;
+      }
+      .aba-menu {
+        display: none;
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        min-width: 160px;
+        z-index: 200;
+        overflow: hidden;
+        box-shadow: var(--shadow-elevated);
+      }
+      .aba-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 11px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s;
+        text-align: left;
+      }
+      .aba-menu-item:hover { background: var(--bg-tertiary); }
+      .aba-menu-item.active { color: var(--green); font-weight: 600; }
+
       /* Selects de filtro */
       .filtro-select {
         background: var(--bg-secondary);
-        border: 0.5px solid var(--border);
+        border: 1px solid var(--border-subtle);
         color: var(--text-primary);
         border-radius: 10px;
         padding: 11px 32px 11px 12px;
@@ -458,34 +493,25 @@
       </div>
 
       <div class="abas">
-        <button
-          class="aba-btn active"
-          id="aba-lancamentos-btn"
-          onclick="trocarAba('lancamentos')"
-        >
+        <button class="aba-btn active" id="aba-lancamentos-btn" onclick="trocarAba('lancamentos')">
           <i class="fa-solid fa-right-left"></i> Lançamentos
         </button>
-        <button
-          class="aba-btn"
-          id="aba-recorrentes-btn"
-          onclick="trocarAba('recorrentes')"
-        >
+        <button class="aba-btn" id="aba-recorrentes-btn" onclick="trocarAba('recorrentes')">
           <i class="fa-solid fa-rotate"></i> Recorrentes
         </button>
-        <button
-          class="aba-btn"
-          id="aba-categorias-btn"
-          onclick="trocarAba('categorias')"
-        >
-          <i class="fa-solid fa-tag"></i> Categorias
-        </button>
-        <button
-          class="aba-btn"
-          id="aba-lixeira-btn"
-          onclick="trocarAba('lixeira')"
-        >
-          <i class="fa-solid fa-trash-can"></i> Lixeira
-        </button>
+        <div class="aba-overflow">
+          <button class="aba-btn" id="aba-mais-btn" onclick="toggleAbaMenu()" title="Mais opções">
+            •••
+          </button>
+          <div class="aba-menu" id="aba-menu">
+            <button class="aba-menu-item" id="aba-categorias-btn" onclick="trocarAba('categorias');fecharAbaMenu()">
+              <i class="fa-solid fa-tag"></i> Categorias
+            </button>
+            <button class="aba-menu-item" id="aba-lixeira-btn" onclick="trocarAba('lixeira');fecharAbaMenu()">
+              <i class="fa-solid fa-trash-can"></i> Lixeira
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- ABA LANÇAMENTOS -->
@@ -539,7 +565,7 @@
         <div id="busca-lanc-wrap" style="position:relative;margin-bottom:10px;display:none">
           <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;pointer-events:none"></i>
           <input id="busca-lanc-input" type="text" placeholder="Buscar por descrição, categoria..."
-            style="width:100%;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px;padding:9px 34px 9px 32px;color:var(--text-primary);font-size:13px;box-sizing:border-box"
+            style="width:100%;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;padding:9px 34px 9px 32px;color:var(--text-primary);font-size:13px;box-sizing:border-box"
             oninput="onBuscaLanc(this.value)">
           <button id="busca-lanc-clear" onclick="fecharBuscaLanc()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;padding:2px 4px;display:none">
             <i class="fa-solid fa-xmark"></i>
@@ -752,7 +778,7 @@
               title="Inverter Despesa ↔ Receita"
               style="
                 background: var(--bg-tertiary);
-                border: 0.5px solid var(--border);
+                border: 1px solid var(--border-subtle);
                 color: var(--text-secondary);
                 border-radius: 10px;
                 padding: 14px;
@@ -787,7 +813,7 @@
               title="Lançar por voz"
               style="
                 background: var(--bg-tertiary);
-                border: 0.5px solid var(--border);
+                border: 1px solid var(--border-subtle);
                 color: var(--text-secondary);
                 border-radius: 10px;
                 padding: 0;
@@ -875,7 +901,7 @@
               padding: 12px;
               background: var(--bg-tertiary);
               color: var(--text-primary);
-              border: 0.5px solid var(--border);
+              border: 1px solid var(--border-subtle);
             "
             tabindex="9"
           >
@@ -1207,7 +1233,7 @@
             style="
               max-height: 400px;
               overflow-y: auto;
-              border: 0.5px solid var(--border);
+              border: 1px solid var(--border-subtle);
               border-radius: 10px;
               margin-bottom: 14px;
             "
@@ -1355,7 +1381,7 @@
                     ),
                 )
               : 30;
-            return `<div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;opacity:0.85">
+            return `<div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:14px;padding:14px;margin-bottom:8px;opacity:0.85">
             <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
               <div style="width:38px;height:38px;border-radius:50%;background:${catCor}22;display:flex;align-items:center;justify-content:center;flex-shrink:0">
                 <i class="fa-solid ${catIcone}" style="font-size:14px;color:${catCor}"></i>
@@ -1369,7 +1395,7 @@
                 <div style="font-size:10px;color:var(--red)">Expira em ${diasRestantes}d</div>
               </div>
             </div>
-            <div style="display:flex;gap:8px;justify-content:flex-end;border-top:0.5px solid var(--border);padding-top:8px">
+            <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border-subtle);padding-top:8px">
               <button class="btn-edit" style="font-size:12px;padding:6px 12px" onclick="restaurarTransacao(${t.id})">
                 <i class="fa-solid fa-rotate-left"></i> Restaurar
               </button>
@@ -1693,10 +1719,10 @@
           return;
         }
         res.innerHTML = `
-          <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px;overflow:hidden">
-            <div style="padding:8px 12px;font-size:11px;color:var(--text-muted);border-bottom:0.5px solid var(--border)">${data.length} resultado(s)</div>
+          <div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;overflow:hidden">
+            <div style="padding:8px 12px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">${data.length} resultado(s)</div>
             ${data.map((t) => `
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:0.5px solid var(--border);cursor:pointer"
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border-subtle);cursor:pointer"
                    onclick="editarLancamento(${t.id})">
                 <div>
                   <div style="font-size:13px;font-weight:500">${t.descricao || "—"}</div>
@@ -1725,16 +1751,30 @@
       }
 
       // ── Abas ──
+      function toggleAbaMenu() {
+        const menu = document.getElementById("aba-menu");
+        menu.style.display = menu.style.display === "block" ? "none" : "block";
+      }
+
+      function fecharAbaMenu() {
+        const menu = document.getElementById("aba-menu");
+        if (menu) menu.style.display = "none";
+      }
+
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".aba-overflow")) fecharAbaMenu();
+      });
+
       function trocarAba(aba) {
         abaAtiva = aba;
-        document
-          .querySelectorAll(".aba-btn")
-          .forEach((b) => b.classList.remove("active"));
-        document
-          .querySelectorAll(".aba-conteudo")
-          .forEach((c) => c.classList.remove("active"));
+        document.querySelectorAll(".aba-btn").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".aba-menu-item").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".aba-conteudo").forEach((c) => c.classList.remove("active"));
         document.getElementById(`aba-${aba}-btn`).classList.add("active");
         document.getElementById(`aba-${aba}`).classList.add("active");
+        if (aba === "categorias" || aba === "lixeira") {
+          document.getElementById("aba-mais-btn").classList.add("active");
+        }
         const labels = {
           lancamentos: ["Lançamentos", "Novo"],
           recorrentes: ["Recorrentes", "Nova recorrência"],
@@ -1853,7 +1893,7 @@
               <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Despesas</div>
               <div style="font-size:15px;font-weight:700;color:var(--red)">-${formatarMoeda(despesas)}</div>
             </div>
-            <div style="flex:1;min-width:80px;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:10px;padding:10px 12px">
+            <div style="flex:1;min-width:80px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:10px;padding:10px 12px">
               <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Saldo${filtrado ? " (mês)" : ""}</div>
               <div style="font-size:15px;font-weight:700;color:${corSaldo}">${formatarMoeda(saldo)}</div>
             </div>
@@ -1867,13 +1907,13 @@
         const wrap = document.createElement("div");
         wrap.id = "paginacao-wrap";
         wrap.style.cssText =
-          "display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:0.5px solid var(--border);background:var(--bg-secondary);border-radius:0 0 14px 14px;";
+          "display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--border-subtle);background:var(--bg-secondary);border-radius:0 0 14px 14px;";
         wrap.innerHTML = `
-          <button onclick="irPagina(${paginacao.pagina - 1})" style="background:${paginacao.tem_anterior ? "var(--bg-tertiary)" : "transparent"};border:0.5px solid var(--border);color:${paginacao.tem_anterior ? "var(--text-primary)" : "var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_anterior ? "pointer" : "default"}" ${!paginacao.tem_anterior ? "disabled" : ""}>
+          <button onclick="irPagina(${paginacao.pagina - 1})" style="background:${paginacao.tem_anterior ? "var(--bg-tertiary)" : "transparent"};border:1px solid var(--border-subtle);color:${paginacao.tem_anterior ? "var(--text-primary)" : "var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_anterior ? "pointer" : "default"}" ${!paginacao.tem_anterior ? "disabled" : ""}>
             <i class="fa-solid fa-chevron-left"></i> Anterior
           </button>
           <span style="font-size:13px;color:var(--text-muted)">Página <strong style="color:var(--text-primary)">${paginacao.pagina}</strong> de <strong style="color:var(--text-primary)">${paginacao.total_paginas}</strong> · ${paginacao.total} lançamento(s)</span>
-          <button onclick="irPagina(${paginacao.pagina + 1})" style="background:${paginacao.tem_proxima ? "var(--bg-tertiary)" : "transparent"};border:0.5px solid var(--border);color:${paginacao.tem_proxima ? "var(--text-primary)" : "var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_proxima ? "pointer" : "default"}" ${!paginacao.tem_proxima ? "disabled" : ""}>
+          <button onclick="irPagina(${paginacao.pagina + 1})" style="background:${paginacao.tem_proxima ? "var(--bg-tertiary)" : "transparent"};border:1px solid var(--border-subtle);color:${paginacao.tem_proxima ? "var(--text-primary)" : "var(--text-muted)"};border-radius:8px;padding:7px 14px;font-size:13px;cursor:${paginacao.tem_proxima ? "pointer" : "default"}" ${!paginacao.tem_proxima ? "disabled" : ""}>
             Próxima <i class="fa-solid fa-chevron-right"></i>
           </button>`;
         const tw =
@@ -1975,10 +2015,8 @@
             <td>${
               isT
                 ? `<span style="color:var(--text-muted);font-size:12px">—</span>`
-                : `<span style="display:inline-flex;align-items:center;gap:6px">
-                  <span style="width:26px;height:26px;border-radius:50%;background:${t.categoria_cor ? t.categoria_cor + "22" : "var(--bg-tertiary)"};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">
-                    <i class="fa-solid ${t.categoria_icone || "fa-tag"}" style="font-size:10px;color:${t.categoria_cor || "#6b7280"}"></i>
-                  </span>
+                : `<span class="cat-chip">
+                  <span class="cat-chip-dot" style="background:${t.categoria_cor || "#6b7280"}"></span>
                   ${t.categoria_nome || "—"}
                 </span>`
             }</td>
@@ -2047,7 +2085,7 @@
                 : "";
 
             html += `
-              <div style="background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:14px;padding:14px 14px 10px;margin-bottom:8px">
+              <div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:14px;padding:14px 14px 10px;margin-bottom:8px">
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
                   <!-- Ícone de categoria -->
                   <div style="width:40px;height:40px;border-radius:50%;background:${isT ? "rgba(99,102,241,0.15)" : catCor + "22"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -2070,7 +2108,7 @@
                   </div>
                 </div>
                 <!-- Ações -->
-                <div style="display:flex;gap:6px;justify-content:flex-end;border-top:0.5px solid var(--border);padding-top:8px">
+                <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid var(--border-subtle);padding-top:8px">
                   ${
                     isT
                       ? `<button class="btn-danger" style="padding:5px 12px;font-size:12px" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
@@ -3207,17 +3245,17 @@
         document.getElementById("import-preview-lista").innerHTML = previewData
           .map(
             (l, i) => `
-          <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:0.5px solid var(--border);${!l.importar ? "opacity:0.4" : ""}">
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border-subtle);${!l.importar ? "opacity:0.4" : ""}">
             <input type="checkbox" ${l.importar ? "checked" : ""} onchange="toggleImport(${i}, this.checked)" style="width:16px;height:16px;flex-shrink:0;cursor:pointer">
             <div style="flex:1;min-width:0">
               <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.descricao}</div>
               <div style="font-size:11px;color:var(--text-muted)">${l.data}</div>
             </div>
-            <select onchange="previewData[${i}].tipo=this.value;renderPreview()" style="background:var(--bg-tertiary);border:0.5px solid var(--border);color:var(--text-primary);border-radius:6px;padding:3px 6px;font-size:11px">
+            <select onchange="previewData[${i}].tipo=this.value;renderPreview()" style="background:var(--bg-tertiary);border:1px solid var(--border-subtle);color:var(--text-primary);border-radius:6px;padding:3px 6px;font-size:11px">
               <option value="despesa" ${l.tipo === "despesa" ? "selected" : ""}>↓ Despesa</option>
               <option value="receita" ${l.tipo === "receita" ? "selected" : ""}>↑ Receita</option>
             </select>
-            <select onchange="previewData[${i}].categoria_id=this.value" style="background:var(--bg-tertiary);border:0.5px solid var(--border);color:var(--text-primary);border-radius:6px;padding:3px 6px;font-size:11px;max-width:110px">
+            <select onchange="previewData[${i}].categoria_id=this.value" style="background:var(--bg-tertiary);border:1px solid var(--border-subtle);color:var(--text-primary);border-radius:6px;padding:3px 6px;font-size:11px;max-width:110px">
               <option value="">Categoria</option>${catsOpts}
             </select>
             <div style="font-size:13px;font-weight:700;color:${l.tipo === "receita" ? "var(--green)" : "var(--red)"};white-space:nowrap;min-width:70px;text-align:right">
