@@ -65,7 +65,7 @@
 
       /* Lixeira badge */
       .lixeira-badge {
-        background: rgba(239, 68, 68, 0.15);
+        background: var(--red-alpha);
         color: var(--red);
         border-radius: 20px;
         padding: 2px 8px;
@@ -227,27 +227,27 @@
         font-weight: 600;
         padding: 2px 7px;
         border-radius: 20px;
-        background: rgba(99, 102, 241, 0.12);
-        color: #6366f1;
+        background: var(--purple-alpha);
+        color: var(--purple);
         margin-left: 5px;
         cursor: pointer;
         white-space: nowrap;
-        transition: background 0.15s;
+        transition: background var(--duration-fast) var(--ease-out);
       }
       .tag-chip:hover, .tag-chip.active {
-        background: rgba(99, 102, 241, 0.28);
+        background: var(--purple-alpha2);
       }
       .badge-freq {
         font-size: 10px;
         padding: 2px 8px;
         border-radius: 20px;
         font-weight: 600;
-        background: rgba(59, 130, 246, 0.15);
+        background: var(--blue-alpha);
         color: var(--blue);
         white-space: nowrap;
       }
       .badge-pausada {
-        background: rgba(107, 114, 128, 0.15);
+        background: var(--bg-tertiary);
         color: var(--text-muted);
         font-size: 10px;
         padding: 2px 8px;
@@ -393,7 +393,7 @@
         color: var(--green);
       }
       .icone-opcao.selecionado {
-        background: rgba(16, 185, 129, 0.15);
+        background: var(--green-alpha);
       }
       .icone-preview {
         display: flex;
@@ -1582,7 +1582,7 @@
             ? `<span style="font-size:10px;background:var(--bg-tertiary);color:var(--text-muted);padding:1px 6px;border-radius:20px;margin-left:4px">${t.parcela_atual}/${t.parcelas}</span>`
             : "";
         return `<div style="display:flex;align-items:center;gap:12px">
-          <div style="width:40px;height:40px;border-radius:50%;background:${isT ? "rgba(99,102,241,0.15)" : catCor + "22"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <div style="width:40px;height:40px;border-radius:50%;background:${isT ? "var(--purple-alpha)" : catCor + "22"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
             <i class="fa-solid ${isT ? "fa-right-left" : catIcone}" style="font-size:15px;color:${catCor}"></i>
           </div>
           <div style="flex:1;min-width:0">
@@ -1737,7 +1737,7 @@
         } else {
           wrap.style.display = "block";
           document.getElementById("busca-lanc-input").focus();
-          document.getElementById("btn-busca-lanc").style.background = "rgba(16,185,129,0.1)";
+          document.getElementById("btn-busca-lanc").style.background = "var(--green-alpha)";
         }
       }
 
@@ -1791,7 +1791,7 @@
         const open = el.style.display === "grid";
         el.style.display = open ? "none" : "grid";
         const btn = document.getElementById("btn-filtros-extra");
-        if (btn) btn.style.background = open ? "" : "rgba(16,185,129,0.1)";
+        if (btn) btn.style.background = open ? "" : "var(--green-alpha)";
       }
 
       function atualizarFiltrosBadge() {
@@ -1964,11 +1964,11 @@
         wrap.style.display = "block";
         wrap.innerHTML = `
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <div style="flex:1;min-width:80px;background:rgba(16,185,129,0.08);border:0.5px solid rgba(16,185,129,0.25);border-radius:10px;padding:10px 12px">
+            <div style="flex:1;min-width:80px;background:var(--green-alpha);border:0.5px solid var(--green);border-radius:10px;padding:10px 12px;border-opacity:0.3">
               <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Receitas</div>
               <div style="font-size:15px;font-weight:700;color:var(--green)">+${formatarMoeda(receitas)}</div>
             </div>
-            <div style="flex:1;min-width:80px;background:rgba(239,68,68,0.08);border:0.5px solid rgba(239,68,68,0.25);border-radius:10px;padding:10px 12px">
+            <div style="flex:1;min-width:80px;background:var(--red-alpha);border:0.5px solid var(--red);border-radius:10px;padding:10px 12px;border-opacity:0.3">
               <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px">Despesas</div>
               <div style="font-size:15px;font-weight:700;color:var(--red)">-${formatarMoeda(despesas)}</div>
             </div>
@@ -2169,10 +2169,10 @@
                 ? "var(--green)"
                 : "var(--red)";
             const bg = isT
-              ? "rgba(99,102,241,0.15)"
+              ? "var(--purple-alpha)"
               : t.tipo === "receita"
-                ? "rgba(16,185,129,0.15)"
-                : "rgba(239,68,68,0.15)";
+                ? "var(--green-alpha)"
+                : "var(--red-alpha)";
             const sinal = isT ? "" : t.tipo === "receita" ? "+" : "-";
             const catIcone = t.categoria_icone || "fa-tag";
             const catCor = t.categoria_cor || "#6b7280";
@@ -2185,7 +2185,7 @@
               <div style="background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:14px;padding:14px 14px 10px;margin-bottom:8px">
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
                   <!-- Ícone de categoria -->
-                  <div style="width:40px;height:40px;border-radius:50%;background:${isT ? "rgba(99,102,241,0.15)" : catCor + "22"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <div style="width:40px;height:40px;border-radius:50%;background:${isT ? "var(--purple-alpha)" : catCor + "22"};display:flex;align-items:center;justify-content:center;flex-shrink:0">
                     <i class="fa-solid ${isT ? "fa-right-left" : catIcone}" style="font-size:15px;color:${isT ? "#6366f1" : catCor}"></i>
                   </div>
                   <!-- Info -->
@@ -2415,8 +2415,8 @@
               const aviso = document.createElement("div");
               aviso.id = "aviso-duplicado";
               aviso.style.cssText = `
-                background:rgba(245,158,11,0.12);border:0.5px solid #f59e0b;
-                border-radius:8px;padding:10px 14px;font-size:12px;color:#f59e0b;
+                background:var(--amber-alpha);border:0.5px solid var(--amber);
+                border-radius:8px;padding:10px 14px;font-size:12px;color:var(--amber);
                 margin-bottom:10px;display:flex;align-items:center;gap:8px;
               `;
               aviso.innerHTML = `

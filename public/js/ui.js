@@ -36,6 +36,55 @@ function toastVariado(acao) {
   toast(msg);
 }
 
+// ── Snackbar persistente de erro de rede (com botão recarregar) ──
+function mostrarErroConexao() {
+  if (document.getElementById("snackbar-rede")) return;
+  const el = document.createElement("div");
+  el.id = "snackbar-rede";
+  el.innerHTML = `
+    <i class="fa-solid fa-wifi" style="opacity:0.7"></i>
+    <span>Erro de conexão. Dados podem estar desatualizados.</span>
+    <button onclick="location.reload()">Recarregar</button>
+    <button onclick="this.closest('#snackbar-rede').remove()" style="background:transparent;color:var(--text-muted);padding:4px 8px">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  `;
+  el.style.cssText = `
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-secondary);
+    border: 1px solid var(--red);
+    border-radius: 12px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 9998;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-elevated);
+    max-width: min(420px, calc(100vw - 32px));
+    animation: toastIn 0.25s var(--ease-out);
+  `;
+  const btnReload = el.querySelector("button");
+  btnReload.style.cssText = `
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  `;
+  document.body.appendChild(el);
+}
+
 // ── Toast com barra de progresso ──
 function toast(mensagem, tipo = "sucesso") {
   const cores = {

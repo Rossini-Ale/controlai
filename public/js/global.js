@@ -325,6 +325,7 @@ async function fetchAPI(endpoint, options = {}) {
     // Erro de rede (offline, timeout, CORS, etc.)
     if (!navigator.onLine) return null; // silencioso — banner offline já notifica
     console.error(`[fetchAPI] ${endpoint} → Erro de rede:`, err.message);
+    if (typeof mostrarErroConexao === "function") mostrarErroConexao();
     return null;
   }
 }
@@ -1203,13 +1204,15 @@ function highlightTermo(texto, termo) {
     if (banner) return;
     banner = document.createElement("div");
     banner.className = "offline-banner";
-    banner.innerHTML = `<i class="fa-solid fa-wifi-slash"></i> Você está offline. Suas ações serão pausadas até a conexão voltar.`;
+    banner.innerHTML = `<i class="fa-solid fa-wifi-slash"></i><span>Sem conexão</span>`;
     document.body.appendChild(banner);
   }
 
   function mostrarOffline() {
     criarBanner();
-    requestAnimationFrame(() => banner.classList.add("visivel"));
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => banner.classList.add("visivel"));
+    });
     // Desabilita botões de salvar
     document
       .querySelectorAll(".btn[onclick*='salvar'], .btn[onclick*='Salvar']")
@@ -1221,8 +1224,8 @@ function highlightTermo(texto, termo) {
 
   function mostrarOnline() {
     if (banner) {
-      banner.innerHTML = `<i class="fa-solid fa-wifi"></i> Conexão restaurada!`;
-      banner.style.background = "#10b981";
+      banner.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>Conexão restaurada</span>`;
+      banner.classList.add("online");
       setTimeout(() => {
         banner.classList.remove("visivel");
         setTimeout(() => {

@@ -344,6 +344,23 @@
       let { mes, ano } = getMesAno();
       let todasTransacoes = [];
       let chartCategorias = null, chart6Meses = null;
+
+      // Lê CSS variables do tema atual para usar nos charts
+      function _cssVar(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      }
+      function _chartTheme() {
+        return {
+          muted:      _cssVar("--text-muted")      || "#6b7280",
+          secondary:  _cssVar("--text-secondary")  || "#9ca3af",
+          green:      _cssVar("--green")            || "#10b981",
+          red:        _cssVar("--red")              || "#ef4444",
+          blue:       _cssVar("--blue")             || "#3b82f6",
+          gridLine:   _cssVar("--border-subtle"),
+          tooltipBg:  _cssVar("--bg-secondary")    || "#1a1f2e",
+          tooltipText:_cssVar("--text-primary")    || "#ffffff",
+        };
+      }
       let _resumoData = null, _evolucaoData = null;
 
       function atualizarLabel() {
@@ -482,41 +499,37 @@
         const cores = top5.map((d) => d.cor || "#6b7280");
 
         if (chartCategorias) chartCategorias.destroy();
+        const ct = _chartTheme();
         chartCategorias = new Chart(
           document.getElementById("chart-categorias"),
           {
             type: "doughnut",
             data: {
               labels,
-              datasets: [
-                {
-                  data: valores,
-                  backgroundColor: cores,
-                  borderWidth: 0,
-                  hoverOffset: 4,
-                },
-              ],
+              datasets: [{
+                data: valores,
+                backgroundColor: cores,
+                borderWidth: 2,
+                borderColor: _cssVar("--bg-secondary") || "#1a1f2e",
+                hoverOffset: 6,
+              }],
             },
             options: {
               responsive: true,
-              cutout: "65%",
+              cutout: "68%",
               plugins: {
                 legend: {
                   position: "bottom",
-                  labels: {
-                    color:
-                      getComputedStyle(document.documentElement)
-                        .getPropertyValue("--text-muted")
-                        .trim() || "#6b7280",
-                    font: { size: 11 },
-                    padding: 10,
-                    boxWidth: 10,
-                  },
+                  labels: { color: ct.muted, font: { size: 11, family: "Inter" }, padding: 12, boxWidth: 10, borderRadius: 3 },
                 },
                 tooltip: {
-                  callbacks: {
-                    label: (ctx) => ` ${formatarMoedaRaw(ctx.parsed)}`,
-                  },
+                  backgroundColor: ct.tooltipBg,
+                  titleColor: ct.tooltipText,
+                  bodyColor: ct.secondary,
+                  borderColor: _cssVar("--border") || "#2d3748",
+                  borderWidth: 1,
+                  padding: 10,
+                  callbacks: { label: (ctx) => ` ${formatarMoedaRaw(ctx.parsed)}` },
                 },
               },
               onClick: (_, elements) => {
@@ -570,9 +583,9 @@
         if (!alertas.length) return;
         const wrap = document.getElementById("alertas-orcamento");
         wrap.innerHTML = `
-          <div style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);border-radius:12px;padding:12px 16px;margin-bottom:16px">
+          <div style="background:var(--red-alpha);border:1px solid var(--red);border-radius:12px;padding:12px 16px;margin-bottom:16px;border-opacity:0.3">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-              <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;font-size:13px"></i>
+              <i class="fa-solid fa-triangle-exclamation" style="color:var(--red);font-size:13px"></i>
               <span style="font-size:13px;font-weight:600">Alertas de orçamento</span>
               <a href="/relatorios.html?aba=orcamento" style="font-size:11px;color:var(--green);text-decoration:none;margin-left:auto">Ver detalhes →</a>
             </div>
@@ -677,10 +690,10 @@
                 ? "var(--green)"
                 : "var(--red)";
             const bg = isT
-              ? "rgba(99,102,241,0.15)"
+              ? "var(--purple-alpha)"
               : t.tipo === "receita"
-                ? "rgba(16,185,129,0.15)"
-                : "rgba(239,68,68,0.15)";
+                ? "var(--green-alpha)"
+                : "var(--red-alpha)";
             const sinal = isT ? "" : t.tipo === "receita" ? "+" : "-";
             const catIcone =
               t.categoria_icone || (isT ? "fa-right-left" : "fa-tag");
@@ -993,7 +1006,7 @@
             <canvas id="chart-saldo-diario" height="110"></canvas>
           </div>`;
 
-        const mutedColor = getComputedStyle(document.documentElement).getPropertyValue("--text-muted").trim() || "#6b7280";
+        const sd = _chartTheme();
         if (chartSaldoDiario) chartSaldoDiario.destroy();
         chartSaldoDiario = new Chart(document.getElementById("chart-saldo-diario"), {
           type: "line",
@@ -1002,8 +1015,8 @@
             datasets: [{
               data: dados.map((d) => d.saldo),
               borderColor: cor,
-              backgroundColor: cor + "18",
-              fill: true, tension: 0.35,
+              backgroundColor: cor + "22",
+              fill: true, tension: 0.4,
               pointRadius: dados.length > 20 ? 0 : 3,
               pointHoverRadius: 5,
               borderWidth: 2,
@@ -1013,13 +1026,22 @@
             responsive: true,
             plugins: {
               legend: { display: false },
-              tooltip: { callbacks: { label: (ctx) => ` ${formatarMoedaRaw(ctx.parsed.y)}` } },
+              tooltip: {
+                backgroundColor: sd.tooltipBg,
+                titleColor: sd.tooltipText,
+                bodyColor: sd.secondary,
+                borderColor: _cssVar("--border"),
+                borderWidth: 1,
+                padding: 10,
+                callbacks: { label: (ctx) => ` ${formatarMoedaRaw(ctx.parsed.y)}` },
+              },
             },
             scales: {
-              x: { grid: { display: false }, ticks: { color: mutedColor, font: { size: 10 } } },
+              x: { grid: { display: false }, ticks: { color: sd.muted, font: { size: 10, family: "Inter" } } },
               y: {
-                grid: { color: "rgba(107,114,128,0.1)" },
-                ticks: { color: mutedColor, font: { size: 10 }, callback: (v) => "R$" + (Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + "k" : v) },
+                grid: { color: _cssVar("--border-subtle") },
+                border: { display: false },
+                ticks: { color: sd.muted, font: { size: 10, family: "Inter" }, callback: (v) => "R$" + (Math.abs(v) >= 1000 ? (v / 1000).toFixed(0) + "k" : v) },
               },
             },
           },
@@ -1155,35 +1177,44 @@
             <canvas id="chart-6meses" height="150"></canvas>
           </div>`;
 
-        const mutedColor = getComputedStyle(document.documentElement).getPropertyValue("--text-muted").trim() || "#6b7280";
         const labels = data.map((d) => nomeMes(d.mes).substring(0, 3) + "/" + String(d.ano).substring(2));
         const receitas = data.map((d) => parseFloat(d.receitas) || 0);
         const despesas = data.map((d) => parseFloat(d.despesas) || 0);
 
         if (chart6Meses) chart6Meses.destroy();
+        const ct6 = _chartTheme();
         chart6Meses = new Chart(document.getElementById("chart-6meses"), {
           type: "bar",
           data: {
             labels,
             datasets: [
-              { label: "Receitas", data: receitas, backgroundColor: "rgba(16,185,129,0.75)", borderRadius: 4, borderWidth: 0 },
-              { label: "Despesas", data: despesas, backgroundColor: "rgba(239,68,68,0.75)", borderRadius: 4, borderWidth: 0 },
+              { label: "Receitas", data: receitas, backgroundColor: ct6.green + "bf", borderRadius: 4, borderWidth: 0 },
+              { label: "Despesas", data: despesas, backgroundColor: ct6.red + "bf", borderRadius: 4, borderWidth: 0 },
             ],
           },
           options: {
             responsive: true,
             plugins: {
-              legend: { position: "top", labels: { color: mutedColor, font: { size: 11 }, padding: 10, boxWidth: 10 } },
-              tooltip: { callbacks: { label: (ctx) => ` ${formatarMoedaRaw(ctx.parsed.y)}` } },
+              legend: { position: "top", labels: { color: ct6.muted, font: { family: "Inter", size: 11 }, padding: 10, boxWidth: 10 } },
+              tooltip: {
+                backgroundColor: ct6.tooltipBg,
+                titleColor: ct6.tooltipText,
+                bodyColor: ct6.secondary,
+                borderColor: ct6.gridLine,
+                borderWidth: 1,
+                padding: 10,
+                callbacks: { label: (ctx) => ` ${formatarMoedaRaw(ctx.parsed.y)}` },
+              },
             },
             scales: {
-              x: { grid: { display: false }, ticks: { color: mutedColor, font: { size: 11 } } },
+              x: { grid: { display: false }, ticks: { color: ct6.muted, font: { family: "Inter", size: 11 } }, border: { display: false } },
               y: {
-                grid: { color: "rgba(107,114,128,0.1)" },
+                grid: { color: ct6.gridLine || "rgba(107,114,128,0.1)" },
                 ticks: {
-                  color: mutedColor, font: { size: 11 },
+                  color: ct6.muted, font: { family: "Inter", size: 11 },
                   callback: (v) => "R$ " + (v >= 1000 ? (v / 1000).toFixed(1) + "k" : v),
                 },
+                border: { display: false },
               },
             },
           },
@@ -1252,7 +1283,7 @@
               const acima = diff > 0;
               insights.push({
                 icon: acima ? "fa-arrow-trend-up" : "fa-arrow-trend-down",
-                bg: acima ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.12)",
+                bg: acima ? "var(--red-alpha)" : "var(--green-alpha)",
                 color: acima ? "var(--red)" : "var(--green)",
                 text: acima
                   ? `Despesas <strong>${Math.abs(diff).toFixed(0)}% acima</strong> da média dos últimos ${ultimos.length} meses`
@@ -1289,7 +1320,7 @@
           if (maiores.length > 0 && parseFloat(maiores[0].valor) > 0) {
             insights.push({
               icon: "fa-receipt",
-              bg: "rgba(107,114,128,0.12)",
+              bg: "var(--bg-tertiary)",
               color: "var(--text-muted)",
               text: `Maior despesa: <strong>${maiores[0].descricao}</strong> — ${formatarMoedaRaw(parseFloat(maiores[0].valor))}`,
             });
@@ -1305,14 +1336,14 @@
           if (eco > 0 && taxa >= 5) {
             insights.push({
               icon: "fa-piggy-bank",
-              bg: "rgba(16,185,129,0.12)",
+              bg: "var(--green-alpha)",
               color: "var(--green)",
               text: `Taxa de economia de <strong>${taxa}%</strong> este mês — ${formatarMoedaRaw(eco)} guardados`,
             });
           } else if (eco < 0) {
             insights.push({
               icon: "fa-triangle-exclamation",
-              bg: "rgba(239,68,68,0.12)",
+              bg: "var(--red-alpha)",
               color: "var(--red)",
               text: `Despesas superiores às receitas em <strong>${formatarMoedaRaw(Math.abs(eco))}</strong> este mês`,
             });
@@ -1358,7 +1389,7 @@
               <a href="/pets.html" style="font-size:12px;color:var(--green);text-decoration:none;font-weight:600">Ver tudo →</a>
             </div>
             ${alertas.length ? `
-              <div style="background:rgba(239,68,68,0.07);border:0.5px solid rgba(239,68,68,0.25);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#ef4444;display:flex;gap:8px;align-items:center">
+              <div style="background:var(--red-alpha);border:0.5px solid var(--red);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--red);display:flex;gap:8px;align-items:center">
                 <i class="fa-solid fa-triangle-exclamation" style="flex-shrink:0"></i>
                 <span>${alertas.length === 1
                   ? `<b>${alertas[0].pet_emoji || "🐾"} ${alertas[0].pet_nome}</b>: ${alertas[0].descricao} vence em breve`
@@ -1432,7 +1463,7 @@
           </div>
         </div>
         <div style="padding:0 20px 20px;display:flex;gap:8px">
-          <button id="modal-meta-deletar" onclick="deletarMeta()" style="display:none;align-items:center;gap:6px;background:rgba(239,68,68,0.1);border:0.5px solid rgba(239,68,68,0.3);color:#ef4444;border-radius:9px;padding:10px 14px;font-size:13px;cursor:pointer"><i class="fa-solid fa-trash"></i></button>
+          <button id="modal-meta-deletar" onclick="deletarMeta()" style="display:none;align-items:center;gap:6px;background:var(--red-alpha);border:0.5px solid var(--red);color:var(--red);border-radius:9px;padding:10px 14px;font-size:13px;cursor:pointer"><i class="fa-solid fa-trash"></i></button>
           <button onclick="salvarMeta()" style="flex:1;background:var(--green);border:none;color:#fff;border-radius:9px;padding:11px;font-size:14px;font-weight:600;cursor:pointer">Salvar</button>
         </div>
       </div>
