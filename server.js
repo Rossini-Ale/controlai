@@ -91,6 +91,7 @@ app.get("/", (req, res) =>
 // ── Inicialização: migrations → servidor → cron ──
 const { rodarMigrations } = require("./migration");
 const { rodarTudo } = require("./routes/recorrentes-engine");
+const { iniciarCronPush } = require("./routes/push-cron");
 const PORT = process.env.PORT || 3000;
 
 rodarMigrations()
@@ -102,5 +103,6 @@ rodarMigrations()
     setTimeout(() => {
       rodarTudo();
       setInterval(rodarTudo, 60 * 60 * 1000);
+      iniciarCronPush();
     }, 5000);
   });
