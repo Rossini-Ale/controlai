@@ -679,7 +679,7 @@
         if (stCard && (bancarias.length || cartoes.length)) {
           stCard.style.display = "block";
           stValor.style.color = totalSaldo >= 0 ? "var(--green)" : "var(--red)";
-          stValor.textContent = formatarMoeda(totalSaldo);
+          stValor.innerHTML = formatarMoeda(totalSaldo);
           stSub.textContent = `${bancarias.length} conta${bancarias.length !== 1 ? "s" : ""}${cartoes.length ? ` · ${cartoes.length} cartão${cartoes.length !== 1 ? "ões" : ""}` : ""}`;
           aplicarPrivacidade();
         }
