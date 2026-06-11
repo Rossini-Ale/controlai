@@ -659,12 +659,14 @@ function selecionarTipo(tipo) {
           .join("")
       : `<option value="">Sem categorias</option>`;
   const selConta = document.getElementById("r-conta");
-  if (selConta)
-    selConta.innerHTML = contasRapido.length
-      ? contasRapido
-          .map((c) => `<option value="${c.id}">${c.nome}</option>`)
-          .join("")
+  if (selConta) {
+    const filtradas = tipo === "cartao"
+      ? contasRapido.filter((c) => c.tipo === "cartao")
+      : contasRapido.filter((c) => c.tipo !== "cartao");
+    selConta.innerHTML = filtradas.length
+      ? filtradas.map((c) => `<option value="${c.id}">${c.nome}</option>`).join("")
       : `<option value="">Sem contas</option>`;
+  }
 }
 async function salvarRapido() {
   const inputValor = document.getElementById("r-valor");
@@ -691,23 +693,6 @@ async function salvarRapido() {
       }),
     });
     toast("Lançamento atualizado! ✏️");
-  } else if (tipoRapido === "cartao") {
-    const cartoes = (await fetchAPI("/api/cartoes")) || [];
-    if (cartoes.length === 0) {
-      alert("Nenhum cartão cadastrado.");
-      return;
-    }
-    await fetchAPI(`/api/faturas/${cartoes[0].id}/lancar`, {
-      method: "POST",
-      body: JSON.stringify({
-        descricao,
-        valor,
-        categoria_id: categoria,
-        data: hoje,
-        parcelas: 1,
-      }),
-    });
-    toast("Lançado no cartão!");
   } else {
     await fetchAPI("/api/transacoes", {
       method: "POST",

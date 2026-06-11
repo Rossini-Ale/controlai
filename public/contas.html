@@ -384,104 +384,60 @@
     <div id="mobileheader"></div>
     <div class="sidebar" id="sidebar"></div>
     <div class="main">
-      <div
-        style="
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 16px;
-        "
-      >
-        <h1 class="page-title" id="page-title" style="margin: 0">Contas</h1>
-        <div id="header-acoes" style="display: flex; gap: 8px"></div>
-      </div>
-
-      <div class="abas">
-        <button
-          class="aba-btn active"
-          id="aba-contas-btn"
-          onclick="trocarAba('contas')"
-        >
-          <i class="fa-solid fa-wallet"></i> Contas
-        </button>
-        <button
-          class="aba-btn"
-          id="aba-cartoes-btn"
-          onclick="trocarAba('cartoes')"
-        >
-          <i class="fa-solid fa-credit-card"></i> Cartões
-        </button>
-      </div>
-
-      <!-- ABA CONTAS -->
-      <div class="aba-conteudo active" id="aba-contas">
-        <div class="contas-grid" id="contas-grid"></div>
-        <div class="transferencias-wrap">
-          <div class="table-wrap">
-            <div class="table-header">
-              <h2>
-                <i
-                  class="fa-solid fa-right-left"
-                  style="color: #6366f1; margin-right: 6px"
-                ></i
-                >Transferências
-              </h2>
-            </div>
-            <div class="desktop-only">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Descrição</th>
-                    <th>Origem</th>
-                    <th>Destino</th>
-                    <th>Valor</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody id="tbody-transferencias"></tbody>
-              </table>
-            </div>
-            <div
-              class="mobile-only"
-              id="lista-transferencias-mobile"
-              style="padding: 12px"
-            ></div>
-          </div>
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+        <div>
+          <h1 class="page-title" style="margin:0">Contas & Cartões</h1>
+          <p class="page-subtitle">Saldos, cartões e transferências</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" style="background:var(--blue)" onclick="abrirModalTransferir()">
+            <i class="fa-solid fa-right-left"></i> Transferir
+          </button>
+          <button class="btn" onclick="abrirModalConta()">
+            <i class="fa-solid fa-plus"></i> Nova conta
+          </button>
         </div>
       </div>
 
-      <!-- ABA CARTÕES -->
-      <div class="aba-conteudo" id="aba-cartoes">
+      <!-- Contas bancárias -->
+      <div id="secao-contas">
+        <h2 style="font-size:14px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:0 0 12px">
+          <i class="fa-solid fa-wallet" style="margin-right:6px"></i>Contas bancárias
+        </h2>
+        <div class="contas-grid" id="contas-grid"></div>
+      </div>
+
+      <!-- Cartões de crédito -->
+      <div id="secao-cartoes" style="display:none;margin-top:28px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <h2 style="font-size:14px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin:0">
+            <i class="fa-solid fa-credit-card" style="margin-right:6px"></i>Cartões de crédito
+          </h2>
+          <button class="btn" style="padding:6px 14px;font-size:13px" onclick="abrirModalConta('cartao')">
+            <i class="fa-solid fa-plus"></i> Novo cartão
+          </button>
+        </div>
         <div class="cartoes-grid" id="cartoes-grid"></div>
-        <div id="fatura-section" style="display: none">
+        <!-- Fatura inline -->
+        <div id="fatura-section" style="display:none;margin-top:20px">
           <div class="fatura-wrap">
             <div class="fatura-header">
               <div class="fatura-titulo-row">
                 <div>
                   <h2 id="fatura-titulo">Fatura</h2>
-                  <span class="fatura-status" id="fatura-status">aberta</span>
+                  <span class="fatura-status aberta" id="fatura-status">aberta</span>
                 </div>
               </div>
               <div class="fatura-nav-row">
-                <button class="fatura-nav-btn" onclick="mudarMesFatura(-1)">
-                  <i class="fa-solid fa-chevron-left"></i>
-                </button>
+                <button class="fatura-nav-btn" onclick="mudarMesFatura(-1)"><i class="fa-solid fa-chevron-left"></i></button>
                 <span class="fatura-mes-label" id="fatura-mes-label"></span>
-                <button class="fatura-nav-btn" onclick="mudarMesFatura(1)">
-                  <i class="fa-solid fa-chevron-right"></i>
-                </button>
+                <button class="fatura-nav-btn" onclick="mudarMesFatura(1)"><i class="fa-solid fa-chevron-right"></i></button>
               </div>
               <div class="fatura-acoes">
-                <button class="btn" onclick="abrirModalLancar()">
+                <button class="btn" onclick="lancarNoCartao()">
                   <i class="fa-solid fa-plus"></i> Lançar
                 </button>
-                <button
-                  id="btn-pagar"
-                  class="btn"
-                  style="background: #6366f1"
-                  onclick="abrirModalPagar()"
-                >
+                <button id="btn-pagar" class="btn" style="background:#6366f1" onclick="abrirModalPagar()">
                   <i class="fa-solid fa-check"></i> Pagar fatura
                 </button>
               </div>
@@ -489,7 +445,7 @@
             <div class="fatura-resumo">
               <div class="card">
                 <div class="card-label">Total</div>
-                <div class="card-value red" id="fatura-total">R$ 0,00</div>
+                <div class="card-value red valor-privado" id="fatura-total">R$ 0,00</div>
               </div>
               <div class="card">
                 <div class="card-label">Lançamentos</div>
@@ -497,83 +453,95 @@
               </div>
               <div class="card">
                 <div class="card-label">Vencimento</div>
-                <div
-                  class="card-value"
-                  id="fatura-vencimento"
-                  style="font-size: 13px"
-                >
-                  —
-                </div>
+                <div class="card-value" id="fatura-vencimento" style="font-size:13px">—</div>
               </div>
             </div>
             <div class="desktop-only">
               <table>
                 <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Descrição</th>
-                    <th>Categoria</th>
-                    <th>Parcela</th>
-                    <th>Valor</th>
-                    <th>Ações</th>
-                  </tr>
+                  <tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Parcela</th><th>Valor</th><th>Ações</th></tr>
                 </thead>
                 <tbody id="tabela-fatura-desktop"></tbody>
               </table>
             </div>
-            <div
-              class="fatura-lista-mobile mobile-only"
-              id="fatura-lista-mobile"
-            ></div>
+            <div class="fatura-lista-mobile mobile-only" id="fatura-lista-mobile"></div>
           </div>
+        </div>
+      </div>
+
+      <!-- Transferências -->
+      <div class="transferencias-wrap" style="margin-top:28px">
+        <div class="table-wrap">
+          <div class="table-header">
+            <h2><i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px"></i>Transferências</h2>
+          </div>
+          <div class="desktop-only">
+            <table>
+              <thead>
+                <tr><th>Data</th><th>Descrição</th><th>Origem</th><th>Destino</th><th>Valor</th><th>Ações</th></tr>
+              </thead>
+              <tbody id="tbody-transferencias"></tbody>
+            </table>
+          </div>
+          <div class="mobile-only" id="lista-transferencias-mobile" style="padding:12px"></div>
         </div>
       </div>
     </div>
 
-    <!-- Modal conta -->
+    <!-- Modal conta / cartão -->
     <div class="modal-overlay" id="modal-conta">
       <div class="modal">
-        <h2 id="modal-conta-titulo">Nova conta</h2>
-        <div class="form-group">
-          <label>Nome da conta</label
-          ><input
-            type="text"
-            id="f-nome"
-            placeholder="Ex: Nubank, Carteira..."
-          />
+        <div class="modal-header">
+          <h2 id="modal-conta-titulo">Nova conta</h2>
+          <button class="btn-cancel btn-icon" onclick="fecharModalConta()"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="form-group">
-          <label>Tipo</label
-          ><select id="f-tipo">
-            <option value="corrente">Conta corrente</option>
-            <option value="poupanca">Poupança</option>
-            <option value="carteira">Carteira</option>
-            <option value="investimento">Investimento</option>
-          </select>
+          <label>Nome</label>
+          <input type="text" id="f-nome" placeholder="Ex: Nubank, Carteira, Inter..." />
         </div>
-        <div class="form-group">
-          <label>Saldo inicial</label
-          ><input
-            type="text"
-            inputmode="decimal"
-            id="f-saldo"
-            placeholder="0,00"
-          />
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group" style="margin:0">
+            <label>Tipo</label>
+            <select id="f-tipo" onchange="atualizarCamposCartao()">
+              <option value="corrente">Conta corrente</option>
+              <option value="poupanca">Poupança</option>
+              <option value="carteira">Carteira</option>
+              <option value="investimento">Investimento</option>
+              <option value="cartao">Cartão de crédito</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Cor</label>
+            <input type="color" id="f-cor" value="#10b981" style="height:40px;cursor:pointer;width:100%" />
+          </div>
         </div>
-        <div class="form-group">
-          <label>Cor</label
-          ><input
-            type="color"
-            id="f-cor"
-            value="#10b981"
-            style="height: 40px; cursor: pointer"
-          />
+        <!-- Campos para conta bancária -->
+        <div id="campos-bancarios">
+          <div class="form-group">
+            <label>Saldo inicial (R$)</label>
+            <input type="text" inputmode="decimal" id="f-saldo" placeholder="0,00" />
+          </div>
         </div>
-        <div class="modal-footer">
-          <button class="btn-cancel" onclick="fecharModalConta()">
-            Cancelar
-          </button>
-          <button class="btn" onclick="salvarConta()">Salvar</button>
+        <!-- Campos extras para cartão -->
+        <div id="campos-cartao" style="display:none">
+          <div class="form-group">
+            <label>Limite (R$)</label>
+            <input type="text" inputmode="decimal" id="f-limite" placeholder="0,00" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group" style="margin:0">
+              <label>Dia de fechamento</label>
+              <input type="number" id="f-fechamento" min="1" max="28" placeholder="Ex: 25" />
+            </div>
+            <div class="form-group" style="margin:0">
+              <label>Dia de vencimento</label>
+              <input type="number" id="f-vencimento" min="1" max="28" placeholder="Ex: 5" />
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn-cancel" onclick="fecharModalConta()" style="flex:1;padding:12px">Cancelar</button>
+          <button class="btn" onclick="salvarConta()" style="flex:2;justify-content:center;padding:12px">Salvar</button>
         </div>
       </div>
     </div>
@@ -630,139 +598,6 @@
       </div>
     </div>
 
-    <!-- Modal novo cartão -->
-    <div class="modal-overlay" id="modal-cartao">
-      <div class="modal">
-        <h2 id="modal-cartao-titulo">Novo cartão</h2>
-        <div class="form-group">
-          <label>Nome do cartão</label
-          ><input type="text" id="c-nome" placeholder="Ex: Nubank, Inter..." />
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
-          <div class="form-group">
-            <label>Limite (R$)</label
-            ><input
-              type="text"
-              inputmode="decimal"
-              id="c-limite"
-              placeholder="0,00"
-            />
-          </div>
-          <div class="form-group">
-            <label>Cor</label
-            ><input
-              type="color"
-              id="c-cor"
-              value="#6366f1"
-              style="height: 40px; cursor: pointer"
-            />
-          </div>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
-          <div class="form-group">
-            <label>Dia fechamento</label
-            ><input
-              type="number"
-              id="c-fechamento"
-              min="1"
-              max="31"
-              placeholder="Ex: 25"
-            />
-          </div>
-          <div class="form-group">
-            <label>Dia vencimento</label
-            ><input
-              type="number"
-              id="c-vencimento"
-              min="1"
-              max="31"
-              placeholder="Ex: 5"
-            />
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-cancel" onclick="fecharModalCartao()">
-            Cancelar
-          </button>
-          <button class="btn" onclick="salvarCartao()">Salvar</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal lançar fatura -->
-    <div class="modal-overlay" id="modal-lancar">
-      <div class="modal">
-        <h2>Lançar no cartão</h2>
-        <div class="form-group">
-          <label>Descrição</label
-          ><input
-            type="text"
-            id="l-descricao"
-            placeholder="Ex: Mercado, Netflix..."
-          />
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
-          <div class="form-group">
-            <label>Valor total (R$)</label
-            ><input
-              type="text"
-              inputmode="decimal"
-              id="l-valor"
-              placeholder="0,00"
-              oninput="calcularParcela()"
-            />
-          </div>
-          <div class="form-group">
-            <label>Parcelas</label>
-            <select id="l-parcelas" onchange="calcularParcela()">
-              <option value="1">À vista</option>
-              <option value="2">2x</option>
-              <option value="3">3x</option>
-              <option value="4">4x</option>
-              <option value="5">5x</option>
-              <option value="6">6x</option>
-              <option value="7">7x</option>
-              <option value="8">8x</option>
-              <option value="9">9x</option>
-              <option value="10">10x</option>
-              <option value="11">11x</option>
-              <option value="12">12x</option>
-            </select>
-          </div>
-        </div>
-        <div
-          id="parcela-preview"
-          style="
-            background: var(--bg-tertiary);
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-bottom: 14px;
-            display: none;
-          "
-        >
-          <i class="fa-solid fa-circle-info" style="margin-right: 6px"></i
-          ><span id="parcela-texto"></span>
-        </div>
-        <div class="form-group">
-          <label>Categoria</label
-          ><select id="l-categoria"></select>
-        </div>
-        <div class="form-group">
-          <label>Data da compra</label><input type="date" id="l-data" />
-        </div>
-        <div class="form-group">
-          <label>Observação (opcional)</label><input type="text" id="l-obs" />
-        </div>
-        <div class="modal-footer">
-          <button class="btn-cancel" onclick="fecharModalLancar()">
-            Cancelar
-          </button>
-          <button class="btn" onclick="lancar()">Lançar</button>
-        </div>
-      </div>
-    </div>
 
     <!-- Modal pagar fatura -->
     <div class="modal-overlay" id="modal-pagar">
@@ -812,104 +647,100 @@
         renderMobileHeader("Contas");
       document.getElementById("tabbar").innerHTML = renderTabBar("Contas");
 
-      let abaAtiva = "contas";
-      let editandoContaId = null,
-        editandoCartaoId = null,
-        editandoTransferenciaId = null;
-      let contasCache = [],
-        categoriasCache = [];
+      let editandoContaId = null, editandoTransferenciaId = null;
+      let contasCache = [], categoriasCache = [];
       let cartaoAtivo = null;
-      let faturaMes = getMesAno().mes,
-        faturaAno = getMesAno().ano;
+      let faturaMes = getMesAno().mes, faturaAno = getMesAno().ano;
 
-      document.getElementById("t-data").value = new Date()
-        .toISOString()
-        .split("T")[0];
-      document.getElementById("l-data").value = new Date()
-        .toISOString()
-        .split("T")[0];
-      document.getElementById("p-data").value = new Date()
-        .toISOString()
-        .split("T")[0];
+      document.getElementById("t-data").value = new Date().toISOString().split("T")[0];
+      document.getElementById("p-data").value = new Date().toISOString().split("T")[0];
 
       function isMobile() {
         return window.innerWidth <= 768;
       }
 
-      // ── Abas ──
-      function trocarAba(aba) {
-        abaAtiva = aba;
-        document
-          .querySelectorAll(".aba-btn")
-          .forEach((b) => b.classList.remove("active"));
-        document
-          .querySelectorAll(".aba-conteudo")
-          .forEach((c) => c.classList.remove("active"));
-        document.getElementById(`aba-${aba}-btn`).classList.add("active");
-        document.getElementById(`aba-${aba}`).classList.add("active");
-        document.getElementById("page-title").textContent =
-          aba === "contas" ? "Contas" : "Cartões";
-        renderHeaderAcoes(aba);
-        if (aba === "cartoes") carregarCartoes();
-        const abaParam = new URLSearchParams(window.location.search).get("aba");
-      }
-
-      function renderHeaderAcoes(aba) {
-        const div = document.getElementById("header-acoes");
-        if (aba === "contas") {
-          div.innerHTML = `
-            <button class="btn" style="background:#6366f1" onclick="abrirModalTransferir()"><i class="fa-solid fa-right-left"></i> Transferir</button>
-            <button class="btn" onclick="abrirModalConta()"><i class="fa-solid fa-plus"></i> Nova conta</button>`;
-        } else {
-          div.innerHTML = `<button class="btn" onclick="abrirModalCartao()"><i class="fa-solid fa-plus"></i> Novo cartão</button>`;
-        }
-      }
-
       // ══════════════════════════════════════
-      // CONTAS
+      // CONTAS & CARTÕES (visão unificada)
       // ══════════════════════════════════════
       async function carregarContas() {
         document.getElementById("contas-grid").innerHTML = skeletonCards(3);
         contasCache = (await fetchAPI("/api/contas")) || [];
         const saldos = (await fetchAPI("/api/relatorios/saldo-contas")) || [];
-        const grid = document.getElementById("contas-grid");
-        if (contasCache.length === 0) {
-          grid.innerHTML = emptyState(
-            "fa-wallet",
-            "Nenhuma conta",
-            "Adicione sua primeira conta bancária ou carteira.",
-            "Nova conta",
-            "abrirModalConta()",
-          );
-          return;
-        }
-        grid.innerHTML = contasCache
-          .map((c) => {
+
+        const bancarias = contasCache.filter((c) => c.tipo !== "cartao");
+        const cartoes = contasCache.filter((c) => c.tipo === "cartao");
+
+        // Renderiza contas bancárias
+        const gridB = document.getElementById("contas-grid");
+        if (!bancarias.length) {
+          gridB.innerHTML = emptyState("fa-wallet", "Nenhuma conta", "Adicione sua primeira conta bancária.", "Nova conta", "abrirModalConta()");
+        } else {
+          const TIPOS = { corrente: "Conta corrente", poupanca: "Poupança", carteira: "Carteira", investimento: "Investimento" };
+          gridB.innerHTML = bancarias.map((c) => {
             const saldo = saldos.find((s) => s.nome === c.nome);
-            const saldoAtual = saldo
-              ? parseFloat(saldo.saldo_atual) || 0
-              : parseFloat(c.saldo_inicial) || 0;
+            const saldoAtual = saldo ? parseFloat(saldo.saldo_atual) || 0 : parseFloat(c.saldo_inicial) || 0;
             const cor = c.cor || "#10b981";
-            const tipoLabel =
-              {
-                corrente: "Conta corrente",
-                poupanca: "Poupança",
-                carteira: "Carteira",
-                investimento: "Investimento",
-              }[c.tipo] || c.tipo;
             return `<div class="conta-card" style="--cor:${cor}">
-            <div class="conta-tipo">${tipoLabel}</div>
-            <div class="conta-nome">${c.nome}</div>
-            <div class="conta-saldo-label">Saldo atual</div>
-            <div class="conta-saldo" style="color:${saldoAtual >= 0 ? "var(--green)" : "var(--red)"}">  ${formatarMoeda(saldoAtual)}</div>
-            <div class="conta-acoes">
-              <button class="btn-transferir" onclick="abrirModalTransferir(${c.id})"><i class="fa-solid fa-right-left"></i> Transferir</button>
-              <button class="btn-edit" onclick="editarConta(${c.id},'${c.nome}','${c.tipo}',${c.saldo_inicial},'${cor}')"><i class="fa-solid fa-pen"></i> Editar</button>
-              <button class="btn-danger" onclick="deletarConta(${c.id})"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          </div>`;
-          })
-          .join("");
+              <div class="conta-tipo">${TIPOS[c.tipo] || c.tipo}</div>
+              <div class="conta-nome">${c.nome}</div>
+              <div class="conta-saldo-label">Saldo atual</div>
+              <div class="conta-saldo" style="color:${saldoAtual >= 0 ? "var(--green)" : "var(--red)"}">
+                ${formatarMoeda(saldoAtual)}
+              </div>
+              <div class="conta-acoes">
+                <button class="btn-transferir" onclick="abrirModalTransferir(${c.id})"><i class="fa-solid fa-right-left"></i> Transferir</button>
+                <button class="btn-edit" onclick="editarConta(${c.id})"><i class="fa-solid fa-pen"></i> Editar</button>
+                <button class="btn-danger" onclick="deletarConta(${c.id})"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>`;
+          }).join("");
+        }
+
+        // Renderiza cartões
+        const secaoC = document.getElementById("secao-cartoes");
+        const gridC = document.getElementById("cartoes-grid");
+        if (!cartoes.length) {
+          secaoC.style.display = "none";
+        } else {
+          secaoC.style.display = "block";
+          gridC.innerHTML = cartoes.map((c) => {
+            const cor = c.cor || "#6366f1";
+            const fatura = parseFloat(c.fatura_atual) || 0;
+            const limite = parseFloat(c.limite) || 0;
+            const pct = limite > 0 ? Math.min((fatura / limite) * 100, 100) : 0;
+            const corBarra = pct > 80 ? "var(--red)" : pct > 50 ? "#f59e0b" : "var(--green)";
+            const disponivel = Math.max(0, limite - fatura);
+            const ativo = cartaoAtivo?.id === c.id;
+            return `<div class="cartao-card${ativo ? " cartao-ativo" : ""}" style="--cor:${cor}" id="cartao-card-${c.id}">
+              <div class="cartao-top">
+                <div class="cartao-nome">${c.nome}</div>
+                <div class="cartao-chip"></div>
+              </div>
+              <div class="cartao-info">
+                <div class="cartao-info-item"><label>Limite</label><span class="valor-privado">${formatarMoedaRaw(limite)}</span></div>
+                <div class="cartao-info-item"><label>Fatura atual</label><span style="color:var(--red)" class="valor-privado">${formatarMoedaRaw(fatura)}</span></div>
+                <div class="cartao-info-item"><label>Disponível</label><span style="color:var(--green)" class="valor-privado">${formatarMoedaRaw(disponivel)}</span></div>
+                <div class="cartao-info-item"><label>Fechamento</label><span>Dia ${c.dia_fechamento || "—"}</span></div>
+              </div>
+              <div class="limite-bar">
+                <div class="limite-fill" style="width:${pct}%;background:${corBarra}"></div>
+              </div>
+              <div class="limite-texto">
+                <span>${pct.toFixed(0)}% utilizado</span>
+                <span class="valor-privado">${formatarMoedaRaw(fatura)} / ${formatarMoedaRaw(limite)}</span>
+              </div>
+              <div class="cartao-acoes">
+                <button class="btn-fatura" onclick="verFatura(${c.id},'${c.nome}',${c.dia_vencimento || 10})">
+                  <i class="fa-solid fa-receipt"></i> Ver fatura
+                </button>
+                <button class="btn-edit" onclick="editarConta(${c.id})"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-danger" onclick="deletarConta(${c.id})"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </div>`;
+          }).join("");
+        }
+
+        aplicarPrivacidade();
       }
 
       async function carregarTransferencias() {
@@ -978,60 +809,74 @@
           .join("");
       }
 
-      function abrirModalConta() {
-        editandoContaId = null;
-        document.getElementById("modal-conta-titulo").textContent =
-          "Nova conta";
-        ["f-nome", "f-saldo"].forEach(
-          (id) => (document.getElementById(id).value = ""),
-        );
-        document.getElementById("f-tipo").value = "corrente";
-        document.getElementById("f-cor").value = "#10b981";
-        document.getElementById("modal-conta").classList.add("active");
+      function atualizarCamposCartao() {
+        const tipo = document.getElementById("f-tipo").value;
+        const isCartao = tipo === "cartao";
+        document.getElementById("campos-cartao").style.display = isCartao ? "block" : "none";
+        document.getElementById("campos-bancarios").style.display = isCartao ? "none" : "block";
+        document.getElementById("modal-conta-titulo").textContent = isCartao ? (editandoContaId ? "Editar cartão" : "Novo cartão") : (editandoContaId ? "Editar conta" : "Nova conta");
+        document.getElementById("f-cor").value = isCartao ? "#6366f1" : "#10b981";
       }
+
+      function abrirModalConta(tipoInicial = "corrente") {
+        editandoContaId = null;
+        document.getElementById("f-nome").value = "";
+        document.getElementById("f-saldo").value = "";
+        document.getElementById("f-limite").value = "";
+        document.getElementById("f-fechamento").value = "";
+        document.getElementById("f-vencimento").value = "";
+        document.getElementById("f-tipo").value = tipoInicial;
+        atualizarCamposCartao();
+        document.getElementById("modal-conta").classList.add("active");
+        setTimeout(() => document.getElementById("f-nome").focus(), 100);
+      }
+
       function fecharModalConta() {
         document.getElementById("modal-conta").classList.remove("active");
       }
-      function editarConta(id, nome, tipo, saldo, cor) {
+
+      function editarConta(id) {
+        const c = contasCache.find((x) => x.id === id);
+        if (!c) return;
         editandoContaId = id;
-        document.getElementById("modal-conta-titulo").textContent =
-          "Editar conta";
-        document.getElementById("f-nome").value = nome;
-        document.getElementById("f-tipo").value = tipo;
-        const elSaldo = document.getElementById("f-saldo");
-        elSaldo.value = parseFloat(saldo).toLocaleString("pt-BR", {
-          minimumFractionDigits: 2,
-        });
-        elSaldo.dataset.valor = saldo;
-        aplicarMascaraMoeda(elSaldo);
-        document.getElementById("f-cor").value = cor;
+        document.getElementById("f-nome").value = c.nome;
+        document.getElementById("f-tipo").value = c.tipo;
+        document.getElementById("f-cor").value = c.cor || "#10b981";
+        if (c.tipo === "cartao") {
+          document.getElementById("f-limite").value = parseFloat(c.limite || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+          document.getElementById("f-fechamento").value = c.dia_fechamento || "";
+          document.getElementById("f-vencimento").value = c.dia_vencimento || "";
+        } else {
+          const el = document.getElementById("f-saldo");
+          el.value = parseFloat(c.saldo_inicial || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+          el.dataset.valor = c.saldo_inicial;
+          aplicarMascaraMoeda(el);
+        }
+        atualizarCamposCartao();
         document.getElementById("modal-conta").classList.add("active");
       }
 
       async function salvarConta() {
-        const body = {
-          nome: document.getElementById("f-nome").value,
-          tipo: document.getElementById("f-tipo").value,
-          saldo_inicial: lerValorMoeda(document.getElementById("f-saldo")),
-          cor: document.getElementById("f-cor").value,
-        };
-        if (!body.nome) {
-          toast("Informe o nome da conta.", "erro");
-          return;
-        }
-        if (editandoContaId) {
-          await fetchAPI(`/api/contas/${editandoContaId}`, {
-            method: "PUT",
-            body: JSON.stringify(body),
-          });
-          toast("Conta atualizada!");
+        const nome = document.getElementById("f-nome").value.trim();
+        const tipo = document.getElementById("f-tipo").value;
+        if (!nome) { toast("Informe o nome.", "erro"); return; }
+
+        const body = { nome, tipo, cor: document.getElementById("f-cor").value };
+        if (tipo === "cartao") {
+          body.limite = lerValorMoeda(document.getElementById("f-limite"));
+          body.dia_fechamento = parseInt(document.getElementById("f-fechamento").value) || 10;
+          body.dia_vencimento = parseInt(document.getElementById("f-vencimento").value) || 20;
+          body.saldo_inicial = 0;
         } else {
-          await fetchAPI("/api/contas", {
-            method: "POST",
-            body: JSON.stringify(body),
-          });
-          toast("Conta criada!");
+          body.saldo_inicial = lerValorMoeda(document.getElementById("f-saldo"));
         }
+
+        const res = editandoContaId
+          ? await fetchAPI(`/api/contas/${editandoContaId}`, { method: "PUT", body: JSON.stringify(body) })
+          : await fetchAPI("/api/contas", { method: "POST", body: JSON.stringify(body) });
+
+        if (res?.erro) { toast(res.erro, "erro"); return; }
+        toast(editandoContaId ? (tipo === "cartao" ? "Cartão atualizado!" : "Conta atualizada!") : (tipo === "cartao" ? "Cartão criado!" : "Conta criada!"));
         fecharModalConta();
         carregarContas();
         carregarTransferencias();
@@ -1152,134 +997,26 @@
       }
 
       // ══════════════════════════════════════
-      // CARTÕES
+      // FATURA DO CARTÃO
       // ══════════════════════════════════════
-      async function carregarCartoes() {
-        document.getElementById("cartoes-grid").innerHTML = skeletonCards(2);
-        const data = (await fetchAPI("/api/cartoes")) || [];
-        const grid = document.getElementById("cartoes-grid");
-        if (data.length === 0) {
-          grid.innerHTML = emptyState(
-            "fa-credit-card",
-            "Nenhum cartão",
-            "Adicione seu primeiro cartão de crédito.",
-            "Novo cartão",
-            "abrirModalCartao()",
-          );
-          return;
-        }
-        grid.innerHTML = data
-          .map((c) => {
-            const cor = c.cor || "#6366f1",
-              fatura = parseFloat(c.fatura_atual) || 0,
-              limite = parseFloat(c.limite) || 0;
-            const pct = limite > 0 ? Math.min((fatura / limite) * 100, 100) : 0;
-            const corBarra =
-              pct > 80 ? "var(--red)" : pct > 50 ? "#f59e0b" : "var(--green)";
-            return `<div class="cartao-card" style="--cor:${cor}">
-            <div class="cartao-top"><div class="cartao-nome">${c.nome}</div><div class="cartao-chip"></div></div>
-            <div class="cartao-info">
-              <div class="cartao-info-item"><label>Limite</label><span>${formatarMoeda(limite)}</span></div>
-              <div class="cartao-info-item"><label>Fatura atual</label><span style="color:var(--red)">${formatarMoeda(fatura)}</span></div>
-              <div class="cartao-info-item"><label>Fechamento</label><span>Dia ${c.dia_fechamento}</span></div>
-              <div class="cartao-info-item"><label>Vencimento</label><span>Dia ${c.dia_vencimento}</span></div>
-            </div>
-            <div class="limite-bar"><div class="limite-fill" style="width:${pct}%;background:${corBarra}"></div></div>
-            <div class="limite-texto"><span>Gasto: ${formatarMoeda(fatura)}</span><span>Disponível: ${formatarMoeda(limite - fatura)}</span></div>
-            <div class="cartao-acoes">
-              <button class="btn-fatura" onclick="verFatura(${c.id},'${c.nome}',${c.dia_vencimento})"><i class="fa-solid fa-file-invoice"></i> Ver fatura</button>
-              <button class="btn-edit" onclick="editarCartao(${c.id},'${c.nome}',${limite},${c.dia_fechamento},${c.dia_vencimento},'${cor}')"><i class="fa-solid fa-pen"></i></button>
-              <button class="btn-danger" onclick="deletarCartao(${c.id})"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          </div>`;
-          })
-          .join("");
+      function lancarNoCartao() {
+        if (!cartaoAtivo) return;
+        window.location.href = `/lancamentos.html?novo=1&conta_id=${cartaoAtivo.id}&tipo=cartao`;
       }
 
-      function abrirModalCartao() {
-        editandoCartaoId = null;
-        document.getElementById("modal-cartao-titulo").textContent =
-          "Novo cartão";
-        ["c-nome", "c-fechamento", "c-vencimento", "c-limite"].forEach(
-          (id) => (document.getElementById(id).value = ""),
-        );
-        document.getElementById("c-cor").value = "#6366f1";
-        document.getElementById("modal-cartao").classList.add("active");
-      }
-      function fecharModalCartao() {
-        document.getElementById("modal-cartao").classList.remove("active");
-      }
-      function editarCartao(id, nome, limite, fechamento, vencimento, cor) {
-        editandoCartaoId = id;
-        document.getElementById("modal-cartao-titulo").textContent =
-          "Editar cartão";
-        document.getElementById("c-nome").value = nome;
-        const elLim = document.getElementById("c-limite");
-        elLim.value = parseFloat(limite).toLocaleString("pt-BR", {
-          minimumFractionDigits: 2,
-        });
-        elLim.dataset.valor = limite;
-        aplicarMascaraMoeda(elLim);
-        document.getElementById("c-cor").value = cor;
-        document.getElementById("c-fechamento").value = fechamento;
-        document.getElementById("c-vencimento").value = vencimento;
-        document.getElementById("modal-cartao").classList.add("active");
-      }
-
-      async function salvarCartao() {
-        const body = {
-          nome: document.getElementById("c-nome").value,
-          limite: lerValorMoeda(document.getElementById("c-limite")),
-          cor: document.getElementById("c-cor").value,
-          dia_fechamento:
-            parseInt(document.getElementById("c-fechamento").value) || 1,
-          dia_vencimento:
-            parseInt(document.getElementById("c-vencimento").value) || 10,
-        };
-        if (!body.nome) {
-          toast("Informe o nome do cartão.", "erro");
-          return;
-        }
-        if (editandoCartaoId) {
-          await fetchAPI(`/api/cartoes/${editandoCartaoId}`, {
-            method: "PUT",
-            body: JSON.stringify(body),
-          });
-          toast("Cartão atualizado!");
-        } else {
-          await fetchAPI("/api/cartoes", {
-            method: "POST",
-            body: JSON.stringify(body),
-          });
-          toast("Cartão criado!");
-        }
-        fecharModalCartao();
-        carregarCartoes();
-      }
-
-      async function deletarCartao(id) {
-        const ok = await confirmar(
-          "Deseja deletar este cartão? Todas as faturas serão perdidas.",
-        );
-        if (!ok) return;
-        await fetchAPI(`/api/cartoes/${id}`, { method: "DELETE" });
-        toast("Cartão deletado!", "info");
-        carregarCartoes();
-      }
-
-      // Fatura
-      async function verFatura(cartaoId, nome, diaVenc) {
-        cartaoAtivo = { id: cartaoId, nome, diaVenc };
-        document.getElementById("fatura-section").style.display = "block";
-        document.getElementById("fatura-titulo").textContent =
-          `Fatura — ${nome}`;
-        document.getElementById("fatura-mes-label").textContent =
-          `${nomeMes(faturaMes)} ${faturaAno}`;
+      async function verFatura(id, nome, diaVenc) {
+        cartaoAtivo = { id, nome, diaVenc };
+        faturaMes = getMesAno().mes;
+        faturaAno = getMesAno().ano;
+        document.getElementById("fatura-titulo").textContent = `Fatura — ${nome}`;
+        document.getElementById("fatura-mes-label").textContent = `${nomeMes(faturaMes)} ${faturaAno}`;
         atualizarVencimento();
+        document.getElementById("fatura-section").style.display = "block";
         await carregarFatura();
-        document
-          .getElementById("fatura-section")
-          .scrollIntoView({ behavior: "smooth" });
+        document.getElementById("fatura-section").scrollIntoView({ behavior: "smooth" });
+        document.querySelectorAll(".cartao-card").forEach((el) => el.classList.remove("cartao-ativo"));
+        const card = document.getElementById(`cartao-card-${id}`);
+        if (card) card.classList.add("cartao-ativo");
       }
 
       function atualizarVencimento() {
@@ -1290,36 +1027,24 @@
 
       async function mudarMesFatura(delta) {
         faturaMes += delta;
-        if (faturaMes > 12) {
-          faturaMes = 1;
-          faturaAno++;
-        }
-        if (faturaMes < 1) {
-          faturaMes = 12;
-          faturaAno--;
-        }
-        document.getElementById("fatura-mes-label").textContent =
-          `${nomeMes(faturaMes)} ${faturaAno}`;
+        if (faturaMes > 12) { faturaMes = 1; faturaAno++; }
+        if (faturaMes < 1) { faturaMes = 12; faturaAno--; }
+        document.getElementById("fatura-mes-label").textContent = `${nomeMes(faturaMes)} ${faturaAno}`;
         atualizarVencimento();
         await carregarFatura();
       }
 
       async function carregarFatura() {
         if (!cartaoAtivo) return;
-        const data = await fetchAPI(
-          `/api/faturas/${cartaoAtivo.id}/${faturaMes}/${faturaAno}/transacoes`,
-        );
+        const data = await fetchAPI(`/api/contas/${cartaoAtivo.id}/fatura?mes=${faturaMes}&ano=${faturaAno}`);
         if (!data) return;
-        const { fatura, transacoes } = data;
-        const total = transacoes.reduce((s, t) => s + parseFloat(t.valor), 0);
-        document.getElementById("fatura-total").innerHTML =
-          formatarMoeda(total);
+        const { transacoes = [], total = 0 } = data;
+        document.getElementById("fatura-total").innerHTML = formatarMoeda(total);
         document.getElementById("fatura-qtd").textContent = transacoes.length;
         const statusEl = document.getElementById("fatura-status");
-        statusEl.textContent = fatura.status;
-        statusEl.className = `fatura-status ${fatura.status}`;
-        document.getElementById("btn-pagar").style.display =
-          fatura.status === "paga" ? "none" : "flex";
+        statusEl.textContent = "aberta";
+        statusEl.className = "fatura-status aberta";
+        document.getElementById("btn-pagar").style.display = total > 0 ? "flex" : "none";
         if (isMobile()) renderFaturaMobile(transacoes);
         else renderFaturaDesktop(transacoes);
       }
@@ -1327,112 +1052,47 @@
       function renderFaturaDesktop(transacoes) {
         const tbody = document.getElementById("tabela-fatura-desktop");
         if (transacoes.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" style="padding:16px">${emptyState("fa-receipt", "Fatura vazia", "Nenhum lançamento nesta fatura.", "Lançar", "abrirModalLancar()")}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" style="padding:16px">${emptyState("fa-receipt", "Fatura vazia", "Nenhum lançamento nesta fatura.", "Lançar", "lancarNoCartao()")}</td></tr>`;
           return;
         }
-        tbody.innerHTML = transacoes
-          .map(
-            (t) => `<tr>
-          <td>${formatarData(t.data)}</td><td>${t.descricao}</td>
+        tbody.innerHTML = transacoes.map((t) => `<tr>
+          <td>${formatarData(t.data)}</td>
+          <td>${t.descricao}</td>
           <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>${t.categoria_nome || "—"}</span></td>
-          <td style="color:var(--text-muted)">${t.parcelas > 1 ? `${t.parcela_atual}/${t.parcelas}` : "À vista"}</td>
+          <td style="color:var(--text-muted)">${t.parcelas_total > 1 ? `${t.parcela_atual}/${t.parcelas_total}` : "À vista"}</td>
           <td><span class="badge despesa">${formatarMoeda(t.valor)}</span></td>
           <td><button class="btn-danger" onclick="deletarLancFatura(${t.id})"><i class="fa-solid fa-trash"></i></button></td>
-        </tr>`,
-          )
-          .join("");
+        </tr>`).join("");
       }
 
       function renderFaturaMobile(transacoes) {
         const lista = document.getElementById("fatura-lista-mobile");
         if (transacoes.length === 0) {
-          lista.innerHTML = emptyState(
-            "fa-receipt",
-            "Fatura vazia",
-            "Nenhum lançamento nesta fatura.",
-            "Lançar",
-            "abrirModalLancar()",
-          );
+          lista.innerHTML = emptyState("fa-receipt", "Fatura vazia", "Nenhum lançamento nesta fatura.", "Lançar", "lancarNoCartao()");
           return;
         }
-        lista.innerHTML = transacoes
-          .map(
-            (t) => `<div class="fatura-item-card">
-          <div class="fatura-item-info"><div class="fatura-item-desc">${t.descricao}</div>
-            <div class="fatura-item-meta"><span>${formatarData(t.data)}</span><span>·</span><span style="display:inline-flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>${t.categoria_nome || "—"}</span><span>·</span><span>${t.parcelas > 1 ? `${t.parcela_atual}/${t.parcelas}` : "À vista"}</span></div>
+        lista.innerHTML = transacoes.map((t) => `<div class="fatura-item-card">
+          <div class="fatura-item-info">
+            <div class="fatura-item-desc">${t.descricao}</div>
+            <div class="fatura-item-meta">
+              <span>${formatarData(t.data)}</span><span>·</span>
+              <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:${t.categoria_cor || "#6b7280"}"></span>${t.categoria_nome || "—"}</span>
+              <span>·</span><span>${t.parcelas_total > 1 ? `${t.parcela_atual}/${t.parcelas_total}` : "À vista"}</span>
+            </div>
           </div>
-          <div class="fatura-item-right"><div class="fatura-item-valor">${formatarMoeda(t.valor)}</div>
+          <div class="fatura-item-right">
+            <div class="fatura-item-valor">${formatarMoeda(t.valor)}</div>
             <button class="btn-danger" style="padding:5px 10px;font-size:11px" onclick="deletarLancFatura(${t.id})"><i class="fa-solid fa-trash"></i></button>
           </div>
-        </div>`,
-          )
-          .join("");
-      }
-
-      async function abrirModalLancar() {
-        categoriasCache = (await fetchAPI("/api/categorias")) || [];
-        const despesas = categoriasCache.filter((c) => c.tipo === "despesa");
-        document.getElementById("l-categoria").innerHTML = despesas.length
-          ? despesas
-              .map((c) => `<option value="${c.id}">${c.nome}</option>`)
-              .join("")
-          : `<option value="">Sem categorias</option>`;
-        ["l-descricao", "l-obs"].forEach(
-          (id) => (document.getElementById(id).value = ""),
-        );
-        document.getElementById("l-valor").value = "";
-        aplicarMascaraMoeda(document.getElementById("l-valor"));
-        document.getElementById("l-parcelas").value = "1";
-        document.getElementById("parcela-preview").style.display = "none";
-        document.getElementById("modal-lancar").classList.add("active");
-      }
-      function fecharModalLancar() {
-        document.getElementById("modal-lancar").classList.remove("active");
-      }
-
-      function calcularParcela() {
-        const valor = parseFloat(document.getElementById("l-valor").value) || 0,
-          parcelas = parseInt(document.getElementById("l-parcelas").value) || 1,
-          preview = document.getElementById("parcela-preview");
-        if (valor > 0 && parcelas > 1) {
-          document.getElementById("parcela-texto").textContent =
-            `${parcelas}x de ${formatarMoedaRaw(valor / parcelas)} — Total: ${formatarMoedaRaw(valor)}`;
-          preview.style.display = "block";
-        } else {
-          preview.style.display = "none";
-        }
-      }
-
-      async function lancar() {
-        const body = {
-          descricao: document.getElementById("l-descricao").value,
-          valor: lerValorMoeda(document.getElementById("l-valor")),
-          parcelas: parseInt(document.getElementById("l-parcelas").value) || 1,
-          categoria_id: document.getElementById("l-categoria").value,
-          data: document.getElementById("l-data").value,
-          observacao: document.getElementById("l-obs").value,
-        };
-        if (!body.descricao || !body.valor || !body.data) {
-          toast("Preencha descrição, valor e data.", "erro");
-          return;
-        }
-        await fetchAPI(`/api/faturas/${cartaoAtivo.id}/lancar`, {
-          method: "POST",
-          body: JSON.stringify(body),
-        });
-        toast("Lançamento adicionado à fatura!");
-        fecharModalLancar();
-        carregarFatura();
-        carregarCartoes();
+        </div>`).join("");
       }
 
       async function abrirModalPagar() {
         const contas = (await fetchAPI("/api/contas")) || [];
-        document.getElementById("p-conta").innerHTML = contas.length
-          ? contas
-              .map((c) => `<option value="${c.id}">${c.nome}</option>`)
-              .join("")
-          : `<option value="">Sem contas</option>`;
+        const bancarias = contas.filter((c) => c.tipo !== "cartao");
+        document.getElementById("p-conta").innerHTML = bancarias.length
+          ? bancarias.map((c) => `<option value="${c.id}">${c.nome}</option>`).join("")
+          : `<option value="">Sem contas bancárias</option>`;
         document.getElementById("modal-pagar").classList.add("active");
       }
       function fecharModalPagar() {
@@ -1440,23 +1100,28 @@
       }
 
       async function pagarFatura() {
-        const body = {
-          conta_id: document.getElementById("p-conta").value,
-          data_pagamento: document.getElementById("p-data").value,
-        };
-        if (!body.conta_id || !body.data_pagamento) {
-          toast("Selecione a conta e a data.", "erro");
-          return;
-        }
-        const res = await fetchAPI(
-          `/api/faturas/${cartaoAtivo.id}/${faturaMes}/${faturaAno}/pagar`,
-          { method: "POST", body: JSON.stringify(body) },
-        );
-        if (res?.mensagem)
-          toast(`Fatura paga! ${formatarMoedaRaw(res.valor)} debitado.`);
+        const contaOrigemId = document.getElementById("p-conta").value;
+        const data = document.getElementById("p-data").value;
+        if (!contaOrigemId || !data) { toast("Selecione a conta e a data.", "erro"); return; }
+        if (!cartaoAtivo) return;
+        const faturaData = await fetchAPI(`/api/contas/${cartaoAtivo.id}/fatura?mes=${faturaMes}&ano=${faturaAno}`);
+        const total = faturaData?.total || 0;
+        if (total <= 0) { toast("Fatura sem valor a pagar.", "info"); return; }
+        const res = await fetchAPI("/api/transferencias", {
+          method: "POST",
+          body: JSON.stringify({
+            conta_origem_id: parseInt(contaOrigemId),
+            conta_destino_id: cartaoAtivo.id,
+            valor: total,
+            data,
+            descricao: `Pagamento fatura ${cartaoAtivo.nome}`,
+          }),
+        });
+        if (res?.erro) { toast(res.erro, "erro"); return; }
+        toast(`Fatura paga! ${formatarMoedaRaw(total)} debitado.`);
         fecharModalPagar();
         carregarFatura();
-        carregarCartoes();
+        carregarContas();
       }
 
       async function deletarLancFatura(id) {
@@ -1465,18 +1130,13 @@
         await fetchAPI(`/api/transacoes/${id}`, { method: "DELETE" });
         toast("Lançamento deletado!", "info");
         carregarFatura();
-        carregarCartoes();
+        carregarContas();
       }
 
       window.addEventListener("resize", () => {
         carregarTransferencias();
         if (cartaoAtivo) carregarFatura();
       });
-
-      // Abre aba por URL param
-      const abaParam = new URLSearchParams(window.location.search).get("aba");
-      if (abaParam === "cartoes") trocarAba("cartoes");
-      else renderHeaderAcoes("contas");
 
       async function init() {
         await carregarContas();

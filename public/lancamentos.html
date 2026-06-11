@@ -1661,10 +1661,9 @@
           const despesas = categorias.filter((c) => c.tipo === "despesa");
           qeCat.innerHTML = despesas.map((c) => `<option value="${c.id}">${c.nome}</option>`).join("");
         }
-        document.getElementById("f-conta").innerHTML = contas.length
-          ? contas
-              .map((c) => `<option value="${c.id}">${c.nome}</option>`)
-              .join("")
+        const bancarias = contas.filter((c) => c.tipo !== "cartao");
+        document.getElementById("f-conta").innerHTML = bancarias.length
+          ? bancarias.map((c) => `<option value="${c.id}">${c.nome}</option>`).join("")
           : `<option value="">Sem contas</option>`;
         ajustarLayout();
 
@@ -2132,6 +2131,16 @@
         filtrarCategorias();
         const inputValor = document.getElementById("f-valor");
         if (inputValor) aplicarCorTipo(inputValor, tipo);
+        // Filtra contas: cartão só mostra cartões; demais tipos mostram contas bancárias
+        const selConta = document.getElementById("f-conta");
+        if (selConta && contas?.length) {
+          const filtradas = tipo === "cartao"
+            ? contas.filter((c) => c.tipo === "cartao")
+            : contas.filter((c) => c.tipo !== "cartao");
+          selConta.innerHTML = filtradas.length
+            ? filtradas.map((c) => `<option value="${c.id}">${c.nome}</option>`).join("")
+            : `<option value="">Sem contas</option>`;
+        }
       }
 
       function filtrarCategorias() {
@@ -2525,10 +2534,23 @@
       initSwipeMes(navegarMes);
 
       // Auto-abrir modal se URL tem ?novo=1
-      if (new URLSearchParams(window.location.search).get("novo") === "1") {
+      (function() {
+        const p = new URLSearchParams(window.location.search);
+        if (p.get("novo") !== "1") return;
+        const tipoUrl = p.get("tipo");
+        const contaIdUrl = p.get("conta_id");
         history.replaceState(null, "", window.location.pathname);
-        setTimeout(abrirModalLancamento, 300);
-      }
+        setTimeout(() => {
+          abrirModalLancamento();
+          setTimeout(() => {
+            if (tipoUrl) selecionarTipoModal(tipoUrl);
+            if (contaIdUrl) {
+              const sel = document.getElementById("f-conta");
+              if (sel) sel.value = contaIdUrl;
+            }
+          }, 150);
+        }, 300);
+      })();
 
       // ══════════════════════════════════════
       // RECORRENTES

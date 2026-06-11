@@ -141,6 +141,10 @@ const MIGRATIONS = [
     id: "018_transacoes_pet_id",
     sql: "ALTER TABLE Transacoes ADD COLUMN pet_id INT NULL",
   },
+  {
+    id: "019_contas_cartao_campos",
+    sql: "ALTER TABLE Contas ADD COLUMN limite DECIMAL(10,2) NULL DEFAULT 0, ADD COLUMN dia_fechamento TINYINT NULL DEFAULT 10, ADD COLUMN dia_vencimento TINYINT NULL DEFAULT 20",
+  },
 ];
 
 async function rodarMigrations() {
