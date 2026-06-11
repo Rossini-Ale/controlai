@@ -174,6 +174,25 @@ router.get("/exportar", auth, async (req, res) => {
   }
 });
 
+// ── Sugestão de recorrente — detecta descrição repetida nos últimos 3 meses ──
+router.get("/sugestao-recorrente", auth, async (req, res) => {
+  const { descricao } = req.query;
+  if (!descricao) return res.json({ sugerir: false });
+  try {
+    const [rows] = await db.query(
+      `SELECT COUNT(DISTINCT DATE_FORMAT(data, '%Y-%m')) AS meses
+       FROM Transacoes
+       WHERE usuario_id = ? AND deleted_at IS NULL AND is_transferencia = 0
+         AND descricao = ?
+         AND data >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)`,
+      [req.usuarioId, descricao],
+    );
+    res.json({ sugerir: (rows[0]?.meses || 0) >= 2 });
+  } catch (err) {
+    res.json({ sugerir: false });
+  }
+});
+
 // ── Exportar XLSX ──
 router.get("/exportar-xlsx", auth, async (req, res) => {
   const { mes, ano, tipo, categoria_id, conta_id } = req.query;

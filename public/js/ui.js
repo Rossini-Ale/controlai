@@ -273,6 +273,58 @@ function emptyState(icone, titulo, descricao, btnLabel, btnFn) {
   `;
 }
 
+// ── Empty State Rico com ilustração SVG ──
+function emptyStateRich(tipo = "lancamentos", temFiltro = false) {
+  const configs = {
+    lancamentos: {
+      svg: `<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="12" y="18" width="56" height="44" rx="8" fill="var(--bg-tertiary)" stroke="var(--border-subtle)" stroke-width="1.5"/>
+        <rect x="20" y="28" width="24" height="3" rx="1.5" fill="var(--border-subtle)"/>
+        <rect x="20" y="35" width="36" height="3" rx="1.5" fill="var(--border-subtle)"/>
+        <rect x="20" y="42" width="30" height="3" rx="1.5" fill="var(--border-subtle)"/>
+        <rect x="20" y="49" width="18" height="3" rx="1.5" fill="var(--border-subtle)"/>
+        <circle cx="60" cy="58" r="12" fill="var(--bg-secondary)" stroke="var(--border-subtle)" stroke-width="1.5"/>
+        <path d="M60 53v5l3 2" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`,
+      titulo: "Nenhum lançamento neste mês",
+      texto: "Registre receitas, despesas e transferências para acompanhar seu fluxo financeiro.",
+      btn: { label: "Novo lançamento", fn: "abrirModalLancamento()" },
+    },
+    filtro: {
+      svg: `<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="36" cy="36" r="18" fill="var(--bg-tertiary)" stroke="var(--border-subtle)" stroke-width="1.5"/>
+        <path d="M49 49l10 10" stroke="var(--border-subtle)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M30 36h12M33 31h6M27 41h18" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>`,
+      titulo: "Nenhum resultado",
+      texto: "Nenhuma transação corresponde aos filtros selecionados. Tente ampliar o período ou remover filtros.",
+      btn: null,
+    },
+    recorrentes: {
+      svg: `<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="40" cy="40" r="22" fill="var(--bg-tertiary)" stroke="var(--border-subtle)" stroke-width="1.5"/>
+        <path d="M29 40a11 11 0 0 1 19-7.5" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M51 40a11 11 0 0 1-19 7.5" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M45 29l3 3.5-3.5 3" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M35 51l-3-3.5 3.5-3" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`,
+      titulo: "Nenhuma recorrência cadastrada",
+      texto: "Crie recorrências para despesas e receitas fixas — elas geram lançamentos automaticamente todo mês.",
+      btn: { label: "Nova recorrência", fn: "abrirModalRec()" },
+    },
+  };
+
+  const c = (temFiltro ? configs.filtro : configs[tipo]) || configs.lancamentos;
+  return `
+    <div style="text-align:center;padding:56px 24px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:14px">
+      <div style="margin:0 auto 20px;display:flex;align-items:center;justify-content:center">${c.svg}</div>
+      <h3 style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:8px">${c.titulo}</h3>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:${c.btn ? "24px" : "0"};line-height:1.6;max-width:280px;margin-left:auto;margin-right:auto">${c.texto}</p>
+      ${c.btn ? `<button onclick="${c.btn.fn}" style="background:var(--green);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px"><i class='fa-solid fa-plus'></i> ${c.btn.label}</button>` : ""}
+    </div>
+  `;
+}
+
 // ── Toast com ação de Desfazer ──
 function toastComUndo(mensagem, onUndo, duracao = 4000, onConfirm) {
   document.querySelectorAll(".toast-el,.toast-undo-el").forEach((t) => t.remove());

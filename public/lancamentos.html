@@ -1605,13 +1605,8 @@
       function renderMobileComSwipe(data, append = false) {
         const lista = document.getElementById("lista-mobile");
         if (!append && data.length === 0) {
-          lista.innerHTML = emptyState(
-            "fa-right-left",
-            "Nenhuma transação",
-            "Nenhuma transação encontrada.",
-            "Novo lançamento",
-            "abrirModalLancamento()",
-          );
+          const temFiltro = !!(document.getElementById("filtro-tipo")?.value || document.getElementById("filtro-categoria")?.value || _tagFiltro);
+          lista.innerHTML = emptyStateRich("lancamentos", temFiltro);
           return;
         }
         const grupos = agruparPorData(data);
@@ -2105,7 +2100,8 @@
         const sorted = sortTransacoes(filtered);
         const tbody = document.getElementById("tabela-transacoes-desktop");
         if (sorted.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7" style="padding:0"><div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transação", "Nenhuma transação encontrada neste período.", "Novo lançamento", "abrirModalLancamento()")}</div></td></tr>`;
+          const temFiltroD = !!(document.getElementById("filtro-tipo")?.value || document.getElementById("filtro-categoria")?.value || _tagFiltro);
+          tbody.innerHTML = `<tr><td colspan="7" style="padding:16px">${emptyStateRich("lancamentos", temFiltroD)}</td></tr>`;
           return;
         }
 
@@ -2145,13 +2141,8 @@
       function renderMobile(data) {
         const lista = document.getElementById("lista-mobile");
         if (data.length === 0) {
-          lista.innerHTML = emptyState(
-            "fa-right-left",
-            "Nenhuma transação",
-            "Nenhuma transação encontrada neste período.",
-            "Novo lançamento",
-            "abrirModalLancamento()",
-          );
+          const temFiltroR = !!(document.getElementById("filtro-tipo")?.value || document.getElementById("filtro-categoria")?.value || _tagFiltro);
+          lista.innerHTML = emptyStateRich("lancamentos", temFiltroR);
           return;
         }
 
@@ -2496,6 +2487,7 @@
               data: body.data,
               ts: Date.now(),
             };
+            _sugerirRecorrente(body);
             haptic(10);
             limparRascunho();
             if (fecharApos) {
@@ -2716,13 +2708,7 @@
         else if (filtroRecAtual === "pausada")
           lista = lista.filter((r) => !r.ativa);
         if (lista.length === 0) {
-          grid.innerHTML = emptyState(
-            "fa-rotate",
-            "Nenhuma recorrência",
-            "Adicione contas fixas como aluguel, salário, assinaturas...",
-            "Nova recorrência",
-            "abrirModalRec()",
-          );
+          grid.innerHTML = emptyStateRich("recorrentes");
           return;
         }
         const hoje = new Date().toISOString().split("T")[0];
@@ -2810,6 +2796,65 @@
           input.max = "31";
           input.placeholder = "1-31";
         }
+      }
+
+      async function _sugerirRecorrente(body) {
+        if (body.parcelas > 1) return; // parcelado não é recorrente
+        try {
+          const res = await fetchAPI(`/api/transacoes/sugestao-recorrente?descricao=${encodeURIComponent(body.descricao)}`);
+          if (!res?.sugerir) return;
+          // Verifica se já é recorrente para não sugerir de novo
+          const jaExiste = todasRec.some(r => r.descricao === body.descricao && r.ativo);
+          if (jaExiste) return;
+        } catch { return; }
+
+        const toastId = "toast-sugestao-rec";
+        document.getElementById(toastId)?.remove();
+        const div = document.createElement("div");
+        div.id = toastId;
+        div.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+          background:var(--bg-secondary);border:1px solid var(--border-subtle);
+          border-radius:var(--radius-lg);padding:12px 16px;box-shadow:var(--shadow-elevated);
+          display:flex;align-items:center;gap:12px;z-index:9000;font-size:13px;
+          animation:slideUp 0.25s ease;max-width:360px;width:calc(100% - 32px)`;
+        div.innerHTML = `
+          <i class="fa-solid fa-rotate" style="color:var(--blue);flex-shrink:0"></i>
+          <span style="flex:1;line-height:1.4;color:var(--text-primary)">
+            <strong>"${body.descricao}"</strong> aparece todo mês.<br>
+            <span style="color:var(--text-secondary);font-size:12px">Quer criar uma recorrência?</span>
+          </span>
+          <button onclick="_confirmarSugestaoRec(${JSON.stringify(body).replace(/"/g,'&quot;')})"
+            style="background:var(--blue);border:none;color:#fff;border-radius:var(--radius-md);
+                   padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">
+            Criar
+          </button>
+          <button onclick="document.getElementById('${toastId}')?.remove()"
+            style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;font-size:16px;line-height:1">×</button>`;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 10000);
+      }
+
+      function _confirmarSugestaoRec(body) {
+        document.getElementById("toast-sugestao-rec")?.remove();
+        abrirModalRecPreenchido(body);
+      }
+
+      function abrirModalRecPreenchido(body) {
+        abrirModalRec();
+        if (body.descricao) document.getElementById("r-descricao").value = body.descricao;
+        if (body.valor) {
+          const elV = document.getElementById("r-valor-rec");
+          elV.value = parseFloat(body.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+          elV.dataset.valor = body.valor;
+          aplicarMascaraMoeda(elV);
+        }
+        if (body.tipo) document.getElementById("r-tipo").value = body.tipo;
+        if (body.categoria_id) {
+          filtrarCategoriasRec();
+          document.getElementById("r-categoria-rec").value = body.categoria_id;
+        }
+        if (body.conta_id) document.getElementById("r-conta-rec").value = body.conta_id;
+        if (body.data) document.getElementById("r-inicio").value = body.data;
       }
 
       function abrirModalRec() {
