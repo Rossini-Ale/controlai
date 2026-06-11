@@ -106,6 +106,41 @@ const MIGRATIONS = [
       FOREIGN KEY (usuario_id) REFERENCES Usuarios(id) ON DELETE CASCADE
     )`,
   },
+  {
+    id: "016_pets",
+    sql: `CREATE TABLE IF NOT EXISTS Pets (
+      id               INT AUTO_INCREMENT PRIMARY KEY,
+      usuario_id       INT NOT NULL,
+      nome             VARCHAR(100) NOT NULL,
+      especie          VARCHAR(50) NOT NULL DEFAULT 'cachorro',
+      raca             VARCHAR(100) NULL,
+      data_nascimento  DATE NULL,
+      emoji            VARCHAR(10) NULL DEFAULT '🐾',
+      created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (usuario_id) REFERENCES Usuarios(id) ON DELETE CASCADE
+    )`,
+  },
+  {
+    id: "017_pet_eventos",
+    sql: `CREATE TABLE IF NOT EXISTS PetEventos (
+      id            INT AUTO_INCREMENT PRIMARY KEY,
+      pet_id        INT NOT NULL,
+      usuario_id    INT NOT NULL,
+      tipo          VARCHAR(30) NOT NULL DEFAULT 'outro',
+      descricao     VARCHAR(255) NOT NULL,
+      data          DATE NOT NULL,
+      proxima_data  DATE NULL,
+      custo         DECIMAL(10,2) NULL DEFAULT 0,
+      observacao    TEXT NULL,
+      created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (pet_id) REFERENCES Pets(id) ON DELETE CASCADE,
+      FOREIGN KEY (usuario_id) REFERENCES Usuarios(id) ON DELETE CASCADE
+    )`,
+  },
+  {
+    id: "018_transacoes_pet_id",
+    sql: "ALTER TABLE Transacoes ADD COLUMN pet_id INT NULL",
+  },
 ];
 
 async function rodarMigrations() {

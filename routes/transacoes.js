@@ -213,21 +213,22 @@ function validarTransacao(body) {
 
 // ── Criar transação ──
 router.post("/", auth, async (req, res) => {
-  const { conta_id, categoria_id, tipo, descricao, valor, data, observacao, parcelas, tags } =
+  const { conta_id, categoria_id, tipo, descricao, valor, data, observacao, parcelas, tags, pet_id } =
     req.body;
   const erroValidacao = validarTransacao(req.body);
   if (erroValidacao) return res.status(400).json({ erro: erroValidacao });
 
   const qtdParcelas = Math.min(Math.max(parseInt(parcelas) || 1, 1), 60);
   const tagsStr = tags && typeof tags === "string" ? tags.substring(0, 255) : null;
+  const petId = pet_id ? parseInt(pet_id) || null : null;
 
   try {
     if (qtdParcelas <= 1) {
       const [result] = await db.query(
-        `INSERT INTO Transacoes (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao, tags)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO Transacoes (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao, tags, pet_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [req.usuarioId, conta_id, categoria_id, tipo, String(descricao).trim(),
-         parseFloat(valor), data, observacao || null, tagsStr],
+         parseFloat(valor), data, observacao || null, tagsStr, petId],
       );
       return res.status(201).json({ id: result.insertId, mensagem: "Transação criada!" });
     }
@@ -241,10 +242,10 @@ router.post("/", auth, async (req, res) => {
       const dataParc = d.toISOString().split("T")[0];
       const descParc = `${String(descricao).trim()} (${i + 1}/${qtdParcelas})`;
       const [result] = await db.query(
-        `INSERT INTO Transacoes (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao, parcela_atual, parcelas_total, tags)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO Transacoes (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao, parcela_atual, parcelas_total, tags, pet_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [req.usuarioId, conta_id, categoria_id, tipo, descParc,
-         parseFloat(valor), dataParc, observacao || null, i + 1, qtdParcelas, tagsStr],
+         parseFloat(valor), dataParc, observacao || null, i + 1, qtdParcelas, tagsStr, petId],
       );
       ids.push(result.insertId);
     }
@@ -257,17 +258,18 @@ router.post("/", auth, async (req, res) => {
 
 // ── Editar transação ──
 router.put("/:id", auth, async (req, res) => {
-  const { conta_id, categoria_id, tipo, descricao, valor, data, observacao, tags } =
+  const { conta_id, categoria_id, tipo, descricao, valor, data, observacao, tags, pet_id } =
     req.body;
   const erroValidacao = validarTransacao(req.body);
   if (erroValidacao) return res.status(400).json({ erro: erroValidacao });
   const tagsStr = tags && typeof tags === "string" ? tags.substring(0, 255) : null;
+  const petIdUpd = pet_id ? parseInt(pet_id) || null : null;
   try {
     await db.query(
-      `UPDATE Transacoes SET conta_id=?, categoria_id=?, tipo=?, descricao=?, valor=?, data=?, observacao=?, tags=?
+      `UPDATE Transacoes SET conta_id=?, categoria_id=?, tipo=?, descricao=?, valor=?, data=?, observacao=?, tags=?, pet_id=?
        WHERE id=? AND usuario_id=? AND deleted_at IS NULL`,
       [conta_id, categoria_id, tipo, String(descricao).trim(),
-       parseFloat(valor), data, observacao, tagsStr,
+       parseFloat(valor), data, observacao, tagsStr, petIdUpd,
        req.params.id, req.usuarioId],
     );
     res.json({ mensagem: "Transação atualizada!" });

@@ -885,6 +885,12 @@
             <datalist id="tags-datalist"></datalist>
           </div>
         </div>
+        <div class="form-group" id="grupo-pet" style="display:none">
+          <label><i class="fa-solid fa-paw" style="color:var(--green);margin-right:4px"></i>Pet (opcional)</label>
+          <select id="f-pet">
+            <option value="">Nenhum</option>
+          </select>
+        </div>
         <div style="display: flex; gap: 10px; margin-top: 8px">
           <button
             onclick="fecharModalLancamento()"
@@ -2193,6 +2199,16 @@
             if (dl && Array.isArray(tags))
               dl.innerHTML = tags.map((t) => `<option value="${t}">`).join("");
           }).catch(() => {});
+          // Pets
+          fetchAPI("/api/pets").then((pets) => {
+            const sel = document.getElementById("f-pet");
+            const grupo = document.getElementById("grupo-pet");
+            if (!sel) return;
+            if (!Array.isArray(pets) || !pets.length) { if (grupo) grupo.style.display = "none"; return; }
+            if (grupo) grupo.style.display = "block";
+            sel.innerHTML = `<option value="">Nenhum</option>` +
+              pets.map((p) => `<option value="${p.id}">${p.emoji || "🐾"} ${p.nome}</option>`).join("");
+          }).catch(() => {});
           // Voz — preenche descrição e valor falando
           ativarVoz("btn-voz", "f-descricao", "f-valor");
           // Auto-save draft
@@ -2242,6 +2258,15 @@
         if (fTagsEdit) fTagsEdit.value = item.tags || "";
         const fParcelasEdit = document.getElementById("f-parcelas");
         if (fParcelasEdit) fParcelasEdit.value = "1";
+        fetchAPI("/api/pets").then((pets) => {
+          const sel = document.getElementById("f-pet");
+          const grupo = document.getElementById("grupo-pet");
+          if (!sel || !Array.isArray(pets) || !pets.length) { if (grupo) grupo.style.display = "none"; return; }
+          if (grupo) grupo.style.display = "block";
+          sel.innerHTML = `<option value="">Nenhum</option>` +
+            pets.map((p) => `<option value="${p.id}">${p.emoji || "🐾"} ${p.nome}</option>`).join("");
+          if (item.pet_id) sel.value = item.pet_id;
+        }).catch(() => {});
         selecionarTipoModal(item.tipo);
         document.getElementById("f-categoria").value = item.categoria_id;
         document.getElementById("f-conta").value = item.conta_id;
@@ -2260,6 +2285,7 @@
           observacao: document.getElementById("f-obs").value,
           parcelas: parseInt(document.getElementById("f-parcelas")?.value) || 1,
           tags: document.getElementById("f-tags")?.value.trim() || null,
+          pet_id: document.getElementById("f-pet")?.value || null,
         };
         if (!body.descricao || !body.valor || !body.data) {
           toast("Preencha descrição, valor e data.", "erro");

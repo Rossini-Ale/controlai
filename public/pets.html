@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="theme-color" content="#0f1117" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <title>Controlaí — Pets</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="/css/global.css" />
+    <style>
+      .pet-cards-wrap {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        margin-bottom: 24px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      .pet-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px 16px;
+        min-width: 130px;
+        cursor: pointer;
+        transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+        text-align: center;
+        flex-shrink: 0;
+        user-select: none;
+      }
+      .pet-card:hover { border-color: var(--green); transform: translateY(-2px); }
+      .pet-card.active {
+        border-color: var(--green);
+        box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+        background: var(--bg-tertiary);
+      }
+      .pet-card-emoji { font-size: 40px; line-height: 1; margin-bottom: 8px; }
+      .pet-card-nome { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .pet-card-especie { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+      .pet-card-gasto { font-size: 12px; font-weight: 600; color: var(--green); }
+
+      .pet-add-card {
+        background: transparent;
+        border: 1.5px dashed var(--border);
+        border-radius: 16px;
+        padding: 18px 16px;
+        min-width: 110px;
+        cursor: pointer;
+        transition: border-color 0.2s, color 0.2s;
+        text-align: center;
+        flex-shrink: 0;
+        color: var(--text-muted);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 12px;
+      }
+      .pet-add-card:hover { border-color: var(--green); color: var(--green); }
+
+      .pet-detalhe { display: none; }
+      .pet-detalhe.visible { display: block; animation: fadeInTab 0.2s ease; }
+
+      .pet-detalhe-header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px 20px;
+        margin-bottom: 16px;
+      }
+      .pet-detalhe-emoji { font-size: 52px; line-height: 1; flex-shrink: 0; }
+      .pet-detalhe-info { flex: 1; min-width: 0; }
+      .pet-detalhe-nome { font-size: 22px; font-weight: 700; }
+      .pet-detalhe-sub { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+      .pet-detalhe-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+      .evento-item {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: border-color 0.15s;
+      }
+      .evento-item:hover { border-color: rgba(255,255,255,0.15); }
+      .evento-tipo-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+      }
+      .evento-info { flex: 1; min-width: 0; }
+      .evento-descricao { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .evento-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+      .evento-badge {
+        font-size: 11px;
+        padding: 3px 9px;
+        border-radius: 20px;
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .evento-badge.urgente { background: rgba(239,68,68,0.12); color: #ef4444; }
+      .evento-badge.breve   { background: rgba(245,158,11,0.12); color: #f59e0b; }
+      .evento-badge.ok      { background: rgba(16,185,129,0.12); color: #10b981; }
+
+      .emoji-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+      .emoji-opt {
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        border-radius: 10px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        background: var(--bg-tertiary);
+        transition: border-color 0.15s, background 0.15s;
+        user-select: none;
+      }
+      .emoji-opt:hover, .emoji-opt.selected {
+        border-color: var(--green);
+        background: rgba(16,185,129,0.08);
+      }
+
+      .alerta-proximos {
+        background: rgba(245,158,11,0.06);
+        border: 1px solid rgba(245,158,11,0.25);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 16px;
+      }
+      .alerta-proximos h3 {
+        margin: 0 0 10px;
+        font-size: 14px;
+        color: #f59e0b;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      @media (max-width: 768px) {
+        .pet-detalhe-header { flex-wrap: wrap; gap: 12px; }
+        .pet-detalhe-actions { width: 100%; }
+        .pet-detalhe-actions button { flex: 1; }
+        .pet-detalhe-nome { font-size: 18px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar" id="sidebar"></aside>
+      <main class="main" id="main">
+        <div id="mobile-header"></div>
+
+        <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <h1 class="page-title">Meus Pets</h1>
+            <p class="page-subtitle">Saúde e gastos dos seus animais</p>
+          </div>
+          <button class="btn" onclick="abrirModalPet()">
+            <i class="fa-solid fa-plus"></i> Adicionar pet
+          </button>
+        </div>
+
+        <!-- Cards de pets -->
+        <div class="pet-cards-wrap" id="pet-cards" style="display:none"></div>
+
+        <!-- Estado vazio -->
+        <div id="pets-empty" style="display:none;text-align:center;padding:60px 20px">
+          <div style="font-size:72px;margin-bottom:16px">🐾</div>
+          <h2 style="color:var(--text-primary);margin-bottom:8px">Nenhum pet ainda</h2>
+          <p style="color:var(--text-muted);margin-bottom:24px">Adicione seu animal de estimação para acompanhar saúde e gastos.</p>
+          <button class="btn" onclick="abrirModalPet()"><i class="fa-solid fa-plus"></i> Adicionar pet</button>
+        </div>
+
+        <!-- Detalhe do pet selecionado -->
+        <div class="pet-detalhe" id="pet-detalhe"></div>
+      </main>
+    </div>
+
+    <div id="tab-bar-wrap"></div>
+
+    <!-- ─── Modal: Adicionar / Editar Pet ─── -->
+    <div class="modal-overlay" id="modal-pet">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="modal-pet-titulo">Novo pet</h2>
+          <button class="btn-cancel btn-icon" onclick="fecharModalPet()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="form-group">
+          <label>Emoji</label>
+          <div class="emoji-grid" id="emoji-grid"></div>
+          <input type="hidden" id="p-emoji" value="🐶" />
+        </div>
+
+        <div class="form-group">
+          <label>Nome <span style="color:var(--red)">*</span></label>
+          <input type="text" id="p-nome" placeholder="Ex: Rex, Luna, Bolinha..." maxlength="100" />
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group" style="margin:0">
+            <label>Espécie</label>
+            <select id="p-especie" onchange="atualizarEmojiEspecie()">
+              <option value="cachorro">Cachorro</option>
+              <option value="gato">Gato</option>
+              <option value="passaro">Pássaro</option>
+              <option value="coelho">Coelho</option>
+              <option value="hamster">Hamster</option>
+              <option value="peixe">Peixe</option>
+              <option value="reptil">Réptil</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Raça (opcional)</label>
+            <input type="text" id="p-raca" placeholder="Ex: Labrador..." maxlength="100" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Data de nascimento (opcional)</label>
+          <input type="date" id="p-nascimento" />
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button onclick="fecharModalPet()" class="btn-cancel" style="flex:1;padding:12px">Cancelar</button>
+          <button onclick="salvarPet()" class="btn" style="flex:2;justify-content:center;padding:12px">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Modal: Registrar / Editar Evento ─── -->
+    <div class="modal-overlay" id="modal-evento">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="modal-evento-titulo">Registrar evento</h2>
+          <button class="btn-cancel btn-icon" onclick="fecharModalEvento()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="form-group">
+          <label>Tipo</label>
+          <select id="e-tipo">
+            <option value="vacina">💉 Vacina</option>
+            <option value="consulta">🏥 Consulta veterinária</option>
+            <option value="vermifugo">💊 Vermífugo</option>
+            <option value="antipulgas">🛡️ Antipulgas / Anticarrapatos</option>
+            <option value="banho_tosa">✂️ Banho e tosa</option>
+            <option value="pesagem">⚖️ Pesagem</option>
+            <option value="cirurgia">🩺 Cirurgia / Procedimento</option>
+            <option value="outro">📋 Outro</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Descrição <span style="color:var(--red)">*</span></label>
+          <input type="text" id="e-descricao" placeholder="Ex: Vacina V8, Consulta de rotina..." maxlength="255" />
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group" style="margin:0">
+            <label>Data do evento</label>
+            <input type="date" id="e-data" />
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Próxima data</label>
+            <input type="date" id="e-proxima" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Custo (R$)</label>
+          <input type="text" id="e-custo" inputmode="decimal" placeholder="0,00" />
+        </div>
+
+        <div class="form-group">
+          <label>Observação (opcional)</label>
+          <textarea id="e-obs" rows="2" placeholder="Clínica, médico, resultado..."></textarea>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button onclick="fecharModalEvento()" class="btn-cancel" style="flex:1;padding:12px">Cancelar</button>
+          <button onclick="salvarEvento()" class="btn" style="flex:2;justify-content:center;padding:12px">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/global.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/notifications.js"></script>
+    <script>
+      verificarAuth();
+      document.getElementById("sidebar").innerHTML = renderSidebar("Pets");
+      document.getElementById("mobile-header").innerHTML = renderMobileHeader("Pets");
+      document.getElementById("tab-bar-wrap").innerHTML = renderTabBar("Pets");
+
+      let pets = [];
+      let petSelecionado = null;
+      let editandoPetId = null;
+      let editandoEventoId = null;
+      let editandoEventoPetId = null;
+
+      const EMOJIS_ESPECIE = {
+        cachorro: "🐶", gato: "🐱", passaro: "🦜", coelho: "🐰",
+        hamster: "🐹", peixe: "🐠", reptil: "🦎", outro: "🐾",
+      };
+      const EMOJIS_LISTA = ["🐶","🐱","🦜","🐰","🐹","🐠","🦎","🐴","🐑","🐮","🐿️","🦔","🐾"];
+
+      const TIPO_EVENTO = {
+        vacina:     { icon: "fa-syringe",        cor: "#6366f1", bg: "rgba(99,102,241,0.12)",  label: "Vacina" },
+        consulta:   { icon: "fa-stethoscope",    cor: "#3b82f6", bg: "rgba(59,130,246,0.12)",  label: "Consulta" },
+        vermifugo:  { icon: "fa-capsules",        cor: "#10b981", bg: "rgba(16,185,129,0.12)",  label: "Vermífugo" },
+        antipulgas: { icon: "fa-shield-halved",  cor: "#f59e0b", bg: "rgba(245,158,11,0.12)",  label: "Antipulgas" },
+        banho_tosa: { icon: "fa-scissors",        cor: "#ec4899", bg: "rgba(236,72,153,0.12)", label: "Banho/Tosa" },
+        pesagem:    { icon: "fa-scale-balanced", cor: "#8b5cf6", bg: "rgba(139,92,246,0.12)",  label: "Pesagem" },
+        cirurgia:   { icon: "fa-user-doctor",    cor: "#ef4444", bg: "rgba(239,68,68,0.12)",   label: "Cirurgia" },
+        outro:      { icon: "fa-clipboard-list", cor: "var(--text-muted)", bg: "var(--bg-tertiary)", label: "Outro" },
+      };
+
+      // ── Emoji grid ──
+      function initEmojiGrid(selecionado) {
+        const grid = document.getElementById("emoji-grid");
+        grid.innerHTML = EMOJIS_LISTA.map((e) =>
+          `<div class="emoji-opt ${e === selecionado ? "selected" : ""}" onclick="selecionarEmoji('${e}')">${e}</div>`
+        ).join("");
+      }
+
+      function selecionarEmoji(emoji) {
+        document.getElementById("p-emoji").value = emoji;
+        document.querySelectorAll(".emoji-opt").forEach((el) => {
+          el.classList.toggle("selected", el.textContent.trim() === emoji);
+        });
+      }
+
+      function atualizarEmojiEspecie() {
+        const esp = document.getElementById("p-especie").value;
+        selecionarEmoji(EMOJIS_ESPECIE[esp] || "🐾");
+      }
+
+      // ── Helpers ──
+      function labelEspecie(e) {
+        const m = { cachorro:"Cachorro", gato:"Gato", passaro:"Pássaro", coelho:"Coelho",
+                    hamster:"Hamster", peixe:"Peixe", reptil:"Réptil", outro:"Outro" };
+        return m[e] || e;
+      }
+
+      function calcIdade(dataNasc) {
+        if (!dataNasc) return null;
+        const nasc = new Date(dataNasc);
+        const agora = new Date();
+        const mesesTotal = (agora.getFullYear() - nasc.getFullYear()) * 12 + (agora.getMonth() - nasc.getMonth());
+        if (mesesTotal < 1) return "menos de 1 mês";
+        if (mesesTotal < 12) return `${mesesTotal} mês${mesesTotal > 1 ? "es" : ""}`;
+        const anos = Math.floor(mesesTotal / 12);
+        return `${anos} ano${anos > 1 ? "s" : ""}`;
+      }
+
+      // ── Carregar pets ──
+      async function carregarPets() {
+        const data = await fetchAPI("/api/pets/dashboard");
+        if (!data) return;
+        pets = data.pets || [];
+        renderPetCards(data.proximos_eventos || []);
+        if (petSelecionado) {
+          if (pets.find((p) => p.id === petSelecionado)) mostrarDetalhePet(petSelecionado);
+          else { document.getElementById("pet-detalhe").classList.remove("visible"); petSelecionado = null; }
+        }
+      }
+
+      function renderPetCards(proximosEventos = []) {
+        const wrap = document.getElementById("pet-cards");
+        const empty = document.getElementById("pets-empty");
+
+        if (!pets.length) {
+          wrap.style.display = "none";
+          empty.style.display = "block";
+          return;
+        }
+        wrap.style.display = "flex";
+        empty.style.display = "none";
+
+        wrap.innerHTML = pets.map((p) => `
+          <div class="pet-card ${petSelecionado === p.id ? "active" : ""}"
+               onclick="mostrarDetalhePet(${p.id})" id="petcard-${p.id}">
+            <div class="pet-card-emoji">${p.emoji || "🐾"}</div>
+            <div class="pet-card-nome">${p.nome}</div>
+            <div class="pet-card-especie">${labelEspecie(p.especie)}</div>
+            <div class="pet-card-gasto">${p.gasto_mes > 0 ? formatarMoedaRaw(p.gasto_mes) + "/mês" : "—"}</div>
+          </div>
+        `).join("") + `
+          <div class="pet-add-card" onclick="abrirModalPet()">
+            <i class="fa-solid fa-plus" style="font-size:22px"></i>
+            <span>Novo pet</span>
+          </div>
+        `;
+      }
+
+      // ── Detalhe do pet ──
+      async function mostrarDetalhePet(id) {
+        petSelecionado = id;
+        document.querySelectorAll(".pet-card").forEach((c) => c.classList.remove("active"));
+        document.getElementById(`petcard-${id}`)?.classList.add("active");
+
+        const pet = pets.find((p) => p.id === id);
+        if (!pet) return;
+
+        const detalhe = document.getElementById("pet-detalhe");
+        detalhe.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-muted)">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size:20px"></i>
+        </div>`;
+        detalhe.classList.add("visible");
+
+        // Scroll suave até o detalhe no mobile
+        if (window.innerWidth <= 768) {
+          setTimeout(() => detalhe.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+        }
+
+        const [gastosData, eventosData] = await Promise.all([
+          fetchAPI(`/api/pets/${id}/gastos?mes=${new Date().getMonth()+1}&ano=${new Date().getFullYear()}`),
+          fetchAPI(`/api/pet-eventos?pet_id=${id}`),
+        ]);
+
+        const gastos = gastosData?.transacoes || [];
+        const totalMes = gastosData?.total || 0;
+        const eventos = Array.isArray(eventosData) ? eventosData : [];
+
+        const idade = calcIdade(pet.data_nascimento);
+        const sub = [labelEspecie(pet.especie), pet.raca, idade].filter(Boolean).join(" · ");
+
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const em30 = new Date(hoje.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const proximos = eventos.filter((e) => {
+          if (!e.proxima_data) return false;
+          const d = new Date(e.proxima_data);
+          return d >= hoje && d <= em30;
+        }).sort((a, b) => new Date(a.proxima_data) - new Date(b.proxima_data));
+
+        // Vencidos
+        const vencidos = eventos.filter((e) => {
+          if (!e.proxima_data) return false;
+          return new Date(e.proxima_data) < hoje;
+        });
+
+        detalhe.innerHTML = `
+          <div class="pet-detalhe-header">
+            <div class="pet-detalhe-emoji">${pet.emoji || "🐾"}</div>
+            <div class="pet-detalhe-info">
+              <div class="pet-detalhe-nome">${pet.nome}</div>
+              <div class="pet-detalhe-sub">${sub}</div>
+            </div>
+            <div class="pet-detalhe-actions">
+              <button class="btn-cancel" style="padding:8px 14px;font-size:13px" onclick="abrirModalPet(${id})">
+                <i class="fa-solid fa-pen"></i> Editar
+              </button>
+              <button class="btn-cancel" style="padding:8px 12px;font-size:13px;color:var(--red);border-color:var(--red)" onclick="confirmarExcluirPet(${id})" title="Excluir pet">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </div>
+
+          ${vencidos.length ? `
+            <div class="alerta-proximos" style="background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.25)">
+              <h3 style="color:#ef4444"><i class="fa-solid fa-circle-exclamation"></i> ${vencidos.length} evento${vencidos.length > 1 ? "s" : ""} vencido${vencidos.length > 1 ? "s" : ""}</h3>
+              ${vencidos.map((e) => renderEventoItem(e, true)).join("")}
+            </div>
+          ` : ""}
+
+          ${proximos.length ? `
+            <div class="alerta-proximos">
+              <h3><i class="fa-solid fa-calendar-days"></i> Próximos 30 dias</h3>
+              ${proximos.map((e) => renderEventoItem(e, true)).join("")}
+            </div>
+          ` : ""}
+
+          <div class="card" style="margin-bottom:20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${gastos.length ? "12px" : "0"}">
+              <h3 style="margin:0;font-size:15px">Gastos este mês</h3>
+              <span style="font-size:20px;font-weight:700;color:${totalMes > 0 ? "var(--red)" : "var(--text-muted)"}">
+                ${totalMes > 0 ? `<span class="valor-privado">${formatarMoedaRaw(totalMes)}</span>` : "Nenhum"}
+              </span>
+            </div>
+            ${gastos.length ? `
+              <div>
+                ${gastos.slice(0, 5).map((t) => `
+                  <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border)">
+                    <div>
+                      <span style="color:var(--text-secondary)">${t.descricao}</span>
+                      <span style="color:var(--text-muted);font-size:11px;margin-left:6px">${formatarData(t.data)}</span>
+                    </div>
+                    <span style="font-weight:500;color:var(--red)" class="valor-privado">${formatarMoedaRaw(t.valor)}</span>
+                  </div>
+                `).join("")}
+                ${gastos.length > 5 ? `
+                  <div style="font-size:12px;color:var(--text-muted);text-align:center;padding-top:8px">
+                    +${gastos.length - 5} lançamentos
+                  </div>
+                ` : ""}
+              </div>
+            ` : ""}
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h3 style="margin:0;font-size:15px">Histórico de saúde</h3>
+            <button class="btn" style="padding:8px 16px;font-size:13px" onclick="abrirModalEvento(${id})">
+              <i class="fa-solid fa-plus"></i> Registrar
+            </button>
+          </div>
+
+          ${eventos.length
+            ? eventos.map((e) => renderEventoItem(e, false)).join("")
+            : `<div style="text-align:center;color:var(--text-muted);font-size:14px;padding:32px 0">
+                <i class="fa-solid fa-clipboard-list" style="font-size:30px;margin-bottom:10px;display:block;opacity:0.4"></i>
+                Nenhum evento registrado ainda
+              </div>`
+          }
+          <div style="height:24px"></div>
+        `;
+
+        aplicarPrivacidade();
+      }
+
+      function renderEventoItem(e, compacto) {
+        const tipo = TIPO_EVENTO[e.tipo] || TIPO_EVENTO.outro;
+        const dataFmt = formatarData(e.data);
+        const custo = parseFloat(e.custo) > 0 ? ` · <span class="valor-privado">${formatarMoedaRaw(e.custo)}</span>` : "";
+
+        let badge = "";
+        if (e.proxima_data) {
+          const hoje = new Date(); hoje.setHours(0,0,0,0);
+          const dias = Math.ceil((new Date(e.proxima_data) - hoje) / 86400000);
+          if (dias < 0)        badge = `<span class="evento-badge urgente">Vencido</span>`;
+          else if (dias === 0) badge = `<span class="evento-badge urgente">Hoje!</span>`;
+          else if (dias <= 7)  badge = `<span class="evento-badge urgente">${dias}d</span>`;
+          else if (dias <= 30) badge = `<span class="evento-badge breve">em ${dias}d</span>`;
+          else                 badge = `<span class="evento-badge ok">${formatarData(e.proxima_data)}</span>`;
+        }
+
+        return `
+          <div class="evento-item">
+            <div class="evento-tipo-icon" style="background:${tipo.bg};color:${tipo.cor}">
+              <i class="fa-solid ${tipo.icon}"></i>
+            </div>
+            <div class="evento-info">
+              <div class="evento-descricao">${e.descricao}</div>
+              <div class="evento-meta">${tipo.label} · ${dataFmt}${custo}${e.observacao ? ` · ${e.observacao}` : ""}</div>
+            </div>
+            ${badge}
+            ${!compacto ? `
+              <div style="display:flex;gap:4px;flex-shrink:0;margin-left:4px">
+                <button onclick="abrirModalEvento(${e.pet_id || petSelecionado},${e.id})"
+                  style="background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;padding:5px 9px;border-radius:7px;font-size:12px;transition:all 0.15s"
+                  title="Editar" onmouseenter="this.style.borderColor='var(--green)'" onmouseleave="this.style.borderColor='var(--border)'">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button onclick="excluirEvento(${e.id})"
+                  style="background:var(--bg-tertiary);border:1px solid var(--border);color:var(--red);cursor:pointer;padding:5px 9px;border-radius:7px;font-size:12px;transition:all 0.15s"
+                  title="Excluir" onmouseenter="this.style.borderColor='var(--red)'" onmouseleave="this.style.borderColor='var(--border)'">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+            ` : ""}
+          </div>
+        `;
+      }
+
+      // ── Modal Pet ──
+      function abrirModalPet(id = null) {
+        editandoPetId = id;
+        const pet = id ? pets.find((p) => p.id === id) : null;
+        document.getElementById("modal-pet-titulo").textContent = id ? "Editar pet" : "Novo pet";
+
+        const emojiInicial = pet?.emoji || "🐶";
+        initEmojiGrid(emojiInicial);
+        document.getElementById("p-emoji").value = emojiInicial;
+        document.getElementById("p-nome").value = pet?.nome || "";
+        document.getElementById("p-especie").value = pet?.especie || "cachorro";
+        document.getElementById("p-raca").value = pet?.raca || "";
+        document.getElementById("p-nascimento").value = pet?.data_nascimento ? pet.data_nascimento.split("T")[0] : "";
+
+        document.getElementById("modal-pet").classList.add("active");
+        setTimeout(() => document.getElementById("p-nome").focus(), 100);
+      }
+
+      function fecharModalPet() {
+        document.getElementById("modal-pet").classList.remove("active");
+      }
+
+      async function salvarPet() {
+        const nome = document.getElementById("p-nome").value.trim();
+        if (!nome) { toast("Informe o nome do pet.", "erro"); return; }
+
+        const body = {
+          nome,
+          especie: document.getElementById("p-especie").value,
+          raca: document.getElementById("p-raca").value.trim() || null,
+          data_nascimento: document.getElementById("p-nascimento").value || null,
+          emoji: document.getElementById("p-emoji").value,
+        };
+
+        const res = editandoPetId
+          ? await fetchAPI(`/api/pets/${editandoPetId}`, { method: "PUT", body: JSON.stringify(body) })
+          : await fetchAPI("/api/pets", { method: "POST", body: JSON.stringify(body) });
+
+        if (res?.erro) { toast(res.erro, "erro"); return; }
+
+        toast(editandoPetId ? "Pet atualizado!" : "Pet adicionado! 🐾");
+        fecharModalPet();
+        await carregarPets();
+        if (!editandoPetId && res?.id) mostrarDetalhePet(res.id);
+      }
+
+      async function confirmarExcluirPet(id) {
+        const pet = pets.find((p) => p.id === id);
+        if (!confirm(`Excluir ${pet?.nome || "este pet"}? Todos os eventos de saúde serão removidos.`)) return;
+        await fetchAPI(`/api/pets/${id}`, { method: "DELETE" });
+        toast("Pet removido.");
+        petSelecionado = null;
+        document.getElementById("pet-detalhe").classList.remove("visible");
+        await carregarPets();
+      }
+
+      // ── Modal Evento ──
+      function abrirModalEvento(petId, eventoId = null) {
+        editandoEventoId = eventoId;
+        editandoEventoPetId = petId;
+        const hoje = new Date().toISOString().split("T")[0];
+
+        document.getElementById("modal-evento-titulo").textContent = eventoId ? "Editar evento" : "Registrar evento";
+        document.getElementById("e-tipo").value = "consulta";
+        document.getElementById("e-descricao").value = "";
+        document.getElementById("e-data").value = hoje;
+        document.getElementById("e-proxima").value = "";
+        document.getElementById("e-custo").value = "";
+        document.getElementById("e-obs").value = "";
+
+        if (eventoId) {
+          fetchAPI(`/api/pet-eventos?pet_id=${petId}`).then((lista) => {
+            const e = lista?.find((ev) => ev.id === eventoId);
+            if (!e) return;
+            document.getElementById("e-tipo").value = e.tipo;
+            document.getElementById("e-descricao").value = e.descricao;
+            document.getElementById("e-data").value = e.data?.split("T")[0] || "";
+            document.getElementById("e-proxima").value = e.proxima_data?.split("T")[0] || "";
+            document.getElementById("e-custo").value = parseFloat(e.custo) > 0
+              ? parseFloat(e.custo).toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : "";
+            document.getElementById("e-obs").value = e.observacao || "";
+          });
+        }
+
+        document.getElementById("modal-evento").classList.add("active");
+        setTimeout(() => document.getElementById("e-descricao").focus(), eventoId ? 200 : 100);
+      }
+
+      function fecharModalEvento() {
+        document.getElementById("modal-evento").classList.remove("active");
+      }
+
+      async function salvarEvento() {
+        const descricao = document.getElementById("e-descricao").value.trim();
+        const data = document.getElementById("e-data").value;
+        if (!descricao) { toast("Informe a descrição.", "erro"); return; }
+        if (!data) { toast("Informe a data.", "erro"); return; }
+
+        const custoRaw = document.getElementById("e-custo").value.replace(/\./g, "").replace(",", ".");
+        const body = {
+          pet_id: editandoEventoPetId,
+          tipo: document.getElementById("e-tipo").value,
+          descricao,
+          data,
+          proxima_data: document.getElementById("e-proxima").value || null,
+          custo: parseFloat(custoRaw) || 0,
+          observacao: document.getElementById("e-obs").value.trim() || null,
+        };
+
+        const res = editandoEventoId
+          ? await fetchAPI(`/api/pet-eventos/${editandoEventoId}`, { method: "PUT", body: JSON.stringify(body) })
+          : await fetchAPI("/api/pet-eventos", { method: "POST", body: JSON.stringify(body) });
+
+        if (res?.erro) { toast(res.erro, "erro"); return; }
+
+        toast(editandoEventoId ? "Evento atualizado!" : "Evento registrado! 📋");
+        fecharModalEvento();
+        mostrarDetalhePet(editandoEventoPetId);
+      }
+
+      async function excluirEvento(id) {
+        if (!confirm("Excluir este evento?")) return;
+        await fetchAPI(`/api/pet-eventos/${id}`, { method: "DELETE" });
+        toast("Evento removido.");
+        mostrarDetalhePet(petSelecionado);
+      }
+
+      // ── Init ──
+      document.addEventListener("DOMContentLoaded", async () => {
+        initPullToRefresh(carregarPets);
+        await carregarPets();
+      });
+    </script>
+  </body>
+</html>

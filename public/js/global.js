@@ -344,6 +344,7 @@ function renderSidebar(paginaAtiva) {
     { href: "/dashboard.html", icon: "fa-house", label: "Dashboard" },
     { href: "/lancamentos.html", icon: "fa-right-left", label: "Lançamentos" },
     { href: "/contas.html", icon: "fa-wallet", label: "Contas" },
+    { href: "/pets.html", icon: "fa-paw", label: "Pets" },
     { href: "/relatorios.html", icon: "fa-chart-bar", label: "Relatórios" },
   ];
   const _sidebarHtml = `
@@ -498,10 +499,10 @@ function renderTabBar(paginaAtiva) {
     },
     { central: true },
     {
-      href: "/contas.html",
-      icon: "fa-wallet",
-      label: "Contas",
-      page: "Contas",
+      href: "/pets.html",
+      icon: "fa-paw",
+      label: "Pets",
+      page: "Pets",
     },
     {
       href: "/relatorios.html",
