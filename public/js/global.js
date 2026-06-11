@@ -362,6 +362,11 @@ function renderSidebar(paginaAtiva) {
       <div class="icon"><i class="fa-solid fa-chart-pie"></i></div>
       <span>controlaí</span>
     </div>
+    <button class="cmd-palette-trigger desktop-only" onclick="abrirCommandPalette()">
+      <i class="fa-solid fa-magnifying-glass" style="font-size:12px"></i>
+      <span>Buscar...</span>
+      <kbd>⌘K</kbd>
+    </button>
     <nav>
       ${navGroups.map((group) => `
         <div class="nav-section-label">${group.label}</div>
@@ -1519,3 +1524,186 @@ document.addEventListener("keydown", (e) => {
     return;
   }
 });
+
+// ════════════════════════════════════════
+// COMMAND PALETTE (⌘K / Ctrl+K)
+// ════════════════════════════════════════
+(function initCommandPalette() {
+  const CP_NAV = [
+    { icon: "fa-house",        label: "Dashboard",       sub: "Página inicial",               href: "/dashboard.html" },
+    { icon: "fa-right-left",   label: "Lançamentos",     sub: "Ver e criar lançamentos",      href: "/lancamentos.html" },
+    { icon: "fa-wallet",       label: "Contas",          sub: "Contas bancárias e cartões",   href: "/contas.html" },
+    { icon: "fa-chart-bar",    label: "Relatórios",      sub: "Gráficos e análises",          href: "/relatorios.html" },
+    { icon: "fa-paw",          label: "Pets",            sub: "Histórico de saúde dos pets",  href: "/pets.html" },
+  ];
+  const CP_ACTIONS = [
+    { icon: "fa-plus",         label: "Novo lançamento",    sub: "Abrir modal de lançamento",   href: "/lancamentos.html?novo=1" },
+    { icon: "fa-rotate",       label: "Ver recorrentes",    sub: "Despesas e receitas fixas",   href: "/lancamentos.html?aba=recorrentes" },
+    { icon: "fa-bullseye",     label: "Ver metas",          sub: "Metas de economia",           href: "/relatorios.html?aba=metas" },
+    { icon: "fa-right-left",   label: "Nova transferência", sub: "Transferir entre contas",     href: "/contas.html" },
+  ];
+
+  let _open = false, _index = 0, _results = [], _timer = null;
+
+  function create() {
+    if (document.getElementById("cmd-palette-overlay")) return;
+    const el = document.createElement("div");
+    el.id = "cmd-palette-overlay";
+    el.innerHTML = `
+      <div id="cmd-palette" role="dialog" aria-label="Command palette">
+        <div id="cmd-palette-input-wrap">
+          <i class="fa-solid fa-magnifying-glass" id="cmd-palette-search-icon"></i>
+          <input id="cmd-palette-input" type="text" placeholder="Buscar lançamentos, navegar..." autocomplete="off" spellcheck="false" aria-label="Buscar">
+          <span id="cmd-palette-esc" onclick="window._cpClose()">ESC</span>
+        </div>
+        <div id="cmd-palette-list" role="listbox"></div>
+        <div id="cmd-palette-footer">
+          <span><kbd>↑</kbd><kbd>↓</kbd> navegar</span>
+          <span><kbd>↵</kbd> abrir</span>
+          <span><kbd>ESC</kbd> fechar</span>
+        </div>
+      </div>`;
+    el.addEventListener("click", (e) => { if (e.target === el) close(); });
+    document.body.appendChild(el);
+    const inp = document.getElementById("cmd-palette-input");
+    inp.addEventListener("input", onInput);
+    inp.addEventListener("keydown", onKey);
+  }
+
+  function open() {
+    create();
+    _open = true;
+    document.getElementById("cmd-palette-overlay").classList.add("visible");
+    setTimeout(() => document.getElementById("cmd-palette-input")?.focus(), 20);
+    render("", groupedItems([...CP_NAV, ...CP_ACTIONS]));
+  }
+
+  function close() {
+    _open = false;
+    const ov = document.getElementById("cmd-palette-overlay");
+    if (ov) ov.classList.remove("visible");
+    const inp = document.getElementById("cmd-palette-input");
+    if (inp) inp.value = "";
+    clearTimeout(_timer);
+  }
+  window._cpClose = close;
+
+  function groupedItems(items) { return items; }
+
+  function onInput(e) {
+    const q = e.target.value.trim();
+    if (!q) { render("", [...CP_NAV, ...CP_ACTIONS]); return; }
+    const lq = q.toLowerCase();
+    const filtered = [...CP_NAV, ...CP_ACTIONS].filter(
+      (i) => i.label.toLowerCase().includes(lq) || (i.sub || "").toLowerCase().includes(lq)
+    );
+    render(q, filtered);
+    if (q.length >= 2) {
+      clearTimeout(_timer);
+      _timer = setTimeout(() => searchTx(q, filtered), 280);
+    }
+  }
+
+  async function searchTx(q, base) {
+    try {
+      const res = await fetchAPI(`/api/transacoes/buscar?q=${encodeURIComponent(q)}`);
+      const tx = (Array.isArray(res) ? res : []).slice(0, 5).map((t) => ({
+        icon: t.is_transferencia ? "fa-right-left" : t.tipo === "receita" ? "fa-arrow-down" : "fa-arrow-up",
+        label: t.descricao,
+        sub: `${formatarData(t.data)} · ${t.categoria_nome || ""}`,
+        right: formatarMoedaRaw(parseFloat(t.valor)),
+        rightColor: t.tipo === "receita" ? "var(--green)" : "var(--red)",
+        href: `/lancamentos.html?mes=${new Date(t.data).getMonth() + 1}&ano=${new Date(t.data).getFullYear()}`,
+        _tx: true,
+      }));
+      if (tx.length) render(q, [...base, ...tx]);
+    } catch (_) {}
+  }
+
+  function render(q, items) {
+    _results = items;
+    _index = 0;
+    const list = document.getElementById("cmd-palette-list");
+    if (!list) return;
+    if (!items.length) {
+      list.innerHTML = `<div id="cmd-palette-empty"><i class="fa-solid fa-magnifying-glass" style="margin-right:8px;opacity:0.4"></i>Sem resultados para "<strong>${q}</strong>"</div>`;
+      return;
+    }
+
+    const navItems = items.filter((i) => !i._tx);
+    const txItems  = items.filter((i) => i._tx);
+    let html = "";
+    if (navItems.length) {
+      html += q ? "" : `<div class="cmd-group-label">Navegar</div>`;
+      navItems.forEach((item, gi) => {
+        const gi2 = items.indexOf(item);
+        html += itemHtml(item, gi2);
+      });
+    }
+    if (txItems.length) {
+      html += `<div class="cmd-group-label">Lançamentos encontrados</div>`;
+      txItems.forEach((item) => {
+        html += itemHtml(item, items.indexOf(item));
+      });
+    }
+    list.innerHTML = html;
+  }
+
+  function itemHtml(item, idx) {
+    const cor = item.rightColor || "var(--text-muted)";
+    const iconCor = item._tx
+      ? (item.rightColor || "var(--text-muted)")
+      : "var(--text-muted)";
+    return `<div class="cmd-item ${idx === 0 ? "active" : ""}" data-idx="${idx}" onclick="window._cpSelect(${idx})">
+      <div class="cmd-item-icon"><i class="fa-solid ${item.icon}" style="color:${iconCor}"></i></div>
+      <div class="cmd-item-body">
+        <div class="cmd-item-label">${item.label}</div>
+        ${item.sub ? `<div class="cmd-item-sub">${item.sub}</div>` : ""}
+      </div>
+      ${item.right ? `<div class="cmd-item-right" style="color:${cor}">${item.right}</div>` : ""}
+    </div>`;
+  }
+
+  function select(idx) {
+    const item = _results[idx ?? _index];
+    if (!item) return;
+    close();
+    setTimeout(() => navegarPara(item.href), 60);
+  }
+  window._cpSelect = select;
+
+  function onKey(e) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      _index = Math.min(_index + 1, _results.length - 1);
+      updateActive();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      _index = Math.max(_index - 1, 0);
+      updateActive();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      select(_index);
+    } else if (e.key === "Escape") {
+      close();
+    }
+  }
+
+  function updateActive() {
+    document.querySelectorAll(".cmd-item").forEach((el) => {
+      el.classList.toggle("active", parseInt(el.dataset.idx) === _index);
+    });
+    document.querySelector(".cmd-item.active")?.scrollIntoView({ block: "nearest" });
+  }
+
+  // Atalho global ⌘K / Ctrl+K
+  document.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      e.preventDefault();
+      _open ? close() : open();
+    }
+  });
+
+  // API pública
+  window.abrirCommandPalette = open;
+})();

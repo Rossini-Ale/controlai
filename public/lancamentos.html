@@ -101,6 +101,36 @@
         padding: 2px 8px;
       }
 
+      /* Timeline desktop — separador por dia */
+      .timeline-day-row td {
+        padding: 0 !important;
+        border-bottom: none !important;
+        background: transparent;
+      }
+      .timeline-day-header-d {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px 20px 4px;
+        background: var(--bg-primary);
+      }
+      .timeline-day-label-d {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: capitalize;
+        min-width: 80px;
+      }
+      .timeline-day-count-d {
+        font-size: 11px;
+        color: var(--text-muted);
+        flex: 1;
+      }
+      .timeline-day-total-d {
+        font-size: 12px;
+        font-weight: 700;
+      }
+
       /* Recorrentes */
       .rec-grid {
         display: grid;
@@ -1990,6 +2020,31 @@
         if (_ultimosData.length) renderDesktop(_ultimosData);
       }
 
+      function _txDesktopRow(t) {
+        const isT = !!t.is_transferencia;
+        const label = isT ? "transferencia" : t.tipo;
+        const parcelaLabel = t.parcelas > 1
+          ? `<span style="font-size:10px;color:var(--text-muted);margin-left:5px;font-weight:400">[${t.parcela_atual}/${t.parcelas}]</span>`
+          : "";
+        return `<tr data-id="${t.id}" style="transition:transform 0.3s ease,opacity 0.3s ease">
+          <td>${formatarData(t.data)}</td>
+          <td>${isT ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}${t.descricao}${parcelaLabel}</td>
+          <td>${isT
+            ? `<span style="color:var(--text-muted);font-size:12px">—</span>`
+            : `<span class="cat-chip"><span class="cat-chip-dot" style="background:${t.categoria_cor || "#6b7280"}"></span>${t.categoria_nome || "—"}</span>`
+          }</td>
+          <td>${t.conta_nome || "—"}</td>
+          <td><span class="badge ${label}">${isT ? "transferência" : t.tipo}</span></td>
+          <td><span class="badge ${label}">${formatarMoeda(t.valor)}</span></td>
+          <td>${isT
+            ? `<button class="btn-danger" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
+            : `<button class="btn-edit" onclick="editarLancamento(${t.id})"><i class="fa-solid fa-pen"></i></button>
+               <button class="btn-edit" onclick="duplicarLancamento(${t.id})" title="Duplicar"><i class="fa-solid fa-copy"></i></button>
+               <button class="btn-danger" onclick="deletarLancamento(${t.id})"><i class="fa-solid fa-trash"></i></button>`
+          }</td>
+        </tr>`;
+      }
+
       function renderDesktop(data) {
         _ultimosData = data;
         const sorted = sortTransacoes(data);
@@ -1998,41 +2053,37 @@
           tbody.innerHTML = `<tr><td colspan="7" style="padding:0"><div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transação", "Nenhuma transação encontrada neste período.", "Novo lançamento", "abrirModalLancamento()")}</div></td></tr>`;
           return;
         }
-        tbody.innerHTML = sorted
-          .map((t) => {
-            const isT = !!t.is_transferencia;
-            const label = isT ? "transferencia" : t.tipo;
-            const parcelaLabel =
-              t.parcelas > 1
-                ? `<span style="font-size:10px;color:var(--text-muted);margin-left:5px;font-weight:400">[${t.parcela_atual}/${t.parcelas}]</span>`
-                : "";
-            return `<tr data-id="${t.id}" style="transition:transform 0.3s ease,opacity 0.3s ease,max-height 0.25s ease">
-            <td>${formatarData(t.data)}</td>
-            <td>
-              ${isT ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}
-              ${t.descricao}${parcelaLabel}
-            </td>
-            <td>${
-              isT
-                ? `<span style="color:var(--text-muted);font-size:12px">—</span>`
-                : `<span class="cat-chip">
-                  <span class="cat-chip-dot" style="background:${t.categoria_cor || "#6b7280"}"></span>
-                  ${t.categoria_nome || "—"}
-                </span>`
-            }</td>
-            <td>${t.conta_nome || "—"}</td>
-            <td><span class="badge ${label}">${isT ? "transferência" : t.tipo}</span></td>
-            <td><span class="badge ${label}">${formatarMoeda(t.valor)}</span></td>
-            <td>${
-              isT
-                ? `<button class="btn-danger" onclick="deletarTransferencia('${t.transferencia_id}')"><i class="fa-solid fa-trash"></i></button>`
-                : `<button class="btn-edit" onclick="editarLancamento(${t.id})"><i class="fa-solid fa-pen"></i></button>
-                 <button class="btn-edit" onclick="duplicarLancamento(${t.id})" title="Duplicar"><i class="fa-solid fa-copy"></i></button>
-                 <button class="btn-danger" onclick="deletarLancamento(${t.id})"><i class="fa-solid fa-trash"></i></button>`
-            }</td>
-          </tr>`;
-          })
-          .join("");
+
+        // Agrupamento por dia (só quando ordenado por data)
+        if (_sortCol === "data") {
+          const grupoMap = {};
+          sorted.forEach((t) => {
+            const d = t.data.split("T")[0];
+            if (!grupoMap[d]) grupoMap[d] = [];
+            grupoMap[d].push(t);
+          });
+          const datas = Object.keys(grupoMap).sort((a, b) => _sortDir === "asc" ? a.localeCompare(b) : b.localeCompare(a));
+          tbody.innerHTML = datas.map((dataStr) => {
+            const grupo = grupoMap[dataStr];
+            const rec = grupo.filter((t) => t.tipo === "receita" && !t.is_transferencia).reduce((s, t) => s + parseFloat(t.valor), 0);
+            const desp = grupo.filter((t) => t.tipo === "despesa" && !t.is_transferencia).reduce((s, t) => s + parseFloat(t.valor), 0);
+            const liq = rec - desp;
+            const liqCor = liq > 0 ? "var(--green)" : liq < 0 ? "var(--red)" : "var(--text-muted)";
+            const dataObj = new Date(dataStr + "T12:00:00");
+            const ds = dataObj.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
+            const dm = dataObj.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+            const header = `<tr class="timeline-day-row">
+              <td colspan="7"><div class="timeline-day-header-d">
+                <span class="timeline-day-label-d">${ds}, ${dm}</span>
+                <span class="timeline-day-count-d">${grupo.length} lançamento${grupo.length !== 1 ? "s" : ""}</span>
+                ${liq !== 0 ? `<span class="timeline-day-total-d" style="color:${liqCor}">${liq > 0 ? "+" : ""}${formatarMoedaRaw(liq)}</span>` : ""}
+              </div></td>
+            </tr>`;
+            return header + grupo.map(_txDesktopRow).join("");
+          }).join("");
+        } else {
+          tbody.innerHTML = sorted.map(_txDesktopRow).join("");
+        }
         animarEntrada(tbody, "tr");
       }
 

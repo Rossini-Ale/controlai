@@ -388,7 +388,8 @@
           carregarSaldoDiario(),
           carregarMetas(),
         ]);
-        _renderInsight(_evolucaoData, _resumoData);
+        _renderInsights(_evolucaoData, _resumoData, todasTransacoes);
+        _renderSparklines(_evolucaoData);
       }
 
       async function carregarSaldoTotal() {
@@ -1189,35 +1190,152 @@
         });
       }
 
-      // ── Insight: variação de despesas em relação à média recente ──
-      function _renderInsight(evolucao, resumo) {
+      // ── Sparklines nos metric cards ──
+      function _sparklineSVG(values, color) {
+        if (!values || values.length < 2) return "";
+        const min = Math.min(...values), max = Math.max(...values);
+        const range = max - min || 1;
+        const w = 64, h = 22;
+        const pts = values.map((v, i) => {
+          const x = (i / (values.length - 1)) * w;
+          const y = h - 2 - ((v - min) / range) * (h - 4);
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        });
+        const last = pts[pts.length - 1].split(",");
+        return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible" aria-hidden="true">
+          <polyline points="${pts.join(" ")}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="${last[0]}" cy="${last[1]}" r="2.5" fill="${color}"/>
+        </svg>`;
+      }
+
+      function _renderSparklines(evolucao) {
+        if (!Array.isArray(evolucao) || evolucao.length < 2) return;
+        const dados = evolucao.filter((d) => !(d.mes == mes && d.ano == ano));
+        if (dados.length < 2) return;
+        const receitas = dados.map((d) => parseFloat(d.receitas) || 0);
+        const despesas = dados.map((d) => parseFloat(d.despesas) || 0);
+        const saldos = dados.map((d) => (parseFloat(d.receitas) || 0) - (parseFloat(d.despesas) || 0));
+
+        [
+          { id: "cv-receitas", values: receitas, color: "var(--green)" },
+          { id: "cv-despesas", values: despesas, color: "var(--red)" },
+          { id: "cv-saldo", values: saldos, color: saldos[saldos.length - 1] >= 0 ? "var(--green)" : "var(--red)" },
+        ].forEach(({ id, values, color }) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const card = el.closest(".card");
+          if (!card) return;
+          card.querySelector(".card-sparkline")?.remove();
+          const div = document.createElement("div");
+          div.className = "card-sparkline";
+          div.innerHTML = _sparklineSVG(values, color);
+          card.appendChild(div);
+        });
+      }
+
+      // ── Insights automáticos do mês ──
+      function _renderInsights(evolucao, resumo, transacoes) {
         const wrap = document.getElementById("insight-variacao");
-        if (!wrap || !Array.isArray(evolucao) || !resumo) return;
+        if (!wrap || !resumo) return;
 
-        const mesAtualKey = `${ano}-${mes}`;
-        const anteriores = evolucao.filter((d) => !(d.mes == mes && d.ano == ano));
-        if (anteriores.length < 2) return;
+        const insights = [];
 
-        const ultimos = anteriores.slice(-3);
-        const avgDespesas = ultimos.reduce((s, d) => s + (parseFloat(d.despesas) || 0), 0) / ultimos.length;
-        const despesasAtual = parseFloat(resumo.total_despesas) || 0;
-        if (avgDespesas <= 0 || despesasAtual <= 0) return;
+        // 1. Variação vs média histórica
+        if (Array.isArray(evolucao) && evolucao.length >= 3) {
+          const anteriores = evolucao.filter((d) => !(d.mes == mes && d.ano == ano));
+          if (anteriores.length >= 2) {
+            const ultimos = anteriores.slice(-3);
+            const avgDesp = ultimos.reduce((s, d) => s + (parseFloat(d.despesas) || 0), 0) / ultimos.length;
+            const desp = parseFloat(resumo.total_despesas) || 0;
+            if (avgDesp > 0 && Math.abs((desp - avgDesp) / avgDesp) >= 0.05) {
+              const diff = ((desp - avgDesp) / avgDesp) * 100;
+              const acima = diff > 0;
+              insights.push({
+                icon: acima ? "fa-arrow-trend-up" : "fa-arrow-trend-down",
+                bg: acima ? "rgba(239,68,68,0.12)" : "rgba(16,185,129,0.12)",
+                color: acima ? "var(--red)" : "var(--green)",
+                text: acima
+                  ? `Despesas <strong>${Math.abs(diff).toFixed(0)}% acima</strong> da média dos últimos ${ultimos.length} meses`
+                  : `Despesas <strong>${Math.abs(diff).toFixed(0)}% abaixo</strong> da média — ótimo desempenho`,
+              });
+            }
+          }
+        }
 
-        const diff = ((despesasAtual - avgDespesas) / avgDespesas) * 100;
-        if (Math.abs(diff) < 5) return;
+        // 2. Maior categoria em despesas
+        if (Array.isArray(transacoes) && transacoes.length > 0) {
+          const desp = transacoes.filter((t) => t.tipo === "despesa" && !t.is_transferencia);
+          const catMap = {};
+          desp.forEach((t) => {
+            const k = t.categoria_nome || "Sem categoria";
+            if (!catMap[k]) catMap[k] = { total: 0, cor: t.categoria_cor || "#6b7280" };
+            catMap[k].total += parseFloat(t.valor) || 0;
+          });
+          const topCats = Object.entries(catMap).sort((a, b) => b[1].total - a[1].total);
+          if (topCats.length > 0) {
+            const [nome, { total, cor }] = topCats[0];
+            const totalDesp = parseFloat(resumo.total_despesas) || 1;
+            const pct = ((total / totalDesp) * 100).toFixed(0);
+            insights.push({
+              icon: "fa-chart-pie",
+              bg: cor + "20",
+              color: cor,
+              text: `<strong>${nome}</strong> é a maior categoria — ${pct}% das despesas (${formatarMoedaRaw(total)})`,
+            });
+          }
 
-        const acima = diff > 0;
-        const cor = acima ? "var(--red)" : "var(--green)";
-        const icone = acima ? "fa-arrow-trend-up" : "fa-arrow-trend-down";
-        const pct = Math.abs(diff).toFixed(0);
-        const msg = acima
-          ? `Despesas ${pct}% acima da média dos últimos ${ultimos.length} meses`
-          : `Despesas ${pct}% abaixo da média dos últimos ${ultimos.length} meses`;
+          // 3. Maior despesa individual
+          const maiores = [...desp].sort((a, b) => parseFloat(b.valor) - parseFloat(a.valor));
+          if (maiores.length > 0 && parseFloat(maiores[0].valor) > 0) {
+            insights.push({
+              icon: "fa-receipt",
+              bg: "rgba(107,114,128,0.12)",
+              color: "var(--text-muted)",
+              text: `Maior despesa: <strong>${maiores[0].descricao}</strong> — ${formatarMoedaRaw(parseFloat(maiores[0].valor))}`,
+            });
+          }
+        }
+
+        // 4. Taxa de economia
+        const rec = parseFloat(resumo.total_receitas) || 0;
+        const desp = parseFloat(resumo.total_despesas) || 0;
+        if (rec > 0 && desp > 0) {
+          const eco = rec - desp;
+          const taxa = Math.round((eco / rec) * 100);
+          if (eco > 0 && taxa >= 5) {
+            insights.push({
+              icon: "fa-piggy-bank",
+              bg: "rgba(16,185,129,0.12)",
+              color: "var(--green)",
+              text: `Taxa de economia de <strong>${taxa}%</strong> este mês — ${formatarMoedaRaw(eco)} guardados`,
+            });
+          } else if (eco < 0) {
+            insights.push({
+              icon: "fa-triangle-exclamation",
+              bg: "rgba(239,68,68,0.12)",
+              color: "var(--red)",
+              text: `Despesas superiores às receitas em <strong>${formatarMoedaRaw(Math.abs(eco))}</strong> este mês`,
+            });
+          }
+        }
+
+        if (!insights.length) { wrap.innerHTML = ""; return; }
 
         wrap.innerHTML = `
-          <div style="display:flex;align-items:center;gap:10px;background:${acima ? "rgba(239,68,68,0.07)" : "rgba(16,185,129,0.07)"};border:0.5px solid ${acima ? "rgba(239,68,68,0.25)" : "rgba(16,185,129,0.25)"};border-radius:10px;padding:10px 14px;margin-bottom:16px">
-            <i class="fa-solid ${icone}" style="color:${cor};font-size:14px;flex-shrink:0"></i>
-            <span style="font-size:13px;color:var(--text-secondary)">${msg}</span>
+          <div class="section-card" style="margin-bottom:20px">
+            <div class="section-header" style="margin-bottom:4px">
+              <div class="section-header-left">
+                <i class="fa-solid fa-lightbulb" style="color:#f59e0b"></i>
+                <span class="section-title">Insights</span>
+              </div>
+            </div>
+            ${insights.map((i) => `
+              <div class="insight-item">
+                <div class="insight-icon" style="background:${i.bg}">
+                  <i class="fa-solid ${i.icon}" style="color:${i.color}"></i>
+                </div>
+                <span class="insight-text">${i.text}</span>
+              </div>`).join("")}
           </div>`;
       }
 
