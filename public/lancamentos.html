@@ -220,6 +220,23 @@
       .rec-proxima-data.vencida {
         color: var(--red);
       }
+      .tag-chip {
+        display: inline-flex;
+        align-items: center;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 20px;
+        background: rgba(99, 102, 241, 0.12);
+        color: #6366f1;
+        margin-left: 5px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s;
+      }
+      .tag-chip:hover, .tag-chip.active {
+        background: rgba(99, 102, 241, 0.28);
+      }
       .badge-freq {
         font-size: 10px;
         padding: 2px 8px;
@@ -1310,7 +1327,7 @@
         filtroRecAtual = "todos";
       let paginaAtual = 1;
       const POR_PAGINA = 30;
-      let _sortCol = "data", _sortDir = "desc", _ultimosData = [];
+      let _sortCol = "data", _sortDir = "desc", _ultimosData = [], _tagFiltro = null;
       const { mes, ano } = getMesAno();
       const FREQ_LABEL = {
         diaria: "Diária",
@@ -1577,6 +1594,7 @@
               ${!isT && t.categoria_nome ? `<span>${t.categoria_nome}</span>` : ""}
               ${t.conta_nome ? `${!isT && t.categoria_nome ? "<span>·</span>" : ""}<span>${t.conta_nome}</span>` : ""}
             </div>
+            ${t.tags ? `<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${t.tags.split(",").map(g => `<span class="tag-chip" onclick="filtrarPorTag('${g.trim()}')">${g.trim()}</span>`).join("")}</div>` : ""}
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-size:15px;font-weight:700;color:${cor}">${sinal}${formatarMoeda(t.valor)}</div>
@@ -1785,7 +1803,35 @@
         const tipo = document.getElementById("filtro-tipo")?.value;
         const cat = document.getElementById("filtro-categoria")?.value;
         const badge = document.getElementById("filtros-badge");
-        if (badge) badge.style.display = (tipo || cat) ? "block" : "none";
+        if (badge) badge.style.display = (tipo || cat || _tagFiltro) ? "block" : "none";
+      }
+
+      function filtrarPorTag(tag) {
+        _tagFiltro = (_tagFiltro === tag) ? null : tag;
+        _renderTagFiltroChip();
+        atualizarFiltrosBadge();
+        if (isMobile()) {
+          const allTx = _ultimosData;
+          const filtered = _tagFiltro ? allTx.filter(t => t.tags && t.tags.split(",").map(x => x.trim()).includes(_tagFiltro)) : allTx;
+          renderMobileComSwipe(filtered);
+        } else {
+          renderDesktop(_ultimosData);
+        }
+      }
+
+      function _renderTagFiltroChip() {
+        let wrap = document.getElementById("tag-filtro-chip-wrap");
+        if (!wrap) {
+          wrap = document.createElement("div");
+          wrap.id = "tag-filtro-chip-wrap";
+          wrap.style.cssText = "display:flex;align-items:center;gap:6px;padding:0 16px 8px";
+          const filtrosWrap = document.getElementById("filtros-extras");
+          if (filtrosWrap) filtrosWrap.after(wrap);
+          else document.querySelector(".filtros-bar")?.appendChild(wrap);
+        }
+        if (!_tagFiltro) { wrap.innerHTML = ""; return; }
+        wrap.innerHTML = `<span style="font-size:12px;color:var(--text-muted)">Tag:</span>
+          <span class="tag-chip active" onclick="filtrarPorTag('${_tagFiltro}')">${_tagFiltro} <i class="fa-solid fa-xmark" style="font-size:10px;margin-left:3px"></i></span>`;
       }
 
       // ── Abas ──
@@ -2036,7 +2082,7 @@
           : "";
         return `<tr data-id="${t.id}" style="transition:transform 0.3s ease,opacity 0.3s ease">
           <td>${formatarData(t.data)}</td>
-          <td>${isT ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}${t.descricao}${parcelaLabel}</td>
+          <td>${isT ? `<i class="fa-solid fa-right-left" style="color:#6366f1;margin-right:6px;font-size:11px"></i>` : ""}${t.descricao}${parcelaLabel}${t.tags ? t.tags.split(",").map(g => `<span class="tag-chip" onclick="filtrarPorTag('${g.trim()}')">${g.trim()}</span>`).join("") : ""}</td>
           <td>${isT
             ? `<span style="color:var(--text-muted);font-size:12px">—</span>`
             : `<span class="cat-chip"><span class="cat-chip-dot" style="background:${t.categoria_cor || "#6b7280"}"></span>${t.categoria_nome || "—"}</span>`
@@ -2055,7 +2101,8 @@
 
       function renderDesktop(data) {
         _ultimosData = data;
-        const sorted = sortTransacoes(data);
+        const filtered = _tagFiltro ? data.filter(t => t.tags && t.tags.split(",").map(x => x.trim()).includes(_tagFiltro)) : data;
+        const sorted = sortTransacoes(filtered);
         const tbody = document.getElementById("tabela-transacoes-desktop");
         if (sorted.length === 0) {
           tbody.innerHTML = `<tr><td colspan="7" style="padding:0"><div style="padding:16px">${emptyState("fa-right-left", "Nenhuma transação", "Nenhuma transação encontrada neste período.", "Novo lançamento", "abrirModalLancamento()")}</div></td></tr>`;
