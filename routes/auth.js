@@ -158,7 +158,12 @@ router.post("/cadastro", cadastroLimiter, async (req, res) => {
       }).catch(() => {}); // silencia erro de email para não afetar o cadastro
     }
   } catch (err) {
-    res.status(400).json({ erro: "Email ou username já cadastrado." });
+    if (err.code === "ER_DUP_ENTRY") {
+      res.status(400).json({ erro: "Não foi possível criar a conta. Verifique os dados e tente novamente." });
+    } else {
+      console.error("[Auth /cadastro]", err.message);
+      res.status(500).json({ erro: "Erro ao criar conta." });
+    }
   }
 });
 

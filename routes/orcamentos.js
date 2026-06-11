@@ -32,7 +32,7 @@ router.get("/", auth, async (req, res) => {
     console.error("[Orcamentos GET]", err.message);
     res
       .status(500)
-      .json({ erro: "Erro ao buscar orçamentos.", detalhe: err.message });
+      .json({ erro: "Erro ao buscar orçamentos." });
   }
 });
 
@@ -75,7 +75,7 @@ router.get("/resumo", auth, async (req, res) => {
     console.error("[Orcamentos RESUMO]", err.message);
     res
       .status(500)
-      .json({ erro: "Erro ao buscar resumo.", detalhe: err.message });
+      .json({ erro: "Erro ao buscar resumo." });
   }
 });
 
@@ -99,7 +99,7 @@ router.post("/", auth, async (req, res) => {
     console.error("[Orcamentos POST]", err.message);
     res
       .status(500)
-      .json({ erro: "Erro ao salvar orçamento.", detalhe: err.message });
+      .json({ erro: "Erro ao salvar orçamento." });
   }
 });
 
@@ -160,7 +160,7 @@ router.post("/copiar", auth, async (req, res) => {
     console.error("[Orcamentos COPIAR]", err.message);
     res
       .status(500)
-      .json({ erro: "Erro ao copiar orçamentos.", detalhe: err.message });
+      .json({ erro: "Erro ao copiar orçamentos." });
   }
 });
 

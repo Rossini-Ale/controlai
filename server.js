@@ -5,12 +5,34 @@ const helmet = require("helmet");
 const path = require("path");
 const rateLimit = require("express-rate-limit");
 require("dotenv").config();
+
+// Valida variáveis de ambiente obrigatórias antes de qualquer coisa
+const ENV_REQUIRED = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME", "JWT_SECRET"];
+for (const key of ENV_REQUIRED) {
+  if (!process.env[key]) {
+    console.error(`❌ Variável de ambiente obrigatória ausente: ${key}`);
+    process.exit(1);
+  }
+}
+
 require("./config/db");
 
 const app = express();
 // CSP desativado: app usa scripts inline extensivamente (refatorar para nonces é trabalho futuro)
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : ["https://controlai.up.railway.app", "http://localhost:3000", "http://127.0.0.1:3000"];
+
+app.use(cors({
+  origin: (origin, cb) => {
+    // Permitir requests sem origin (mobile apps, curl, Postman)
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error("CORS: origem não permitida"));
+  },
+  credentials: true,
+}));
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -87,6 +109,19 @@ app.post(`/bot${process.env.TELEGRAM_TOKEN}`, (req, res) => {
 app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "index.html")),
 );
+
+// ── 404 para rotas de API desconhecidas ──
+app.use("/api", (req, res) => {
+  res.status(404).json({ erro: "Rota não encontrada." });
+});
+
+// ── Handler de erro centralizado ──
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error("[Express error]", err.message);
+  if (err.message?.startsWith("CORS")) return res.status(403).json({ erro: err.message });
+  res.status(err.status || 500).json({ erro: "Erro interno do servidor." });
+});
 
 // ── Inicialização: migrations → servidor → cron ──
 const { rodarMigrations } = require("./migration");

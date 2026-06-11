@@ -45,39 +45,27 @@ router.post("/", auth, async (req, res) => {
   const transferencia_id = randomUUID();
   const desc = descricao || "Transferência entre contas";
 
+  const conn = await db.getConnection();
   try {
+    await conn.beginTransaction();
+
     // Despesa na conta de origem
-    const [resOrigem] = await db.query(
+    const [resOrigem] = await conn.query(
       `INSERT INTO Transacoes
          (usuario_id, conta_id, tipo, descricao, valor, data, observacao, transferencia_id, is_transferencia)
        VALUES (?, ?, 'despesa', ?, ?, ?, ?, ?, 1)`,
-      [
-        req.usuarioId,
-        conta_origem_id,
-        desc,
-        valorFloat,
-        data,
-        observacao || null,
-        transferencia_id,
-      ],
+      [req.usuarioId, conta_origem_id, desc, valorFloat, data, observacao || null, transferencia_id],
     );
 
     // Receita na conta de destino
-    const [resDestino] = await db.query(
+    const [resDestino] = await conn.query(
       `INSERT INTO Transacoes
          (usuario_id, conta_id, tipo, descricao, valor, data, observacao, transferencia_id, is_transferencia)
        VALUES (?, ?, 'receita', ?, ?, ?, ?, ?, 1)`,
-      [
-        req.usuarioId,
-        conta_destino_id,
-        desc,
-        valorFloat,
-        data,
-        observacao || null,
-        transferencia_id,
-      ],
+      [req.usuarioId, conta_destino_id, desc, valorFloat, data, observacao || null, transferencia_id],
     );
 
+    await conn.commit();
     res.status(201).json({
       mensagem: "Transferência realizada!",
       transferencia_id,
@@ -85,8 +73,11 @@ router.post("/", auth, async (req, res) => {
       id_destino: resDestino.insertId,
     });
   } catch (err) {
-    console.error(err);
+    await conn.rollback();
+    console.error("[Transferencias POST]", err.message);
     res.status(500).json({ erro: "Erro ao realizar transferência." });
+  } finally {
+    conn.release();
   }
 });
 
@@ -182,54 +173,43 @@ router.put("/:transferencia_id", auth, async (req, res) => {
 
   const desc = descricao || "Transferência entre contas";
 
+  const conn = await db.getConnection();
   try {
     // Verifica que pertence ao usuário
-    const [check] = await db.query(
+    const [check] = await conn.query(
       "SELECT id, tipo FROM Transacoes WHERE transferencia_id = ? AND usuario_id = ?",
       [req.params.transferencia_id, req.usuarioId],
     );
-    if (check.length < 2)
+    if (check.length < 2) {
+      conn.release();
       return res.status(404).json({ erro: "Transferência não encontrada." });
+    }
 
     const despesa = check.find((t) => t.tipo === "despesa");
     const receita = check.find((t) => t.tipo === "receita");
 
-    // Atualiza despesa (origem)
-    await db.query(
-      `UPDATE Transacoes
-       SET conta_id = ?, valor = ?, data = ?, descricao = ?, observacao = ?
-       WHERE id = ? AND usuario_id = ?`,
-      [
-        conta_origem_id,
-        valorFloat,
-        data,
-        desc,
-        observacao || null,
-        despesa.id,
-        req.usuarioId,
-      ],
+    await conn.beginTransaction();
+
+    await conn.query(
+      `UPDATE Transacoes SET conta_id=?, valor=?, data=?, descricao=?, observacao=?
+       WHERE id=? AND usuario_id=?`,
+      [conta_origem_id, valorFloat, data, desc, observacao || null, despesa.id, req.usuarioId],
     );
 
-    // Atualiza receita (destino)
-    await db.query(
-      `UPDATE Transacoes
-       SET conta_id = ?, valor = ?, data = ?, descricao = ?, observacao = ?
-       WHERE id = ? AND usuario_id = ?`,
-      [
-        conta_destino_id,
-        valorFloat,
-        data,
-        desc,
-        observacao || null,
-        receita.id,
-        req.usuarioId,
-      ],
+    await conn.query(
+      `UPDATE Transacoes SET conta_id=?, valor=?, data=?, descricao=?, observacao=?
+       WHERE id=? AND usuario_id=?`,
+      [conta_destino_id, valorFloat, data, desc, observacao || null, receita.id, req.usuarioId],
     );
 
+    await conn.commit();
     res.json({ mensagem: "Transferência atualizada!" });
   } catch (err) {
-    console.error(err);
+    await conn.rollback();
+    console.error("[Transferencias PUT]", err.message);
     res.status(500).json({ erro: "Erro ao atualizar transferência." });
+  } finally {
+    conn.release();
   }
 });
 

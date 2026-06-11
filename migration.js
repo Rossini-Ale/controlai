@@ -145,6 +145,19 @@ const MIGRATIONS = [
     id: "019_contas_cartao_campos",
     sql: "ALTER TABLE Contas ADD COLUMN limite DECIMAL(10,2) NULL DEFAULT 0, ADD COLUMN dia_fechamento TINYINT NULL DEFAULT 10, ADD COLUMN dia_vencimento TINYINT NULL DEFAULT 20",
   },
+  {
+    id: "020_indexes_performance",
+    sql: `ALTER TABLE Transacoes
+            ADD INDEX idx_categoria_id (categoria_id),
+            ADD INDEX idx_recorrente_id (recorrente_id),
+            ADD INDEX idx_transferencia_id (transferencia_id)`,
+  },
+  {
+    id: "021_indexes_usuarios",
+    sql: `ALTER TABLE Usuarios
+            ADD UNIQUE INDEX idx_email (email),
+            ADD UNIQUE INDEX idx_username (username)`,
+  },
 ];
 
 async function rodarMigrations() {

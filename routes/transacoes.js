@@ -431,8 +431,9 @@ router.post("/:id/duplicar", auth, async (req, res) => {
     const data = req.body.data || new Date().toISOString().split("T")[0];
     const valor = req.body.valor || orig.valor;
     const [result] = await db.query(
-      `INSERT INTO Transacoes (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO Transacoes
+         (usuario_id, conta_id, categoria_id, tipo, descricao, valor, data, observacao, tags, pet_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         req.usuarioId,
         orig.conta_id,
@@ -442,6 +443,8 @@ router.post("/:id/duplicar", auth, async (req, res) => {
         valor,
         data,
         orig.observacao || null,
+        orig.tags || null,
+        orig.pet_id || null,
       ],
     );
     res
